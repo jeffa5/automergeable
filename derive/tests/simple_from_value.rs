@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use automergable::Automergable;
+use automergable_derive::Automergable;
 use automerge::Path;
 
 #[test]
