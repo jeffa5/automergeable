@@ -28,6 +28,10 @@ pub fn expand_automergable(input: DeriveInput) -> TokenStream {
         #[automatically_derived]
         impl #t_name {
             #(#imp_paths)*
+
+            pub fn diff(&self, other: &Self) -> Vec<automerge::LocalChange> {
+                todo!()
+            }
         }
     }
 }
