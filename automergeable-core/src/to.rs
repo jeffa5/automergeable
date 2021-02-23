@@ -91,6 +91,6 @@ impl ToAutomerge for time::SystemTime {
         let ts = self
             .duration_since(time::UNIX_EPOCH)
             .expect("time went backwards");
-        ScalarValue::Timestamp(ts.as_millis().try_into().unwrap()).into()
+        ScalarValue::Timestamp(ts.as_secs().try_into().unwrap()).into()
     }
 }
