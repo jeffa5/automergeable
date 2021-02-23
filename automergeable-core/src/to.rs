@@ -1,10 +1,16 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryInto, time};
 
 use automerge::{MapType, ScalarValue};
 
 /// Require a method to convert the current value into an automerge value
 pub trait ToAutomerge {
     fn to_automerge(&self) -> automerge::Value;
+}
+
+impl ToAutomerge for Vec<char> {
+    fn to_automerge(&self) -> automerge::Value {
+        automerge::Value::Text(self.clone())
+    }
 }
 
 impl<T> ToAutomerge for Vec<T>
@@ -37,15 +43,33 @@ impl ToAutomerge for String {
     }
 }
 
+impl ToAutomerge for i64 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Int(*self).into()
+    }
+}
+
 impl ToAutomerge for u64 {
     fn to_automerge(&self) -> automerge::Value {
         ScalarValue::Uint(*self).into()
     }
 }
 
-impl ToAutomerge for i64 {
+impl ToAutomerge for f64 {
     fn to_automerge(&self) -> automerge::Value {
-        ScalarValue::Int(*self).into()
+        ScalarValue::F64(*self).into()
+    }
+}
+
+impl ToAutomerge for f32 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::F32(*self).into()
+    }
+}
+
+impl ToAutomerge for bool {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Boolean(*self).into()
     }
 }
 
@@ -59,5 +83,14 @@ where
         } else {
             ScalarValue::Null.into()
         }
+    }
+}
+
+impl ToAutomerge for time::SystemTime {
+    fn to_automerge(&self) -> automerge::Value {
+        let ts = self
+            .duration_since(time::UNIX_EPOCH)
+            .expect("time went backwards");
+        ScalarValue::Timestamp(ts.as_millis().try_into().unwrap()).into()
     }
 }

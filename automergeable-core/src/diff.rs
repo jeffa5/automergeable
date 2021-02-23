@@ -1,8 +1,6 @@
-use automerge::LocalChange;
-use automerge::Path;
-use automerge::ScalarValue;
-use automerge::Value;
 use std::convert::TryInto;
+
+use automerge::{LocalChange, Path, ScalarValue, Value};
 
 /// Calculate the `LocalChange`s between the two values.
 ///
@@ -187,10 +185,12 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::collections::HashMap;
+
     use automerge::MapType;
     use insta::assert_debug_snapshot;
-    use std::collections::HashMap;
+
+    use super::*;
 
     #[test]
     fn diff_maps() {
