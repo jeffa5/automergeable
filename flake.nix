@@ -16,9 +16,17 @@
             system = system;
           };
           rust = pkgs.rust-bin.nightly.latest.rust;
+          cargoNix = pkgs.callPackage ./Cargo.nix { };
         in
         rec
         {
+          packages = {
+            automergeable-core = cargoNix.workspaceMembers.automergeable-core.build;
+            automergeable-derive = cargoNix.workspaceMembers.automergeable-derive.build;
+          };
+
+          defaultPackage = packages.automergeable-derive;
+
           devShell = pkgs.mkShell {
             buildInputs = with pkgs;[
               (rust.override {
