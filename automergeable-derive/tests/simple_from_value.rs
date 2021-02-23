@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use automergable_derive::Automergable;
+use automergeable_derive::Automergeable;
 use automerge::Path;
 
 #[test]
 fn simple_from_value() {
-    #[derive(Automergable)]
+    #[derive(Automergeable)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,

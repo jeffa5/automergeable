@@ -1,5 +1,5 @@
 [package]
-name = "automergable-core"
+name = "automergeable-core"
 version = "0.1.0"
 authors = ["Andrew Jeffery <dev@jeffas.io>"]
 edition = "2018"

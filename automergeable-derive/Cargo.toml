@@ -1,5 +1,5 @@
 [package]
-name = "automergable-derive"
+name = "automergeable-derive"
 version = "0.1.0"
 authors = ["Andrew Jeffery <dev@jeffas.io>"]
 edition = "2018"
@@ -13,3 +13,7 @@ quote = "1.0.9"
 syn = "1.0.60"
 automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automergeable-core = { path = "../automergeable-core" }
+
+[dev-dependencies]
+pretty_assertions = "0.6.1"
