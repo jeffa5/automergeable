@@ -293,6 +293,12 @@ rec {
             packageId = "automerge-protocol";
           }
         ];
+        devDependencies = [
+          {
+            name = "insta";
+            packageId = "insta";
+          }
+        ];
         
       };
       "automergeable-derive" = rec {

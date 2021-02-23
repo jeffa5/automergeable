@@ -7,3 +7,6 @@ edition = "2018"
 [dependencies]
 automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+
+[dev-dependencies]
+insta = "1.6.1"
