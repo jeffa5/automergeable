@@ -1,8 +1,8 @@
 use automerge::LocalChange;
-use std::convert::TryInto;
 use automerge::Path;
 use automerge::ScalarValue;
 use automerge::Value;
+use std::convert::TryInto;
 
 /// Calculate the `LocalChange`s between the two values.
 ///
@@ -38,15 +38,24 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             for (i, v) in new_vec.iter().enumerate() {
                 if let Some(old_v) = old_vec.get(i) {
                     // changed
-                    changes.append(&mut diff_with_path(v, old_v, path.clone().index(i.try_into().unwrap())))
+                    changes.append(&mut diff_with_path(
+                        v,
+                        old_v,
+                        path.clone().index(i.try_into().unwrap()),
+                    ))
                 } else {
                     // new
-                    changes.push(LocalChange::insert(path.clone().index(i.try_into().unwrap()), v.clone()))
+                    changes.push(LocalChange::insert(
+                        path.clone().index(i.try_into().unwrap()),
+                        v.clone(),
+                    ))
                 }
             }
             for i in new_vec.len()..old_vec.len() {
                 // removed
-                changes.push(LocalChange::delete(path.clone().index(i.try_into().unwrap())))
+                changes.push(LocalChange::delete(
+                    path.clone().index(i.try_into().unwrap()),
+                ))
             }
             changes
         }
@@ -56,53 +65,115 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             for (i, v) in new_vec.iter().enumerate() {
                 if i < old_vec.len() {
                     // changed
-                    changes.push(LocalChange::set(path.clone().index(i.try_into().unwrap()), Value::Primitive(ScalarValue::Str(v.to_string()))))
+                    changes.push(LocalChange::set(
+                        path.clone().index(i.try_into().unwrap()),
+                        Value::Primitive(ScalarValue::Str(v.to_string())),
+                    ))
                 } else {
                     // new
-                    changes.push(LocalChange::insert(path.clone().index(i.try_into().unwrap()), Value::Primitive(ScalarValue::Str(v.to_string()))))
+                    changes.push(LocalChange::insert(
+                        path.clone().index(i.try_into().unwrap()),
+                        Value::Primitive(ScalarValue::Str(v.to_string())),
+                    ))
                 }
             }
             for i in new_vec.len()..old_vec.len() {
                 // removed
-                changes.push(LocalChange::delete(path.clone().index(i.try_into().unwrap())))
+                changes.push(LocalChange::delete(
+                    path.clone().index(i.try_into().unwrap()),
+                ))
             }
             changes
         }
-        (Value::Primitive(ScalarValue::Str(new_string)), Value::Primitive(ScalarValue::Str(_old_string))) => {
+        (
+            Value::Primitive(ScalarValue::Str(new_string)),
+            Value::Primitive(ScalarValue::Str(_old_string)),
+        ) => {
             // just set this, we can't address the characters so this may be a thing such as an enum
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Str(new_string.to_owned())))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Str(new_string.to_owned())),
+            )]
         }
-        (Value::Primitive(ScalarValue::Int(new_int)), Value::Primitive(ScalarValue::Int(_old_int))) => {
+        (
+            Value::Primitive(ScalarValue::Int(new_int)),
+            Value::Primitive(ScalarValue::Int(_old_int)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Int(*new_int)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Int(*new_int)),
+            )]
         }
-        (Value::Primitive(ScalarValue::Uint(new_int)), Value::Primitive(ScalarValue::Uint(_old_int))) => {
+        (
+            Value::Primitive(ScalarValue::Uint(new_int)),
+            Value::Primitive(ScalarValue::Uint(_old_int)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Uint(*new_int)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Uint(*new_int)),
+            )]
         }
-        (Value::Primitive(ScalarValue::F64(new_int)), Value::Primitive(ScalarValue::F64(_old_int))) => {
+        (
+            Value::Primitive(ScalarValue::F64(new_int)),
+            Value::Primitive(ScalarValue::F64(_old_int)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::F64(*new_int)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::F64(*new_int)),
+            )]
         }
-        (Value::Primitive(ScalarValue::F32(new_int)), Value::Primitive(ScalarValue::F32(_old_int))) => {
+        (
+            Value::Primitive(ScalarValue::F32(new_int)),
+            Value::Primitive(ScalarValue::F32(_old_int)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::F32(*new_int)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::F32(*new_int)),
+            )]
         }
-        (Value::Primitive(ScalarValue::Counter(new_int)), Value::Primitive(ScalarValue::Counter(old_int))) => {
+        (
+            Value::Primitive(ScalarValue::Counter(new_int)),
+            Value::Primitive(ScalarValue::Counter(old_int)),
+        ) => {
             // naive
-            vec![LocalChange::increment_by(path, (new_int-old_int).try_into().unwrap())]
+            vec![LocalChange::increment_by(
+                path,
+                (new_int - old_int).try_into().unwrap(),
+            )]
         }
-        (Value::Primitive(ScalarValue::Timestamp(new_int)), Value::Primitive(ScalarValue::Timestamp(_old_int))) => {
+        (
+            Value::Primitive(ScalarValue::Timestamp(new_int)),
+            Value::Primitive(ScalarValue::Timestamp(_old_int)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Timestamp(*new_int)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Timestamp(*new_int)),
+            )]
         }
-        (Value::Primitive(ScalarValue::Cursor(new_cursor)), Value::Primitive(ScalarValue::Cursor(_old_cursor))) => {
+        (
+            Value::Primitive(ScalarValue::Cursor(new_cursor)),
+            Value::Primitive(ScalarValue::Cursor(_old_cursor)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Cursor(new_cursor.clone())))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Cursor(new_cursor.clone())),
+            )]
         }
-        (Value::Primitive(ScalarValue::Boolean(new_bool)), Value::Primitive(ScalarValue::Boolean(_old_bool))) => {
+        (
+            Value::Primitive(ScalarValue::Boolean(new_bool)),
+            Value::Primitive(ScalarValue::Boolean(_old_bool)),
+        ) => {
             // naive
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Boolean(*new_bool)))]
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(ScalarValue::Boolean(*new_bool)),
+            )]
         }
         (Value::Primitive(ScalarValue::Null), _) => {
             vec![LocalChange::set(path, Value::Primitive(ScalarValue::Null))]
@@ -117,9 +188,9 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use automerge::MapType;
     use insta::assert_debug_snapshot;
     use std::collections::HashMap;
-    use automerge::MapType;
 
     #[test]
     fn diff_maps() {
@@ -204,9 +275,7 @@ mod tests {
 
         assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @"[]");
 
-        new_vec.push(
-            ScalarValue::Str("some val".to_owned()).into(),
-        );
+        new_vec.push(ScalarValue::Str("some val".to_owned()).into());
         assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
         [
             LocalChange {
@@ -229,9 +298,7 @@ mod tests {
         "###);
 
         old_vec = new_vec.clone();
-        new_vec[0]=
-            ScalarValue::Str("some newer val".to_owned()).into()
-        ;
+        new_vec[0] = ScalarValue::Str("some newer val".to_owned()).into();
         assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
         [
             LocalChange {
@@ -278,9 +345,7 @@ mod tests {
 
         assert_debug_snapshot!(diff(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @"[]");
 
-        new_text.push(
-            'a',
-        );
+        new_text.push('a');
         assert_debug_snapshot!(diff(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
         [
             LocalChange {
