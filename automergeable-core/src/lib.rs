@@ -1,6 +1,6 @@
-mod to;
 mod diff;
+mod to;
 
-pub use to::ToAutomerge;
 pub use diff::diff;
-pub trait Automergeable : to::ToAutomerge{}
+pub use to::ToAutomerge;
+pub trait Automergeable: to::ToAutomerge {}

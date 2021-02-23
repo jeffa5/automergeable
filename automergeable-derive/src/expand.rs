@@ -13,7 +13,10 @@ pub fn expand_automergeable(input: DeriveInput) -> TokenStream {
     let t_name = input.ident;
     let imp_paths = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
-        let field_name_path = Ident::new(&format!("{}_PATH_KEY", field_name.to_string().to_uppercase()), field_name.span());
+        let field_name_path = Ident::new(
+            &format!("{}_PATH_KEY", field_name.to_string().to_uppercase()),
+            field_name.span(),
+        );
         let path_key = format_ident!("{}", field_name).to_string();
 
         quote! {
@@ -24,7 +27,7 @@ pub fn expand_automergeable(input: DeriveInput) -> TokenStream {
         let field_name = f.ident.as_ref().unwrap();
         let field_name_string = format_ident!("{}", field_name).to_string();
 
-        quote!{
+        quote! {
             fields.insert(#field_name_string.to_owned(), self.#field_name.to_automerge());
         }
     });
