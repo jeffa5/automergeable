@@ -15,7 +15,7 @@
             overlays = [ rust-overlay.overlay ];
             system = system;
           };
-          rust = pkgs.rust-bin.stable.latest.rust;
+          rust = pkgs.rust-bin.nightly.latest.rust;
           cargoNix = pkgs.callPackage ./Cargo.nix { };
         in
         rec
@@ -38,6 +38,7 @@
               cargo-expand
               cargo-insta
               crate2nix
+              rust-analyzer
 
               rnix-lsp
               nixpkgs-fmt
