@@ -28,6 +28,7 @@
               cargo-watch
               cargo-udeps
               cargo-expand
+              cargo-insta
               crate2nix
 
               rnix-lsp

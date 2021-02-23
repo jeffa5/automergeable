@@ -1,65 +1,54 @@
 use std::collections::HashMap;
-use core::hash::Hash;
-use std::convert::TryInto;
-use automerge::{LocalChange, Path, ScalarValue};
 
-pub trait ToValue {
-    fn to_value(&self) -> automerge::Value ;
+use automerge::{LocalChange, MapType, Path, ScalarValue};
+
+pub trait Automergeable : ToAutomerge{}
+
+pub trait ToAutomerge {
+    fn to_automerge(&self) -> automerge::Value ;
 }
 
-pub trait AutoDiff : ToValue {
-    fn diff(&self, path:Path, original: &Self) -> Vec<automerge::LocalChange> ;
-}
-
-impl<T> ToValue for Vec<T> where T:ToValue {
-    fn to_value(&self) -> automerge::Value {
-        let vals = self.iter().map(|v| v.to_value()).collect::<Vec<_>>();
+impl<T> ToAutomerge for Vec<T> where T:ToAutomerge {
+    fn to_automerge(&self) -> automerge::Value {
+        let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
         automerge::Value::Sequence(vals)
     }
 }
 
-impl<T> AutoDiff for Vec<T> where T : AutoDiff + PartialEq{
-    fn diff(&self, path:Path,original: &Self) -> Vec<automerge::LocalChange>  {
-        println!("diffing vec");
-            let mut changes = Vec::new();
-            for (i, n) in self.iter().enumerate() {
-                if !original.iter().any(|o| o == n) {
-                    changes.push(LocalChange::insert(path.clone().index(i.try_into().unwrap()), n.to_value()))
-                }
-            }
-            changes
+impl<K,V> ToAutomerge for HashMap<K, V> where K:ToString, V:ToAutomerge{
+fn to_automerge(&self) -> automerge::Value {
+    let mut hm = HashMap::new();
+    for (k, v) in self {
+        hm.insert(k.to_string(), v.to_automerge());
     }
+    automerge::Value::Map(hm, MapType::Map)
+}
 }
 
-impl<K,V> ToValue for HashMap<K, V> where K:ToValue, V:ToValue{
-
-fn to_value(&self) -> automerge::Value { todo!() }
-}
-
-impl<K,V> AutoDiff for HashMap<K, V> where V:AutoDiff+PartialEq, K: ToValue+ToString+Eq+Hash{
-    fn diff(&self, path:Path,original: &Self) -> Vec<automerge::LocalChange>  {
-        println!("diffing hashmap");
-        let mut changes = Vec::new();
-        for  (k,v) in self.iter(){
-            if let Some(o) = original.get(k)  {
-                changes.append(&mut v.diff(path.clone().key(k.to_string()), o))
-            } else {
-                changes.push(LocalChange::insert(path.clone().key(k.to_string()), v.to_value()))
-            }
-        }
-        changes
-    }
-}
-
-impl ToValue for String {
-    fn to_value(&self) -> automerge::Value  {
+impl ToAutomerge for String {
+    fn to_automerge(&self) -> automerge::Value  {
         ScalarValue::Str(self.to_owned()).into()
     }
 }
 
-impl AutoDiff for String {
-    fn diff(&self, path: Path, original: &Self) -> Vec<automerge::LocalChange>  {
-        println!("diffing string");
-        vec![automerge::LocalChange::set(path, automerge::Value::Primitive(automerge::ScalarValue::Str(self.to_owned())))]
+impl ToAutomerge for u64 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Uint(*self).into()
+    }
+}
+
+impl ToAutomerge for i64 {
+    fn to_automerge(&self) -> automerge::Value{
+        ScalarValue::Int(*self).into()
+    }
+}
+
+impl<T> ToAutomerge for Option<T> where T : ToAutomerge {
+    fn to_automerge(&self) -> automerge::Value  {
+        if let Some(v) = self {
+            v.to_automerge()
+        }else {
+            ScalarValue::Null.into()
+        }
     }
 }

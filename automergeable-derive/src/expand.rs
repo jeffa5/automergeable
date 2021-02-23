@@ -1,4 +1,4 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{Data, DataStruct, DeriveInput, Fields};
 
@@ -13,20 +13,19 @@ pub fn expand_automergeable(input: DeriveInput) -> TokenStream {
     let t_name = input.ident;
     let imp_paths = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
-        let field_name_path = format_ident!("{}_path", field_name);
+        let field_name_path = Ident::new(&format!("{}_PATH_KEY", field_name.to_string().to_uppercase()), field_name.span());
         let path_key = format_ident!("{}", field_name).to_string();
 
         quote! {
-            pub fn #field_name_path() -> ::automerge::Path {
-                ::automerge::Path::root().key(#path_key)
-            }
+            const #field_name_path : &'static str = #path_key;
         }
     });
-    let field_diffs = fields.iter().map(|f| {
+    let to_automerge_fields = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
-        let path_key = format_ident!("{}", field_name).to_string();
+        let field_name_string = format_ident!("{}", field_name).to_string();
+
         quote!{
-            changes.append(&mut self.#field_name.diff(path.clone().key(#path_key), &original.#field_name));
+            fields.insert(#field_name_string.to_owned(), self.#field_name.to_automerge());
         }
     });
     quote! {
@@ -36,18 +35,11 @@ pub fn expand_automergeable(input: DeriveInput) -> TokenStream {
         }
 
         #[automatically_derived]
-        impl ::automergeable_core::ToValue for #t_name {
-            fn to_value(&self) -> ::automerge::Value {
-                todo!()
-            }
-        }
-
-        #[automatically_derived]
-        impl ::automergeable_core::AutoDiff for #t_name {
-            fn diff(&self, path: ::automerge::Path, original: &Self) -> ::std::vec::Vec<::automerge::LocalChange> {
-                let mut changes = ::std::vec::Vec::new();
-                #(#field_diffs)*
-                changes
+        impl ::automergeable_core::ToAutomerge for #t_name {
+            fn to_automerge(&self) -> ::automerge::Value {
+                let mut fields = ::std::collections::HashMap::new();
+                #(#to_automerge_fields)*
+                ::automerge::Value::Map(fields, ::automerge::MapType::Map)
             }
         }
     }
