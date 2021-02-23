@@ -1,0 +1,7 @@
+[package]
+name = "automergable"
+version = "0.1.0"
+authors = ["Andrew Jeffery <dev@jeffas.io>"]
+edition = "2018"
+
+[dependencies]
