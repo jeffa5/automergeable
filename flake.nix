@@ -27,6 +27,7 @@
               cargo-edit
               cargo-watch
               cargo-udeps
+              cargo-expand
               crate2nix
 
               rnix-lsp
