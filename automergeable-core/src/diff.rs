@@ -4,6 +4,9 @@ use automerge::Path;
 use automerge::ScalarValue;
 use automerge::Value;
 
+/// Calculate the `LocalChange`s between the two values.
+///
+/// Recursively works from the root.
 pub fn diff(new: &Value, old: &Value) -> Vec<LocalChange> {
     diff_with_path(new, old, Path::root())
 }
