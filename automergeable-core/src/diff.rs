@@ -1,3 +1,6 @@
-pub fn diff(new: automerge::Value, old: automerge::Value) -> Vec<automerge::LocalChange> {
+use automerge::Value;
+use automerge::LocalChange;
+
+pub fn diff(new: Value, old: Value) -> Vec<LocalChange> {
     Vec::new()
 }

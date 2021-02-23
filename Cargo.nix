@@ -310,10 +310,6 @@ rec {
             packageId = "automerge";
           }
           {
-            name = "automerge-protocol";
-            packageId = "automerge-protocol";
-          }
-          {
             name = "automergeable-core";
             packageId = "automergeable-core";
           }
