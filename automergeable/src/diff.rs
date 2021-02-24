@@ -2,10 +2,22 @@ use std::convert::TryInto;
 
 use automerge::{LocalChange, Path, ScalarValue, Value};
 
+use crate::ToAutomerge;
+
+/// Calculate the `LocalChange`s between the two types that implement `ToAutomerge`.
+///
+/// Recursively works from the root.
+pub fn diff<T>(new: &T, old: &T) -> Vec<LocalChange>
+where
+    T: ToAutomerge,
+{
+    diff_values(&new.to_automerge(), &old.to_automerge())
+}
+
 /// Calculate the `LocalChange`s between the two values.
 ///
 /// Recursively works from the root.
-pub fn diff(new: &Value, old: &Value) -> Vec<LocalChange> {
+pub fn diff_values(new: &Value, old: &Value) -> Vec<LocalChange> {
     diff_with_path(new, old, Path::root())
 }
 
@@ -197,13 +209,13 @@ mod tests {
         let mut old_map = HashMap::new();
         let mut new_map = HashMap::new();
 
-        assert_debug_snapshot!(diff(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @"[]");
 
         new_map.insert(
             "abc".to_owned(),
             ScalarValue::Str("some val".to_owned()).into(),
         );
-        assert_debug_snapshot!(diff(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
         [
             LocalChange {
                 path: Path(
@@ -229,7 +241,7 @@ mod tests {
             "abc".to_owned(),
             ScalarValue::Str("some newer val".to_owned()).into(),
         );
-        assert_debug_snapshot!(diff(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
         [
             LocalChange {
                 path: Path(
@@ -252,7 +264,7 @@ mod tests {
 
         old_map = new_map.clone();
         new_map.remove("abc");
-        assert_debug_snapshot!(diff(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
         [
             LocalChange {
                 path: Path(
@@ -273,10 +285,10 @@ mod tests {
         let mut old_vec = Vec::new();
         let mut new_vec = Vec::new();
 
-        assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @"[]");
 
         new_vec.push(ScalarValue::Str("some val".to_owned()).into());
-        assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
         [
             LocalChange {
                 path: Path(
@@ -299,7 +311,7 @@ mod tests {
 
         old_vec = new_vec.clone();
         new_vec[0] = ScalarValue::Str("some newer val".to_owned()).into();
-        assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
         [
             LocalChange {
                 path: Path(
@@ -322,7 +334,7 @@ mod tests {
 
         old_vec = new_vec.clone();
         new_vec.pop();
-        assert_debug_snapshot!(diff(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone() )), @r###"
         [
             LocalChange {
                 path: Path(
@@ -343,10 +355,10 @@ mod tests {
         let mut old_text = Vec::new();
         let mut new_text = Vec::new();
 
-        assert_debug_snapshot!(diff(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @"[]");
 
         new_text.push('a');
-        assert_debug_snapshot!(diff(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
         [
             LocalChange {
                 path: Path(
@@ -369,7 +381,7 @@ mod tests {
 
         old_text = new_text.clone();
         new_text[0] = 'b';
-        assert_debug_snapshot!(diff(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
         [
             LocalChange {
                 path: Path(
@@ -392,7 +404,7 @@ mod tests {
 
         old_text = new_text.clone();
         new_text.pop();
-        assert_debug_snapshot!(diff(&Value::Text(new_text.clone()), &Value::Text(old_text.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone() )), @r###"
         [
             LocalChange {
                 path: Path(

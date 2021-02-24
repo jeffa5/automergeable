@@ -42,7 +42,7 @@ where
         };
         let mut new_t = original.clone();
         change(&mut new_t).unwrap();
-        let changes = crate::diff(&new_t.to_automerge(), &original.to_automerge());
+        let changes = crate::diff(&new_t, &original);
         let change =
             self.frontend
                 .change::<_, automerge::InvalidChangeRequest>(message, |doc| {
