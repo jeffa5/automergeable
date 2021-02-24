@@ -28,10 +28,10 @@ rec {
   # You can override the features with
   # workspaceMembers."${crateName}".build.override { features = [ "default" "feature1" ... ]; }.
   workspaceMembers = {
-    "automergeable-core" = rec {
-      packageId = "automergeable-core";
+    "automergeable" = rec {
+      packageId = "automergeable";
       build = internal.buildRustCrateWithFeatures {
-        packageId = "automergeable-core";
+        packageId = "automergeable";
       };
 
       # Debug support which might change between releases.
@@ -42,6 +42,16 @@ rec {
       packageId = "automergeable-derive";
       build = internal.buildRustCrateWithFeatures {
         packageId = "automergeable-derive";
+      };
+
+      # Debug support which might change between releases.
+      # File a bug if you depend on any for non-debug work!
+      debug = internal.debugCrate { inherit packageId; };
+    };
+    "automergeable-traits" = rec {
+      packageId = "automergeable-traits";
+      build = internal.buildRustCrateWithFeatures {
+        packageId = "automergeable-traits";
       };
 
       # Debug support which might change between releases.
@@ -275,11 +285,11 @@ rec {
         ];
         
       };
-      "automergeable-core" = rec {
-        crateName = "automergeable-core";
+      "automergeable" = rec {
+        crateName = "automergeable";
         version = "0.1.0";
         edition = "2018";
-        src = (builtins.filterSource sourceFilter ./automergeable-core);
+        src = (builtins.filterSource sourceFilter ./automergeable);
         authors = [
           "Andrew Jeffery <dev@jeffas.io>"
         ];
@@ -291,6 +301,14 @@ rec {
           {
             name = "automerge-protocol";
             packageId = "automerge-protocol";
+          }
+          {
+            name = "automergeable-derive";
+            packageId = "automergeable-derive";
+          }
+          {
+            name = "automergeable-traits";
+            packageId = "automergeable-traits";
           }
         ];
         devDependencies = [
@@ -316,8 +334,8 @@ rec {
             packageId = "automerge";
           }
           {
-            name = "automergeable-core";
-            packageId = "automergeable-core";
+            name = "automergeable-traits";
+            packageId = "automergeable-traits";
           }
           {
             name = "proc-macro2";
@@ -336,6 +354,26 @@ rec {
           {
             name = "insta";
             packageId = "insta";
+          }
+        ];
+        
+      };
+      "automergeable-traits" = rec {
+        crateName = "automergeable-traits";
+        version = "0.1.0";
+        edition = "2018";
+        src = (builtins.filterSource sourceFilter ./automergeable-traits);
+        authors = [
+          "Andrew Jeffery <dev@jeffas.io>"
+        ];
+        dependencies = [
+          {
+            name = "automerge";
+            packageId = "automerge";
+          }
+          {
+            name = "automerge-protocol";
+            packageId = "automerge-protocol";
           }
         ];
         

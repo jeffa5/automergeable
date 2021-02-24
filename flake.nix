@@ -21,11 +21,12 @@
         rec
         {
           packages = {
-            automergeable-core = cargoNix.workspaceMembers.automergeable-core.build;
+            automergeable = cargoNix.workspaceMembers.automergeable.build;
+            automergeable-traits = cargoNix.workspaceMembers.automergeable-traits.build;
             automergeable-derive = cargoNix.workspaceMembers.automergeable-derive.build;
           };
 
-          defaultPackage = packages.automergeable-derive;
+          defaultPackage = packages.automergeable;
 
           devShell = pkgs.mkShell {
             buildInputs = with pkgs;[

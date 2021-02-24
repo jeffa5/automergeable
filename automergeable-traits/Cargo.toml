@@ -1,5 +1,5 @@
 [package]
-name = "automergeable-core"
+name = "automergeable-traits"
 version = "0.1.0"
 authors = ["Andrew Jeffery <dev@jeffas.io>"]
 edition = "2018"
@@ -8,7 +8,3 @@ license = "MIT"
 [dependencies]
 automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
-thiserror = "1.0.24"
-
-[dev-dependencies]
-insta = "1.6.1"

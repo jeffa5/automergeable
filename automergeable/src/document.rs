@@ -5,11 +5,12 @@ use std::{
 };
 
 use automerge::Path;
+use automergeable_traits::{Automergeable, FromAutomerge};
 
 #[derive(Default)]
 pub struct Document<T>
 where
-    T: crate::Automergeable,
+    T: Automergeable,
 {
     frontend: automerge::Frontend,
     _data: PhantomData<T>,
@@ -17,7 +18,7 @@ where
 
 impl<T> Document<T>
 where
-    T: crate::Automergeable,
+    T: Automergeable,
 {
     pub fn new() -> Self {
         Self {
@@ -34,7 +35,7 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as crate::FromAutomerge>::Error: std::error::Error,
+        <T as FromAutomerge>::Error: std::error::Error,
     {
         let original = match self.frontend.get_value(&Path::root()) {
             Some(value) => T::from_automerge(&value).unwrap(),
@@ -61,7 +62,7 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as crate::FromAutomerge>::Error: Error,
+        <T as FromAutomerge>::Error: Error,
     {
         self.change_inner(None, change)
     }
@@ -74,7 +75,7 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as crate::FromAutomerge>::Error: Error,
+        <T as FromAutomerge>::Error: Error,
     {
         self.change_inner(Some(message), change)
     }
@@ -82,7 +83,7 @@ where
 
 impl<T> Deref for Document<T>
 where
-    T: crate::Automergeable,
+    T: Automergeable,
 {
     type Target = automerge::Frontend;
 
@@ -93,7 +94,7 @@ where
 
 impl<T> DerefMut for Document<T>
 where
-    T: crate::Automergeable,
+    T: Automergeable,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.frontend

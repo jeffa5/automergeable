@@ -1,10 +1,6 @@
-mod diff;
-mod document;
 mod from;
 mod to;
 
-pub use diff::diff;
-pub use document::Document;
 pub use from::FromAutomerge;
 pub use to::ToAutomerge;
 

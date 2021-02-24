@@ -22,7 +22,7 @@ pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
     });
     quote! {
         #[automatically_derived]
-        impl ::automergeable_core::ToAutomerge for #t_name {
+        impl ::automergeable_traits::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
                 let mut fields = ::std::collections::HashMap::new();
                 #(#to_automerge_fields)*

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use automergeable_core::ToAutomerge;
 use automergeable_derive::{Automergeable, ToAutomerge};
+use automergeable_traits::ToAutomerge;
 use insta::{assert_json_snapshot, Settings};
 
 #[test]
