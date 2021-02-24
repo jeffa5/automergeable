@@ -1,3 +1,4 @@
+/// Require a method to convert to a value from an automerge value.
 pub trait FromAutomerge: Sized {
     type Error;
 

@@ -2,7 +2,7 @@ use std::{collections::HashMap, convert::TryInto, time};
 
 use automerge::{MapType, ScalarValue};
 
-/// Require a method to convert the current value into an automerge value
+/// Require a method to convert the current value into an automerge value.
 pub trait ToAutomerge {
     fn to_automerge(&self) -> automerge::Value;
 }
