@@ -13,6 +13,7 @@ pub fn automergeable(input: TokenStream) -> TokenStream {
     to::to_automerge(input).into()
 }
 
+/// Derive the `ToAutomerge` trait.
 #[proc_macro_derive(ToAutomerge, attributes(automergeable))]
 pub fn to_automerge(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
