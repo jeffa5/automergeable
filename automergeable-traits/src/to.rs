@@ -177,5 +177,4 @@ nonzero_to_automerge! {
     std::num::NonZeroU64,
     std::num::NonZeroU128,
     std::num::NonZeroUsize,
-
 }

@@ -102,3 +102,77 @@ impl FromAutomerge for bool {
         }
     }
 }
+
+impl FromAutomerge for i64 {
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Primitive(ScalarValue::Int(i)) = value {
+            Ok(*i)
+        } else {
+            Err(FromAutomergeError::WrongType)
+        }
+    }
+}
+
+macro_rules! as_i64_from_automerge {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl FromAutomerge for $x {
+            fn from_automerge(value: &automerge::Value) -> Result<Self, FromAutomergeError>{
+                i64::from_automerge(value).map(|i| i as $x)
+            }
+        })*
+    };
+}
+
+as_i64_from_automerge! {
+    i8,i16,i32
+}
+
+impl FromAutomerge for isize {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        i64::from_automerge(value).map(|i| i as isize)
+    }
+}
+
+impl FromAutomerge for i128 {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        i64::from_automerge(value).map(|i| i as i128)
+    }
+}
+
+impl FromAutomerge for u64 {
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Primitive(ScalarValue::Uint(u)) = value {
+            Ok(*u)
+        } else {
+            Err(FromAutomergeError::WrongType)
+        }
+    }
+}
+
+macro_rules! as_u64_from_automerge {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl FromAutomerge for $x {
+            fn from_automerge(value: &automerge::Value) -> Result<Self, FromAutomergeError>{
+                u64::from_automerge(value).map(|u| u as $x)
+            }
+        })*
+    };
+}
+
+as_u64_from_automerge! {
+    u8,u16,u32
+}
+
+impl FromAutomerge for usize {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        u64::from_automerge(value).map(|u| u as usize)
+    }
+}
+
+impl FromAutomerge for u128 {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        u64::from_automerge(value).map(|u| u as u128)
+    }
+}
