@@ -18,7 +18,7 @@ where
 
 impl<T> Document<T>
 where
-    T: Automergeable,
+    T: Automergeable + Clone + Default,
 {
     pub fn new() -> Self {
         Self {
