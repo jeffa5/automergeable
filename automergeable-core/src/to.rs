@@ -43,18 +43,6 @@ impl ToAutomerge for String {
     }
 }
 
-impl ToAutomerge for i64 {
-    fn to_automerge(&self) -> automerge::Value {
-        ScalarValue::Int(*self).into()
-    }
-}
-
-impl ToAutomerge for u64 {
-    fn to_automerge(&self) -> automerge::Value {
-        ScalarValue::Uint(*self).into()
-    }
-}
-
 impl ToAutomerge for f64 {
     fn to_automerge(&self) -> automerge::Value {
         ScalarValue::F64(*self).into()
@@ -93,4 +81,101 @@ impl ToAutomerge for time::SystemTime {
             .expect("time went backwards");
         ScalarValue::Timestamp(ts.as_secs().try_into().unwrap()).into()
     }
+}
+
+macro_rules! as_i64_to_automerge {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl ToAutomerge for $x {
+            fn to_automerge(&self) -> automerge::Value {
+                (*self as i64).to_automerge()
+            }
+        })*
+    };
+}
+
+as_i64_to_automerge! {
+    i8,
+    i16,
+    i32,
+}
+
+impl ToAutomerge for i64 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Int(*self).into()
+    }
+}
+
+impl ToAutomerge for isize {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Int((*self).try_into().unwrap()).into()
+    }
+}
+
+impl ToAutomerge for i128 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Int((*self).try_into().unwrap()).into()
+    }
+}
+
+macro_rules! as_u64_to_automerge {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl ToAutomerge for $x {
+            fn to_automerge(&self) -> automerge::Value {
+                (*self as u64).to_automerge()
+            }
+        })*
+    };
+}
+
+as_u64_to_automerge! {
+    u8,
+    u16,
+    u32,
+}
+
+impl ToAutomerge for u64 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Uint(*self).into()
+    }
+}
+
+impl ToAutomerge for usize {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Uint((*self).try_into().unwrap()).into()
+    }
+}
+
+impl ToAutomerge for u128 {
+    fn to_automerge(&self) -> automerge::Value {
+        ScalarValue::Uint((*self).try_into().unwrap()).into()
+    }
+}
+
+macro_rules! nonzero_to_automerge {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl ToAutomerge for $x {
+            fn to_automerge(&self) -> automerge::Value {
+                self.get().to_automerge()
+            }
+        })*
+    };
+}
+
+nonzero_to_automerge! {
+    std::num::NonZeroI8,
+    std::num::NonZeroI16,
+    std::num::NonZeroI32,
+    std::num::NonZeroI64,
+    std::num::NonZeroI128,
+    std::num::NonZeroIsize,
+    std::num::NonZeroU8,
+    std::num::NonZeroU16,
+    std::num::NonZeroU32,
+    std::num::NonZeroU64,
+    std::num::NonZeroU128,
+    std::num::NonZeroUsize,
+
 }
