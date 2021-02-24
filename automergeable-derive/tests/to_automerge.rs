@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use automergeable_core::ToAutomerge;
-use automergeable_derive::Automergeable;
+use automergeable_derive::{Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 
 #[test]
 fn to_automerge() {
-    #[derive(Automergeable, Debug)]
+    #[derive(ToAutomerge, Debug)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,

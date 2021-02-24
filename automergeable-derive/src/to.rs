@@ -2,7 +2,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{Attribute, Data, DataStruct, DeriveInput, Fields, Lit, Meta, NestedMeta};
 
-pub fn expand_automergeable(input: DeriveInput) -> TokenStream {
+pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
     let fields = match input.data {
         Data::Struct(DataStruct {
             fields: Fields::Named(fields),

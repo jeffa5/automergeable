@@ -1,8 +1,7 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput};
 
-mod expand;
-use expand::expand_automergeable;
+mod to;
 
 /// Derive the `Automergeable` trait.
 ///
@@ -11,5 +10,11 @@ use expand::expand_automergeable;
 #[proc_macro_derive(Automergeable, attributes(automergeable))]
 pub fn automergeable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    expand_automergeable(input).into()
+    to::to_automerge(input).into()
+}
+
+#[proc_macro_derive(ToAutomerge, attributes(automergeable))]
+pub fn to_automerge(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    to::to_automerge(input).into()
 }
