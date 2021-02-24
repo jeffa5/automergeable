@@ -5,7 +5,7 @@ use std::{
 };
 
 use automerge::Path;
-use automergeable_traits::{Automergeable, FromAutomerge};
+use automergeable_traits::Automergeable;
 
 #[derive(Default)]
 pub struct Document<T>
@@ -35,7 +35,6 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as FromAutomerge>::Error: std::error::Error,
     {
         let original = match self.frontend.get_value(&Path::root()) {
             Some(value) => T::from_automerge(&value).unwrap(),
@@ -62,7 +61,6 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as FromAutomerge>::Error: Error,
     {
         self.change_inner(None, change)
     }
@@ -75,7 +73,6 @@ where
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
-        <T as FromAutomerge>::Error: Error,
     {
         self.change_inner(Some(message), change)
     }
