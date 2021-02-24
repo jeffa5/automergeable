@@ -24,9 +24,13 @@ pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
         #[automatically_derived]
         impl ::automergeable_traits::FromAutomerge for #t_name {
             fn from_automerge(value: &::automerge::Value) -> ::std::result::Result<Self, ::automergeable_traits::FromAutomergeError> {
-                Ok(Self {
-                    #(#from_automerge_fields)*
-                })
+                if let ::automerge::Value::Map(hm, ::automerge::MapType::Map) = value {
+                    Ok(Self {
+                        #(#from_automerge_fields)*
+                    })
+                } else {
+                    Err(::automergeable_traits::FromAutomergeError::WrongType)
+                }
             }
         }
     }
@@ -63,16 +67,30 @@ fn get_representation_type(
             Meta::Path(_) => {}
         }
     }
+    let field_name_string = format_ident!("{}", field_name).to_string();
+    let value_for_field = quote! {
+        hm.get(#field_name_string).ok_or(::automergeable_traits::FromAutomergeError::WrongType)?
+    };
     match ty.as_deref() {
         Some("Text") => {
-            quote! { <::std::vec::Vec<char>>::from_automerge(value)?.into_iter().collect() }
+            quote! { <::std::vec::Vec<char>>::from_automerge(#value_for_field)?.into_iter().collect() }
         }
-        // Some("Counter") => {
-        //     quote! { if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = value  }
-        // }
-        // Some("Timestamp") => {
-        //     quote! { ::#field_ty::from_automerge(value) }
-        // }
-        _ => quote! { <#field_ty>::from_automerge(value)? },
+        Some("Counter") => {
+            quote! { if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = #value_for_field {
+                *i
+            } else {
+                return Err(::automergeable_traits::FromAutomergeError::WrongType)
+            }}
+        }
+        Some("Timestamp") => {
+            quote! { if let ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(i)) = #value_for_field {
+                *i
+            } else {
+                return Err(::automergeable_traits::FromAutomergeError::WrongType)
+            }}
+        }
+        _ => {
+            quote! { <#field_ty>::from_automerge(#value_for_field)? }
+        }
     }
 }

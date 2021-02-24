@@ -17,3 +17,4 @@ automergeable-traits = { path = "../automergeable-traits" }
 
 [dev-dependencies]
 insta = "1.6.1"
+serde = "1.0.123"
