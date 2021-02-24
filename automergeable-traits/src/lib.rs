@@ -1,7 +1,7 @@
 mod from;
 mod to;
 
-pub use from::FromAutomerge;
+pub use from::{FromAutomerge, FromAutomergeError};
 pub use to::ToAutomerge;
 
 /// Overall trait for requiring all automerge sub-traits.
