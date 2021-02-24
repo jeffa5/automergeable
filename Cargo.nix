@@ -355,6 +355,10 @@ rec {
             name = "insta";
             packageId = "insta";
           }
+          {
+            name = "serde";
+            packageId = "serde";
+          }
         ];
         
       };
@@ -374,6 +378,10 @@ rec {
           {
             name = "automerge-protocol";
             packageId = "automerge-protocol";
+          }
+          {
+            name = "thiserror";
+            packageId = "thiserror";
           }
         ];
         
