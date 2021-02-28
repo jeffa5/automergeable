@@ -1,8 +1,8 @@
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     punctuated::Punctuated, token::Comma, Attribute, Data, DataStruct, DeriveInput, Field, Fields,
-    Index, Lit, Meta, NestedMeta,
+    Lit, Meta, NestedMeta, Type,
 };
 
 pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
@@ -28,7 +28,11 @@ fn from_automerge_struct_named_fields(
         let field_name = f.ident.as_ref().unwrap();
         let field_ty = &f.ty;
 
-        let repr = get_representation_type_named(&f.attrs, field_name, field_ty);
+        let field_name_string = format_ident!("{}", field_name).to_string();
+        let value_for_field = quote! {
+            hm.get(#field_name_string)
+        };
+        let repr = get_representation_type(&f.attrs, field_ty, value_for_field);
         quote! {
             #field_name: #repr,
         }
@@ -51,93 +55,6 @@ fn from_automerge_struct_named_fields(
     }
 }
 
-fn get_representation_type_named(
-    attrs: &[Attribute],
-    field_name: &Ident,
-    field_ty: &syn::Type,
-) -> TokenStream {
-    let mut ty = None;
-    for a in attrs {
-        match a.parse_meta().unwrap() {
-            Meta::NameValue(_) => {}
-            Meta::List(meta) => {
-                if Some("automergeable".to_owned()) == meta.path.get_ident().map(|i| i.to_string())
-                {
-                    for m in meta.nested {
-                        match m {
-                            NestedMeta::Meta(meta) => match meta {
-                                Meta::Path(_) | Meta::List(_) => {}
-                                Meta::NameValue(n) => {
-                                    if let Lit::Str(lit) = &n.lit {
-                                        ty = Some(lit.value())
-                                    }
-                                }
-                            },
-                            NestedMeta::Lit(Lit::Str(_)) => {}
-                            _ => {}
-                        }
-                    }
-                }
-            }
-            Meta::Path(_) => {}
-        }
-    }
-    let field_name_string = format_ident!("{}", field_name).to_string();
-    let value_for_field = quote! {
-        hm.get(#field_name_string)
-    };
-    match ty.as_deref() {
-        Some("Text") => {
-            quote! {
-                if let Some(value) = #value_for_field {
-                    <::std::vec::Vec<char>>::from_automerge(value)?.into_iter().collect()
-                } else {
-                    <#field_ty>::default()
-                }
-            }
-        }
-        Some("Counter") => {
-            quote! {
-                if let Some(value) = #value_for_field {
-                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = value {
-                    *i
-                    } else {
-                        return Err(::automergeable_traits::FromAutomergeError::WrongType {
-                            found: value.clone(),
-                        })
-                    }
-                } else {
-                    <#field_ty>::default()
-                }
-            }
-        }
-        Some("Timestamp") => {
-            quote! {
-                if let Some(value) = #value_for_field {
-                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(i)) = value {
-                        *i
-                    } else {
-                        return Err(::automergeable_traits::FromAutomergeError::WrongType {
-                            found: value.clone(),
-                        })
-                    }
-                } else {
-                    <#field_ty>::default()
-                }
-            }
-        }
-        _ => {
-            quote! {
-                if let Some(value) = #value_for_field {
-                    <#field_ty>::from_automerge(value)?
-                } else {
-                    <#field_ty>::default()
-                }
-            }
-        }
-    }
-}
-
 fn from_automerge_struct_unnamed_fields(
     input: &DeriveInput,
     fields: &Punctuated<Field, Comma>,
@@ -148,7 +65,10 @@ fn from_automerge_struct_unnamed_fields(
         let field_name = syn::Index::from(i);
         let field_ty = &f.ty;
 
-        let repr = get_representation_type_unnamed(&f.attrs, &field_name, field_ty);
+        let value_for_field = quote! {
+            seq.get(#field_name)
+        };
+        let repr = get_representation_type(&f.attrs, field_ty, value_for_field);
         quote! {
             #repr,
         }
@@ -183,10 +103,10 @@ fn from_automerge_struct_unnamed_fields(
     }
 }
 
-fn get_representation_type_unnamed(
+fn get_representation_type(
     attrs: &[Attribute],
-    field_name: &Index,
-    field_ty: &syn::Type,
+    field_ty: &Type,
+    value_for_field: TokenStream,
 ) -> TokenStream {
     let mut ty = None;
     for a in attrs {
@@ -214,9 +134,6 @@ fn get_representation_type_unnamed(
             Meta::Path(_) => {}
         }
     }
-    let value_for_field = quote! {
-        seq.get(#field_name)
-    };
     match ty.as_deref() {
         Some("Text") => {
             quote! {
