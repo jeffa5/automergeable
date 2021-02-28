@@ -7,7 +7,7 @@ use crate::ToAutomerge;
 /// Calculate the `LocalChange`s between the two types that implement `ToAutomerge`.
 ///
 /// Recursively works from the root.
-pub fn diff<T>(new: &T, old: &T) -> Vec<LocalChange>
+pub fn diff<T>(new: &Option<T>, old: &Option<T>) -> Vec<LocalChange>
 where
     T: ToAutomerge,
 {
