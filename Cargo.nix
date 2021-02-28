@@ -310,6 +310,10 @@ rec {
             name = "automergeable-traits";
             packageId = "automergeable-traits";
           }
+          {
+            name = "thiserror";
+            packageId = "thiserror";
+          }
         ];
         devDependencies = [
           {
