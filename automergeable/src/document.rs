@@ -4,9 +4,19 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use automerge::{Path, Value};
+use automerge::Path;
 
 use crate::Automergeable;
+
+#[derive(Debug, thiserror::Error)]
+pub enum DocumentChangeError<E: Error> {
+    #[error(transparent)]
+    InvalidChangeRequest(#[from] automerge::InvalidChangeRequest),
+    #[error(transparent)]
+    FromError(#[from] crate::FromAutomergeError),
+    #[error("change error: {0}")]
+    ChangeError(E),
+}
 
 #[derive(Default)]
 pub struct Document<T>
@@ -32,7 +42,7 @@ where
         &mut self,
         message: Option<String>,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, Box<dyn Error>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
@@ -40,16 +50,12 @@ where
         let original = self
             .frontend
             .get_value(&Path::root())
-            .map(|value| match &value {
-                Value::Map(hm, automerge::MapType::Map) if !hm.is_empty() => {
-                    Some(T::from_automerge(&value).expect("original from frontend was not valid"))
-                }
-                _ => None,
-            })
-            .flatten();
-        let mut new_t = original.as_ref().cloned().unwrap_or_default();
-        change(&mut new_t).unwrap();
-        let changes = crate::diff(&Some(new_t), &original);
+            .expect("no root value");
+        let mut new_t = T::from_automerge(&original)?;
+        if let Err(e) = change(&mut new_t) {
+            return Err(DocumentChangeError::ChangeError(e));
+        }
+        let changes = crate::diff_values(&new_t.to_automerge(), &original);
         let change =
             self.frontend
                 .change::<_, automerge::InvalidChangeRequest>(message, |doc| {
@@ -64,7 +70,7 @@ where
     pub fn change<F, E>(
         &mut self,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, Box<dyn Error>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,
@@ -76,7 +82,7 @@ where
         &mut self,
         message: String,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, Box<dyn Error>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
     where
         E: Error,
         F: FnOnce(&mut T) -> Result<(), E>,

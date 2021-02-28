@@ -10,6 +10,7 @@ automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main"
 automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automergeable-traits = { path = "../automergeable-traits" }
 automergeable-derive = { path = "../automergeable-derive" }
+thiserror = "1.0.24"
 
 [dev-dependencies]
 insta = "1.6.1"

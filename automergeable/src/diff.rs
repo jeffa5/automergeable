@@ -2,18 +2,6 @@ use std::convert::TryInto;
 
 use automerge::{LocalChange, Path, ScalarValue, Value};
 
-use crate::ToAutomerge;
-
-/// Calculate the `LocalChange`s between the two types that implement `ToAutomerge`.
-///
-/// Recursively works from the root.
-pub fn diff<T>(new: &Option<T>, old: &Option<T>) -> Vec<LocalChange>
-where
-    T: ToAutomerge,
-{
-    diff_values(&new.to_automerge(), &old.to_automerge())
-}
-
 /// Calculate the `LocalChange`s between the two values.
 ///
 /// Recursively works from the root.
@@ -31,7 +19,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                     changes.append(&mut diff_with_path(v, old_v, path.clone().key(k)))
                 } else {
                     // new
-                    changes.push(LocalChange::insert(path.clone().key(k), v.clone()))
+                    changes.push(LocalChange::set(path.clone().key(k), v.clone()))
                 }
             }
             for k in old_map.keys() {
@@ -225,7 +213,7 @@ mod tests {
                         ),
                     ],
                 ),
-                operation: Insert(
+                operation: Set(
                     Primitive(
                         Str(
                             "some val",
