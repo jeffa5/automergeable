@@ -28,7 +28,7 @@ fn to_automerge_struct_named_fields(
         let field_name = f.ident.as_ref().unwrap();
         let field_name_string = format_ident!("{}", field_name).to_string();
 
-        let repr = get_representation_type_named(&f.attrs, field_name);
+        let repr = get_representation_type(&f.attrs, quote! { #field_name });
         quote! {
             fields.insert(#field_name_string.to_owned(), #repr);
         }
@@ -45,7 +45,7 @@ fn to_automerge_struct_named_fields(
     }
 }
 
-fn get_representation_type_named(attrs: &[Attribute], field_name: &Ident) -> TokenStream {
+fn get_representation_type(attrs: &[Attribute], field_name: TokenStream) -> TokenStream {
     let mut ty = None;
     for a in attrs {
         match a.parse_meta().unwrap() {
@@ -95,7 +95,7 @@ fn to_automerge_struct_unnamed_fields(
     let to_automerge_fields = fields.iter().enumerate().map(|(i, f)| {
         let field_name = syn::Index::from(i);
 
-        let repr = get_representation_type_unnamed(&f.attrs, field_name);
+        let repr = get_representation_type(&f.attrs, quote! { #field_name });
         quote! {
             value.push(#repr);
         }
@@ -111,46 +111,5 @@ fn to_automerge_struct_unnamed_fields(
                 ::automerge::Value::Map(fields, ::automerge::MapType::Map)
             }
         }
-    }
-}
-
-fn get_representation_type_unnamed(attrs: &[Attribute], field_name: Index) -> TokenStream {
-    let mut ty = None;
-    for a in attrs {
-        match a.parse_meta().unwrap() {
-            Meta::NameValue(_) => {}
-            Meta::List(meta) => {
-                if Some("automergeable".to_owned()) == meta.path.get_ident().map(|i| i.to_string())
-                {
-                    for m in meta.nested {
-                        match m {
-                            NestedMeta::Meta(meta) => match meta {
-                                Meta::Path(_) | Meta::List(_) => {}
-                                Meta::NameValue(n) => {
-                                    if let Lit::Str(lit) = &n.lit {
-                                        ty = Some(lit.value())
-                                    }
-                                }
-                            },
-                            NestedMeta::Lit(Lit::Str(_)) => {}
-                            _ => {}
-                        }
-                    }
-                }
-            }
-            Meta::Path(_) => {}
-        }
-    }
-    match ty.as_deref() {
-        Some("Text") => {
-            quote! { ::automerge::Value::Text(self.#field_name.chars().collect::<::std::vec::Vec<_>>()) }
-        }
-        Some("Counter") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(self.#field_name)) }
-        }
-        Some("Timestamp") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(self.#field_name)) }
-        }
-        _ => quote! { self.#field_name.to_automerge() },
     }
 }
