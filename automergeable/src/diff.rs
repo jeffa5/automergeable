@@ -264,7 +264,7 @@ mod tests {
 
         old_map = new_map.clone();
         new_map.remove("abc");
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map, MapType::Map), &Value::Map(old_map, MapType::Map)), @r###"
         [
             LocalChange {
                 path: Path(
@@ -334,7 +334,7 @@ mod tests {
 
         old_vec = new_vec.clone();
         new_vec.pop();
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec), &Value::Sequence(old_vec )), @r###"
         [
             LocalChange {
                 path: Path(
@@ -404,7 +404,7 @@ mod tests {
 
         old_text = new_text.clone();
         new_text.pop();
-        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text), &Value::Text(old_text )), @r###"
         [
             LocalChange {
                 path: Path(
