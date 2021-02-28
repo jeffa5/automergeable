@@ -1,8 +1,8 @@
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     punctuated::Punctuated, token::Comma, Attribute, Data, DataStruct, DeriveInput, Field, Fields,
-    Index, Lit, Meta, NestedMeta,
+    Lit, Meta, NestedMeta,
 };
 
 pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
