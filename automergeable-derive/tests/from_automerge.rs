@@ -98,12 +98,16 @@ fn from_automerge_attribute() {
         #[automergeable(representation = "Timestamp")]
         a_timestamp: i64,
         b: B,
+        tup: Tuple,
     }
 
     #[derive(Automergeable, Debug, Default, Serialize)]
     struct B {
         inner: u64,
     }
+
+    #[derive(Automergeable, Debug, Default, Serialize)]
+    struct Tuple(#[automergeable(representation = "Text")] String, Vec<char>);
 
     let mut a = A {
         list: Vec::new(),
@@ -114,6 +118,7 @@ fn from_automerge_attribute() {
         a_counter: 0,
         a_timestamp: 0,
         b: B { inner: 2 },
+        tup: Tuple("a tuple".to_owned(), vec!['h', 'i']),
     };
     let mut settings = Settings::new();
     settings.set_sort_maps(true);
@@ -129,7 +134,14 @@ fn from_automerge_attribute() {
           "a_timestamp": 0,
           "b": {
             "inner": 2
-          }
+          },
+          "tup": [
+            "a tuple",
+            [
+              "h",
+              "i"
+            ]
+          ]
         }
         "###);
     });
@@ -151,7 +163,14 @@ fn from_automerge_attribute() {
           "a_timestamp": 0,
           "b": {
             "inner": 2
-          }
+          },
+          "tup": [
+            "a tuple",
+            [
+              "h",
+              "i"
+            ]
+          ]
         }
         "###);
     });
@@ -176,7 +195,14 @@ fn from_automerge_attribute() {
           "a_timestamp": 60,
           "b": {
             "inner": 3
-          }
+          },
+          "tup": [
+            "a tuple",
+            [
+              "h",
+              "i"
+            ]
+          ]
         }
         "###);
     });

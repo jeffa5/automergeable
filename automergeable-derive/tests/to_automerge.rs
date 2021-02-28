@@ -88,7 +88,7 @@ fn to_automerge() {
 
 #[test]
 fn to_automerge_attribute() {
-    #[derive(Automergeable, Debug, Default)]
+    #[derive(ToAutomerge, Debug, Default)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,
@@ -101,12 +101,16 @@ fn to_automerge_attribute() {
         #[automergeable(representation = "Timestamp")]
         a_timestamp: i64,
         b: B,
+        tup: Tuple,
     }
 
     #[derive(Automergeable, Debug, Default)]
     struct B {
         inner: u64,
     }
+
+    #[derive(ToAutomerge, Debug, Default)]
+    struct Tuple(#[automergeable(representation = "Text")] String, Vec<char>);
 
     let mut a = A {
         list: Vec::new(),
@@ -117,6 +121,7 @@ fn to_automerge_attribute() {
         a_counter: 0,
         a_timestamp: 0,
         b: B { inner: 2 },
+        tup: Tuple("a tuple".to_owned(), vec!['h', 'i']),
     };
 
     a.others.insert("a".to_owned(), "b".to_owned());
@@ -146,6 +151,26 @@ fn to_automerge_attribute() {
             "some_text": [
               "h",
               "i"
+            ],
+            "tup": [
+              {
+                "Tuple": [
+                  [
+                    "a",
+                    " ",
+                    "t",
+                    "u",
+                    "p",
+                    "l",
+                    "e"
+                  ],
+                  [
+                    "h",
+                    "i"
+                  ]
+                ]
+              },
+              "map"
             ],
             "yep": -234
           },
@@ -188,6 +213,26 @@ fn to_automerge_attribute() {
               "r",
               "l",
               "d"
+            ],
+            "tup": [
+              {
+                "Tuple": [
+                  [
+                    "a",
+                    " ",
+                    "t",
+                    "u",
+                    "p",
+                    "l",
+                    "e"
+                  ],
+                  [
+                    "h",
+                    "i"
+                  ]
+                ]
+              },
+              "map"
             ],
             "yep": null
           },
