@@ -29,7 +29,9 @@ pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
                         #(#from_automerge_fields)*
                     })
                 } else {
-                    Err(::automergeable_traits::FromAutomergeError::WrongType)
+                    Err(::automergeable_traits::FromAutomergeError::WrongType {
+                        found: value.clone(),
+                    })
                 }
             }
         }
@@ -69,28 +71,56 @@ fn get_representation_type(
     }
     let field_name_string = format_ident!("{}", field_name).to_string();
     let value_for_field = quote! {
-        hm.get(#field_name_string).ok_or(::automergeable_traits::FromAutomergeError::WrongType)?
+        hm.get(#field_name_string)
     };
     match ty.as_deref() {
         Some("Text") => {
-            quote! { <::std::vec::Vec<char>>::from_automerge(#value_for_field)?.into_iter().collect() }
+            quote! {
+                if let Some(value) = #value_for_field {
+                    <::std::vec::Vec<char>>::from_automerge(value)?.into_iter().collect()
+                } else {
+                    <#field_ty>::default()
+                }
+            }
         }
         Some("Counter") => {
-            quote! { if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = #value_for_field {
-                *i
-            } else {
-                return Err(::automergeable_traits::FromAutomergeError::WrongType)
-            }}
+            quote! {
+                if let Some(value) = #value_for_field {
+                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = value {
+                    *i
+                    } else {
+                        return Err(::automergeable_traits::FromAutomergeError::WrongType {
+                            found: value.clone(),
+                        })
+                    }
+                } else {
+                    <#field_ty>::default()
+                }
+            }
         }
         Some("Timestamp") => {
-            quote! { if let ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(i)) = #value_for_field {
-                *i
-            } else {
-                return Err(::automergeable_traits::FromAutomergeError::WrongType)
-            }}
+            quote! {
+                if let Some(value) = #value_for_field {
+                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(i)) = value {
+                        *i
+                    } else {
+                        return Err(::automergeable_traits::FromAutomergeError::WrongType {
+                            found: value.clone(),
+                        })
+                    }
+                } else {
+                    <#field_ty>::default()
+                }
+            }
         }
         _ => {
-            quote! { <#field_ty>::from_automerge(#value_for_field)? }
+            quote! {
+                if let Some(value) = #value_for_field {
+                    <#field_ty>::from_automerge(value)?
+                } else {
+                    <#field_ty>::default()
+                }
+            }
         }
     }
 }

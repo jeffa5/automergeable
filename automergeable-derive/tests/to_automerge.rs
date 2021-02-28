@@ -6,7 +6,7 @@ use insta::{assert_json_snapshot, Settings};
 
 #[test]
 fn to_automerge() {
-    #[derive(ToAutomerge, Debug)]
+    #[derive(ToAutomerge, Debug, Default)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,
@@ -15,7 +15,7 @@ fn to_automerge() {
         b: B,
     }
 
-    #[derive(Automergeable, Debug)]
+    #[derive(Automergeable, Debug, Default)]
     struct B {
         inner: u64,
     }
@@ -88,7 +88,7 @@ fn to_automerge() {
 
 #[test]
 fn to_automerge_attribute() {
-    #[derive(Automergeable, Debug)]
+    #[derive(Automergeable, Debug, Default)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,
@@ -103,7 +103,7 @@ fn to_automerge_attribute() {
         b: B,
     }
 
-    #[derive(Automergeable, Debug)]
+    #[derive(Automergeable, Debug, Default)]
     struct B {
         inner: u64,
     }

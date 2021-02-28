@@ -10,7 +10,7 @@ pub trait FromAutomerge: Sized {
 #[derive(thiserror::Error, Debug)]
 pub enum FromAutomergeError {
     #[error("found the wrong type")]
-    WrongType,
+    WrongType { found: automerge::Value },
     #[error("unknown error: {0}")]
     Unknown(#[from] Box<dyn Error>),
 }
@@ -20,7 +20,9 @@ impl FromAutomerge for String {
         if let Value::Primitive(ScalarValue::Str(s)) = value {
             Ok(s.to_owned())
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -37,7 +39,9 @@ where
             }
             Ok(v)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -47,7 +51,9 @@ impl FromAutomerge for Vec<char> {
         if let Value::Text(vec) = value {
             Ok(vec.to_vec())
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -64,7 +70,9 @@ where
             }
             Ok(m)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -88,7 +96,9 @@ impl FromAutomerge for SystemTime {
             let duration = std::time::Duration::from_secs((*t).try_into().unwrap());
             Ok(SystemTime::UNIX_EPOCH + duration)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -98,7 +108,9 @@ impl FromAutomerge for bool {
         if let Value::Primitive(ScalarValue::Boolean(b)) = value {
             Ok(*b)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -108,7 +120,9 @@ impl FromAutomerge for i64 {
         if let Value::Primitive(ScalarValue::Int(i)) = value {
             Ok(*i)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }
@@ -145,7 +159,9 @@ impl FromAutomerge for u64 {
         if let Value::Primitive(ScalarValue::Uint(u)) = value {
             Ok(*u)
         } else {
-            Err(FromAutomergeError::WrongType)
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
         }
     }
 }

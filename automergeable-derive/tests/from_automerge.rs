@@ -7,7 +7,7 @@ use serde::Serialize;
 
 #[test]
 fn from_automerge() {
-    #[derive(ToAutomerge, FromAutomerge, Debug, Serialize)]
+    #[derive(ToAutomerge, FromAutomerge, Debug, Default, Serialize)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,
@@ -16,7 +16,7 @@ fn from_automerge() {
         b: B,
     }
 
-    #[derive(Automergeable, Debug, Serialize)]
+    #[derive(Automergeable, Debug, Default, Serialize)]
     struct B {
         inner: u64,
     }
@@ -85,7 +85,7 @@ fn from_automerge() {
 
 #[test]
 fn from_automerge_attribute() {
-    #[derive(Automergeable, Debug, Serialize)]
+    #[derive(Automergeable, Debug, Default, Serialize)]
     struct A {
         list: Vec<String>,
         others: HashMap<String, String>,
@@ -100,7 +100,7 @@ fn from_automerge_attribute() {
         b: B,
     }
 
-    #[derive(Automergeable, Debug, Serialize)]
+    #[derive(Automergeable, Debug, Default, Serialize)]
     struct B {
         inner: u64,
     }
