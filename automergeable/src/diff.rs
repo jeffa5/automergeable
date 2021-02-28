@@ -179,7 +179,9 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
         (v, Value::Primitive(ScalarValue::Null)) => {
             vec![LocalChange::set(path, v.clone())]
         }
-        (n, o) => panic!("unhandled diff case: {:?} {:?}", n, o),
+        (n, _) => {
+            vec![LocalChange::set(path, n.clone())]
+        }
     }
 }
 
