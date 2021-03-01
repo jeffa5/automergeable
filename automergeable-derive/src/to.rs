@@ -1,45 +1,74 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    punctuated::Punctuated, token::Comma, Attribute, Data, DataStruct, DeriveInput, Field, Fields,
-    Lit, Meta, NestedMeta,
+    punctuated::Punctuated, token::Comma, Attribute, Data, DataEnum, DataStruct, DeriveInput,
+    Fields, Lit, Meta, NestedMeta, Variant,
 };
 
 pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
     match &input.data {
-        Data::Struct(DataStruct {
-            fields: Fields::Named(fields),
-            ..
-        }) => to_automerge_struct_named_fields(&input, &fields.named),
-        Data::Struct(DataStruct {
-            fields: Fields::Unnamed(fields),
-            ..
-        }) => to_automerge_struct_unnamed_fields(&input, &fields.unnamed),
+        Data::Struct(DataStruct { fields, .. }) => to_automerge_struct(&input, &fields),
+        Data::Enum(DataEnum { variants, .. }) => to_automerge_enum(&input, &variants),
         _ => panic!("this derive macro only works on structs with named fields"),
     }
 }
 
-fn to_automerge_struct_named_fields(
-    input: &DeriveInput,
-    fields: &Punctuated<Field, Comma>,
-) -> TokenStream {
+fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     let t_name = &input.ident;
-    let to_automerge_fields = fields.iter().map(|f| {
-        let field_name = f.ident.as_ref().unwrap();
-        let field_name_string = format_ident!("{}", field_name).to_string();
+    let fields_to_automerge = fields_to_automerge(fields, true);
+    quote! {
+        #[automatically_derived]
+        impl ::automergeable_traits::ToAutomerge for #t_name {
+            fn to_automerge(&self) -> ::automerge::Value {
+                #fields_to_automerge
+            }
+        }
+    }
+}
 
-        let repr = get_representation_type(&f.attrs, quote! { #field_name });
+fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
+    let t_name = &input.ident;
+    let variants = variants.iter().map(|v| {
+        let v_name = &v.ident;
+        let fields = match &v.fields {
+            Fields::Named(n) => {
+                let names = n.named.iter().map(|n| {
+                    let name = &n.ident;
+                    quote! { #name, }
+                });
+                quote! {{
+                    #(#names)*
+                }}
+            }
+            Fields::Unnamed(u) => {
+                let items = u.unnamed.iter().enumerate().map(|(i, _)| {
+                    let a = Ident::new(&format!("f{}", i), Span::call_site());
+                    quote! { #a, }
+                });
+                quote! {( #(#items)* )}
+            }
+            Fields::Unit => {
+                quote! {}
+            }
+        };
+        let fields_to_automerge = fields_to_automerge(&v.fields, false);
+        let v_name_string = v_name.to_string();
         quote! {
-            fields.insert(#field_name_string.to_owned(), #repr);
+            Self::#v_name#fields => {
+                let mut outer = ::std::collections::HashMap::new();
+                let fields = {#fields_to_automerge};
+                outer.insert(#v_name_string.to_owned(), fields);
+                ::automerge::Value::Map(outer, ::automerge::MapType::Map)
+            }
         }
     });
     quote! {
         #[automatically_derived]
         impl ::automergeable_traits::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
-                let mut fields = ::std::collections::HashMap::new();
-                #(#to_automerge_fields)*
-                ::automerge::Value::Map(fields, ::automerge::MapType::Map)
+                match self {
+                    #(#variants)*
+                }
             }
         }
     }
@@ -74,41 +103,64 @@ fn get_representation_type(attrs: &[Attribute], field_name: TokenStream) -> Toke
     }
     match ty.as_deref() {
         Some("Text") => {
-            quote! { ::automerge::Value::Text(self.#field_name.chars().collect::<::std::vec::Vec<_>>()) }
+            quote! { ::automerge::Value::Text(#field_name.chars().collect::<::std::vec::Vec<_>>()) }
         }
         Some("Counter") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(self.#field_name)) }
+            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(#field_name)) }
         }
         Some("Timestamp") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(self.#field_name)) }
+            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(#field_name)) }
         }
-        _ => quote! { self.#field_name.to_automerge() },
+        _ => quote! { #field_name.to_automerge() },
     }
 }
 
-fn to_automerge_struct_unnamed_fields(
-    input: &DeriveInput,
-    fields: &Punctuated<Field, Comma>,
-) -> TokenStream {
-    let t_name = &input.ident;
-    let t_name_string = format_ident!("{}", &input.ident).to_string();
-    let to_automerge_fields = fields.iter().enumerate().map(|(i, f)| {
-        let field_name = syn::Index::from(i);
+fn fields_to_automerge(fields: &Fields, is_struct: bool) -> TokenStream {
+    match fields {
+        Fields::Named(n) => {
+            let fields = n.named.iter().map(|f| {
+                let field_name = f.ident.as_ref().unwrap();
+                let field_name_string = format_ident!("{}", field_name).to_string();
 
-        let repr = get_representation_type(&f.attrs, quote! { #field_name });
-        quote! {
-            value.push(#repr);
-        }
-    });
-    quote! {
-        #[automatically_derived]
-        impl ::automergeable_traits::ToAutomerge for #t_name {
-            fn to_automerge(&self) -> ::automerge::Value {
+                let field_name = if is_struct {
+                    quote! {self.#field_name}
+                } else {
+                    quote! {#field_name}
+                };
+                let repr = get_representation_type(&f.attrs, field_name);
+                quote! {
+                    fields.insert(#field_name_string.to_owned(), #repr);
+                }
+            });
+            quote! {
                 let mut fields = ::std::collections::HashMap::new();
-                let mut value = Vec::new();
-                #(#to_automerge_fields)*
-                fields.insert(#t_name_string.to_owned(), ::automerge::Value::Sequence(value));
+                #(#fields)*
                 ::automerge::Value::Map(fields, ::automerge::MapType::Map)
+            }
+        }
+        Fields::Unnamed(u) => {
+            let fields = u.unnamed.iter().enumerate().map(|(i, f)| {
+                let field_name = if is_struct {
+                    let field_name = syn::Index::from(i);
+                    quote! {self.#field_name}
+                } else {
+                    let f = Ident::new(&format!("f{}", i), Span::call_site());
+                    quote! {#f}
+                };
+                let repr = get_representation_type(&f.attrs, field_name);
+                quote! {
+                    fields.push(#repr);
+                }
+            });
+            quote! {
+                let mut fields = Vec::new();
+                #(#fields)*
+                ::automerge::Value::Sequence(fields)
+            }
+        }
+        Fields::Unit => {
+            quote! {
+                ::automerge::Value::Primitive(::automerge::ScalarValue::Null)
             }
         }
     }

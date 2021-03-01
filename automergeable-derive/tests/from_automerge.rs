@@ -99,6 +99,8 @@ fn from_automerge_attribute() {
         a_timestamp: i64,
         b: B,
         tup: Tuple,
+        en: En,
+        u: Unit,
     }
 
     #[derive(Automergeable, Debug, Default, Serialize)]
@@ -108,6 +110,22 @@ fn from_automerge_attribute() {
 
     #[derive(Automergeable, Debug, Default, Serialize)]
     struct Tuple(#[automergeable(representation = "Text")] String, Vec<char>);
+
+    #[derive(Automergeable, Debug, Default, Serialize)]
+    struct Unit;
+
+    #[derive(Automergeable, Debug, Serialize)]
+    enum En {
+        Part1(#[automergeable(representation = "Text")] String, i64),
+        Part2,
+        Part3 { a: String },
+    }
+
+    impl Default for En {
+        fn default() -> Self {
+            Self::Part2
+        }
+    }
 
     let mut a = A {
         list: Vec::new(),
@@ -119,6 +137,8 @@ fn from_automerge_attribute() {
         a_timestamp: 0,
         b: B { inner: 2 },
         tup: Tuple("a tuple".to_owned(), vec!['h', 'i']),
+        en: En::default(),
+        u: Unit,
     };
     let mut settings = Settings::new();
     settings.set_sort_maps(true);
@@ -141,7 +161,9 @@ fn from_automerge_attribute() {
               "h",
               "i"
             ]
-          ]
+          ],
+          "en": "Part2",
+          "u": null
         }
         "###);
     });
@@ -149,6 +171,7 @@ fn from_automerge_attribute() {
     a.others.insert("a".to_owned(), "b".to_owned());
     a.some_text.push_str("hi");
     a.a_counter += 2;
+    a.en = En::Part1(String::new(), 42);
     settings.bind(|| {
         assert_json_snapshot!(A::from_automerge(&a.to_automerge()).ok(), @r###"
         {
@@ -170,7 +193,14 @@ fn from_automerge_attribute() {
               "h",
               "i"
             ]
-          ]
+          ],
+          "en": {
+            "Part1": [
+              "",
+              42
+            ]
+          },
+          "u": null
         }
         "###);
     });
@@ -180,6 +210,7 @@ fn from_automerge_attribute() {
     a.yep = None;
     a.b.inner += 1;
     a.a_timestamp += 60;
+    a.en = En::Part3 { a: String::new() };
     settings.bind(|| {
         assert_json_snapshot!(A::from_automerge(&a.to_automerge()).ok(), @r###"
         {
@@ -202,7 +233,13 @@ fn from_automerge_attribute() {
               "h",
               "i"
             ]
-          ]
+          ],
+          "en": {
+            "Part3": {
+              "a": ""
+            }
+          },
+          "u": null
         }
         "###);
     });
