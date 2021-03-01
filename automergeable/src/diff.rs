@@ -409,4 +409,57 @@ mod tests {
         ]
         "###);
     }
+
+    #[test]
+    fn new_and_empty() {
+        let old = Value::Primitive(ScalarValue::Null);
+        let mut hm = HashMap::new();
+        hm.insert("a".to_owned(), Value::Primitive(ScalarValue::Uint(2)));
+        let new = Value::Map(hm, MapType::Map);
+
+        assert_debug_snapshot!(diff_values(&new , &old), @r###"
+        [
+            LocalChange {
+                path: Path(
+                    [],
+                ),
+                operation: Set(
+                    Map(
+                        {
+                            "a": Primitive(
+                                Uint(
+                                    2,
+                                ),
+                            ),
+                        },
+                        Map,
+                    ),
+                ),
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn empty_and_new() {
+        let new = Value::Primitive(ScalarValue::Null);
+        let mut hm = HashMap::new();
+        hm.insert("a".to_owned(), Value::Primitive(ScalarValue::Uint(2)));
+        let old = Value::Map(hm, MapType::Map);
+
+        assert_debug_snapshot!(diff_values(&new , &old), @r###"
+        [
+            LocalChange {
+                path: Path(
+                    [],
+                ),
+                operation: Set(
+                    Primitive(
+                        Null,
+                    ),
+                ),
+            },
+        ]
+        "###);
+    }
 }
