@@ -7,3 +7,21 @@ Be able to perform diffs on these types.
 Use a custom `Document` for your type to facilitate more natural interactions.
 
 **Very alpha**
+
+```rust
+#[derive(Automergeable)]
+struct A {
+  #[automergeable(representation = "Text")]
+  some_text: String,
+  #[automergeable(representation = "Counter")]
+  a_counter: i64,
+  #[automergeable(representation = "Timestamp")]
+  a_timestamp: i64,
+  b: B,
+}
+
+#[derive(Automergeable)]
+struct B {
+    inner: u64,
+}
+```
