@@ -1,4 +1,10 @@
-use std::{collections::HashMap, convert::TryInto, error::Error, time::SystemTime};
+use std::{
+    collections::{BTreeMap, HashMap},
+    convert::{TryFrom, TryInto},
+    error::Error,
+    hash::Hash,
+    time::SystemTime,
+};
 
 use automerge::{Primitive, Value};
 
@@ -11,6 +17,8 @@ pub trait FromAutomerge: Sized {
 pub enum FromAutomergeError {
     #[error("found the wrong type")]
     WrongType { found: automerge::Value },
+    #[error("failed converting from automerge")]
+    FailedTryFrom,
     #[error("unknown error: {0}")]
     Unknown(#[from] Box<dyn Error>),
 }
@@ -58,15 +66,44 @@ impl FromAutomerge for Vec<char> {
     }
 }
 
-impl<V> FromAutomerge for HashMap<String, V>
+impl<K, V> FromAutomerge for HashMap<K, V>
 where
+    K: TryFrom<String> + Eq + Hash,
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
             let mut m = HashMap::new();
             for (k, v) in map {
-                m.insert(k.clone(), V::from_automerge(v)?);
+                if let Ok(k) = K::try_from(k.clone()) {
+                    m.insert(k, V::from_automerge(v)?);
+                } else {
+                    return Err(FromAutomergeError::FailedTryFrom);
+                }
+            }
+            Ok(m)
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
+impl<K, V> FromAutomerge for BTreeMap<K, V>
+where
+    K: TryFrom<String> + Eq + Ord,
+    V: FromAutomerge,
+{
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Map(map, automerge::MapType::Map) = value {
+            let mut m = BTreeMap::new();
+            for (k, v) in map {
+                if let Ok(k) = K::try_from(k.clone()) {
+                    m.insert(k, V::from_automerge(v)?);
+                } else {
+                    return Err(FromAutomergeError::FailedTryFrom);
+                }
             }
             Ok(m)
         } else {

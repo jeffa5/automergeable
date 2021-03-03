@@ -1,4 +1,8 @@
-use std::{collections::HashMap, convert::TryInto, time};
+use std::{
+    collections::{BTreeMap, HashMap},
+    convert::TryInto,
+    time,
+};
 
 use automerge::{MapType, Primitive, Value};
 
@@ -24,6 +28,20 @@ where
 }
 
 impl<K, V> ToAutomerge for HashMap<K, V>
+where
+    K: ToString,
+    V: ToAutomerge,
+{
+    fn to_automerge(&self) -> Value {
+        let mut hm = HashMap::new();
+        for (k, v) in self {
+            hm.insert(k.to_string(), v.to_automerge());
+        }
+        Value::Map(hm, MapType::Map)
+    }
+}
+
+impl<K, V> ToAutomerge for BTreeMap<K, V>
 where
     K: ToString,
     V: ToAutomerge,
