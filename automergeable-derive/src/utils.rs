@@ -2,7 +2,7 @@ use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{punctuated::Punctuated, DeriveInput};
 
-pub(crate) fn traits_path(input: &DeriveInput) -> TokenStream {
+pub(crate) fn crate_path(input: &DeriveInput) -> TokenStream {
     let path = input.attrs.iter().find_map(|a| {
         a.path.get_ident().map(|i| i.to_string()).and_then(|i| {
             if i == "automergeable" {
@@ -13,7 +13,7 @@ pub(crate) fn traits_path(input: &DeriveInput) -> TokenStream {
                                 if let (Some(path), syn::Lit::Str(lit)) =
                                     (n.path.get_ident().map(|i| i.to_string()), n.lit.clone())
                                 {
-                                    if path == "traits_path" {
+                                    if path == "crate_path" {
                                         let mut path = syn::Path {
                                             leading_colon: None,
                                             segments: Punctuated::new(),
@@ -45,5 +45,5 @@ pub(crate) fn traits_path(input: &DeriveInput) -> TokenStream {
             }
         })
     });
-    path.unwrap_or_else(|| quote! {automergeable::traits})
+    path.unwrap_or_else(|| quote! {automergeable})
 }

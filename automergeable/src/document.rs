@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn create_from_empty() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -134,7 +134,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct B {
             inner: u64,
         }
@@ -152,7 +152,7 @@ mod tests {
     #[test]
     fn create_from_empty_then_add_some_fields() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -168,7 +168,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct B {
             inner: u64,
         }
@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn create_from_empty_then_add_some_fields_later() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -206,7 +206,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
-        #[automergeable(traits_path = "crate::traits")]
+        #[automergeable(crate_path = "crate")]
         struct B {
             inner: u64,
         }

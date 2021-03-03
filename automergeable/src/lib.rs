@@ -7,3 +7,7 @@ pub mod traits {
 pub use automergeable_derive::{Automergeable, FromAutomerge, ToAutomerge};
 pub use diff::diff_values;
 pub use document::Document;
+
+pub mod automerge {
+    pub use automerge::{MapType, Primitive, Value};
+}
