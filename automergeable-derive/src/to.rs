@@ -5,6 +5,8 @@ use syn::{
     Fields, Lit, Meta, NestedMeta, Variant,
 };
 
+use crate::utils;
+
 pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
     match &input.data {
         Data::Struct(DataStruct { fields, .. }) => to_automerge_struct(&input, &fields),
@@ -14,11 +16,12 @@ pub(crate) fn to_automerge(input: DeriveInput) -> TokenStream {
 }
 
 fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
+    let traits_path = utils::traits_path(input);
     let t_name = &input.ident;
     let fields_to_automerge = fields_to_automerge(fields, true);
     quote! {
         #[automatically_derived]
-        impl automergeable_traits::ToAutomerge for #t_name {
+        impl #traits_path::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
                 #fields_to_automerge
             }
@@ -27,6 +30,7 @@ fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
 }
 
 fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
+    let traits_path = utils::traits_path(input);
     let t_name = &input.ident;
     let variants = variants.iter().map(|v| {
         let v_name = &v.ident;
@@ -64,7 +68,7 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
     });
     quote! {
         #[automatically_derived]
-        impl automergeable_traits::ToAutomerge for #t_name {
+        impl #traits_path::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
                 match self {
                     #(#variants)*

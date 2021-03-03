@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use automergeable_derive::{Automergeable, ToAutomerge};
-use automergeable_traits::ToAutomerge;
+use automergeable::{traits::ToAutomerge, Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 
 #[test]
@@ -158,7 +157,8 @@ fn to_automerge_attribute() {
 
     let mut settings = Settings::new();
     settings.set_sort_maps(true);
-    settings.bind(|| assert_json_snapshot!(a.to_automerge(), @r###"
+    settings.bind(|| {
+        assert_json_snapshot!(a.to_automerge(), @r###"
                      [
                        {
                          "a_counter": {
@@ -210,7 +210,8 @@ fn to_automerge_attribute() {
                        },
                        "map"
                      ]
-                     "###));
+                     "###)
+    });
 
     a.others.insert("a".to_owned(), "b".to_owned());
     a.some_text.push_str("hi");

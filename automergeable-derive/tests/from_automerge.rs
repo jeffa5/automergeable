@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use automergeable_derive::{Automergeable, FromAutomerge, ToAutomerge};
-use automergeable_traits::{FromAutomerge, ToAutomerge};
+use automergeable::{
+    traits::{FromAutomerge, ToAutomerge},
+    Automergeable, FromAutomerge, ToAutomerge,
+};
 use insta::{assert_json_snapshot, Settings};
 use serde::Serialize;
 

@@ -5,6 +5,8 @@ use syn::{
     Fields, Ident, Lit, Meta, NestedMeta, Type, Variant,
 };
 
+use crate::utils;
+
 pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
     match &input.data {
         Data::Struct(DataStruct { fields, .. }) => from_automerge_struct(&input, &fields),
@@ -14,12 +16,13 @@ pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
 }
 
 fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
+    let traits_path = utils::traits_path(input);
     let t_name = &input.ident;
-    let fields_from_automerge = fields_from_automerge(fields, None);
+    let fields_from_automerge = fields_from_automerge(fields, None, &traits_path);
     quote! {
         #[automatically_derived]
-        impl automergeable_traits::FromAutomerge for #t_name {
-            fn from_automerge(value: &::automerge::Value) -> ::std::result::Result<Self, automergeable_traits::FromAutomergeError> {
+        impl #traits_path::FromAutomerge for #t_name {
+            fn from_automerge(value: &::automerge::Value) -> ::std::result::Result<Self, #traits_path::FromAutomergeError> {
                 #fields_from_automerge
             }
         }
@@ -27,34 +30,36 @@ fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
 }
 
 fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
+    let traits_path = utils::traits_path(input);
     let t_name = &input.ident;
     let variant_match = variants.iter().map(|v| {
         let v_name = &v.ident;
         let v_name_string = v_name.to_string();
-        let fields_from_automerge = fields_from_automerge(&v.fields, Some(v_name.clone()));
+        let fields_from_automerge =
+            fields_from_automerge(&v.fields, Some(v_name.clone()), &traits_path);
         quote! {
             (#v_name_string, value) => {#fields_from_automerge}
         }
     });
     quote! {
         #[automatically_derived]
-        impl automergeable_traits::FromAutomerge for #t_name {
-            fn from_automerge(value: &::automerge::Value) -> ::std::result::Result<Self, automergeable_traits::FromAutomergeError> {
+        impl #traits_path::FromAutomerge for #t_name {
+            fn from_automerge(value: &::automerge::Value) -> ::std::result::Result<Self, #traits_path::FromAutomergeError> {
                 if let ::automerge::Value::Map(hm, ::automerge::MapType::Map) = value {
                     if hm.len() != 1 {
-                        Err(automergeable_traits::FromAutomergeError::WrongType {
+                        Err(#traits_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                         })
                     } else {
                         match hm.iter().map(|(k,v)| (k.as_str(), v)).next().unwrap() {
                             #(#variant_match)*
-                            _ => Err(automergeable_traits::FromAutomergeError::WrongType {
+                            _ => Err(#traits_path::FromAutomergeError::WrongType {
                                 found: value.clone(),
                             })
                         }
                     }
                 } else {
-                    Err(automergeable_traits::FromAutomergeError::WrongType {
+                    Err(#traits_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                     })
                 }
@@ -67,6 +72,7 @@ fn get_representation_type(
     attrs: &[Attribute],
     field_ty: &Type,
     value_for_field: TokenStream,
+    traits_path: &TokenStream,
 ) -> TokenStream {
     let mut ty = None;
     for a in attrs {
@@ -110,7 +116,7 @@ fn get_representation_type(
                     if let ::automerge::Value::Primitive(::automerge::Primitive::Counter(i)) = value {
                     *i
                     } else {
-                        return Err(automergeable_traits::FromAutomergeError::WrongType {
+                        return Err(#traits_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                         })
                     }
@@ -125,7 +131,7 @@ fn get_representation_type(
                     if let ::automerge::Value::Primitive(::automerge::Primitive::Timestamp(i)) = value {
                         *i
                     } else {
-                        return Err(automergeable_traits::FromAutomergeError::WrongType {
+                        return Err(#traits_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                         })
                     }
@@ -146,7 +152,11 @@ fn get_representation_type(
     }
 }
 
-fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenStream {
+fn fields_from_automerge(
+    fields: &Fields,
+    variant_name: Option<Ident>,
+    traits_path: &TokenStream,
+) -> TokenStream {
     let ty_name = if let Some(name) = variant_name {
         quote! {Self::#name}
     } else {
@@ -162,7 +172,8 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
                 let value_for_field = quote! {
                     hm.get(#field_name_string)
                 };
-                let repr = get_representation_type(&f.attrs, field_ty, value_for_field);
+                let repr =
+                    get_representation_type(&f.attrs, field_ty, value_for_field, traits_path);
                 quote! {
                     #field_name: #repr,
                 }
@@ -173,7 +184,7 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
                         #(#fields)*
                     })
                 } else {
-                    Err(automergeable_traits::FromAutomergeError::WrongType {
+                    Err(#traits_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                     })
                 }
@@ -187,7 +198,8 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
                 let value_for_field = quote! {
                     seq.get(#field_name)
                 };
-                let repr = get_representation_type(&f.attrs, field_ty, value_for_field);
+                let repr =
+                    get_representation_type(&f.attrs, field_ty, value_for_field, traits_path);
                 quote! {
                     #repr,
                 }
@@ -198,7 +210,7 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
                         #(#fields)*
                     ))
                 } else {
-                    Err(automergeable_traits::FromAutomergeError::WrongType {
+                    Err(#traits_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                     })
                 }
@@ -209,7 +221,7 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
                 if let ::automerge::Value::Primitive(::automerge::Primitive::Null) = value {
                     Ok(#ty_name)
                 } else {
-                    Err(automergeable_traits::FromAutomergeError::WrongType {
+                    Err(#traits_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                     })
                 }

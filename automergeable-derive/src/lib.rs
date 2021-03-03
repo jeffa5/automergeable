@@ -4,6 +4,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 mod from;
 mod to;
+mod utils;
 
 /// Derive the `Automergeable` trait.
 ///

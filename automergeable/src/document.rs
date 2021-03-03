@@ -6,14 +6,14 @@ use std::{
 
 use automerge::Path;
 
-use crate::Automergeable;
+use crate::traits::Automergeable;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DocumentChangeError<E: Error> {
     #[error(transparent)]
     InvalidChangeRequest(#[from] automerge::InvalidChangeRequest),
     #[error(transparent)]
-    FromError(#[from] crate::FromAutomergeError),
+    FromError(#[from] crate::traits::FromAutomergeError),
     #[error("change error: {0}")]
     ChangeError(E),
 }
@@ -118,6 +118,7 @@ mod tests {
     #[test]
     fn create_from_empty() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -133,6 +134,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct B {
             inner: u64,
         }
@@ -150,6 +152,7 @@ mod tests {
     #[test]
     fn create_from_empty_then_add_some_fields() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -165,6 +168,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct B {
             inner: u64,
         }
@@ -186,6 +190,7 @@ mod tests {
     #[test]
     fn create_from_empty_then_add_some_fields_later() {
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct A {
             list: Vec<String>,
             others: std::collections::HashMap<String, String>,
@@ -201,6 +206,7 @@ mod tests {
         }
 
         #[derive(crate::Automergeable, Debug, Clone, Default)]
+        #[automergeable(traits_path = "crate::traits")]
         struct B {
             inner: u64,
         }
