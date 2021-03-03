@@ -1,5 +1,9 @@
 # Automergeable
 
-Taking inspiration for a typed automerge from [here](https://github.com/automerge/automerge-rs/issues/22).
+Taking inspiration for a typed [automerge](https://github.com/automerge/automerge) from [here](https://github.com/automerge/automerge-rs/issues/22).
 
-This gives a nice way to derive functionality to convert a struct to an automerge `Value` and a method to diff these too.
+Derive functionality to convert to and from automerge Values.
+Be able to perform diffs on these types.
+Use a custom `Document` for your type to facilitate more natural interactions.
+
+**Very alpha**
