@@ -100,8 +100,8 @@ fn get_representation_type(
             Meta::Path(_) => {}
         }
     }
-    match ty.as_deref() {
-        Some("Text") => {
+    match ty.map(|s| s.to_lowercase()).as_deref() {
+        Some("text") => {
             quote! {
                 if let Some(value) = #value_for_field {
                     <::std::vec::Vec<char>>::from_automerge(value)?.into_iter().collect()
@@ -110,7 +110,7 @@ fn get_representation_type(
                 }
             }
         }
-        Some("Counter") => {
+        Some("counter") => {
             quote! {
                 if let Some(value) = #value_for_field {
                     if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(i)) = value {
@@ -125,7 +125,7 @@ fn get_representation_type(
                 }
             }
         }
-        Some("Timestamp") => {
+        Some("timestamp") => {
             quote! {
                 if let Some(value) = #value_for_field {
                     if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Timestamp(i)) = value {

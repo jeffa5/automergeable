@@ -109,14 +109,14 @@ fn get_representation_type(
             Meta::Path(_) => {}
         }
     }
-    match ty.as_deref() {
-        Some("Text") => {
+    match ty.map(|s| s.to_lowercase()).as_deref() {
+        Some("text") => {
             quote! { #crate_path::automerge::Value::Text(#field_name.chars().collect::<::std::vec::Vec<_>>()) }
         }
-        Some("Counter") => {
+        Some("counter") => {
             quote! { #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(#field_name)) }
         }
-        Some("Timestamp") => {
+        Some("timestamp") => {
             quote! { #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Timestamp(#field_name)) }
         }
         _ => quote! { #field_name.to_automerge() },
