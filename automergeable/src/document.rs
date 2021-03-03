@@ -38,6 +38,14 @@ where
         }
     }
 
+    pub fn new_with_patch(
+        patch: automerge_protocol::Patch,
+    ) -> Result<Self, automerge_frontend::InvalidPatch> {
+        let mut s = Self::new();
+        s.apply_patch(patch)?;
+        Ok(s)
+    }
+
     pub fn get(&self) -> Option<T> {
         self.frontend
             .get_value(&Path::root())
