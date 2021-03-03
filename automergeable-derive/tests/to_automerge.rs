@@ -33,27 +33,33 @@ fn to_automerge() {
     settings.set_sort_maps(true);
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-         [
-           {
-             "b": [
-               {
-                 "inner": 2
-               },
-               "map"
-             ],
-             "list": [],
-             "nah": null,
-             "others": [
-               {
-                 "a": "b"
-               },
-               "map"
-             ],
-             "yep": -234
-           },
-           "map"
-         ]
-         "###)
+        [
+          {
+            "b": [
+              {
+                "inner": {
+                  "Uint": 2
+                }
+              },
+              "map"
+            ],
+            "list": [],
+            "nah": "Null",
+            "others": [
+              {
+                "a": {
+                  "Str": "b"
+                }
+              },
+              "map"
+            ],
+            "yep": {
+              "Int": -234
+            }
+          },
+          "map"
+        ]
+        "###)
     });
 
     a.others.insert("c".to_owned(), "c".to_owned());
@@ -61,28 +67,34 @@ fn to_automerge() {
     a.b.inner += 1;
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-         [
-           {
-             "b": [
-               {
-                 "inner": 3
-               },
-               "map"
-             ],
-             "list": [],
-             "nah": null,
-             "others": [
-               {
-                 "a": "b",
-                 "c": "c"
-               },
-               "map"
-             ],
-             "yep": null
-           },
-           "map"
-         ]
-         "###)
+        [
+          {
+            "b": [
+              {
+                "inner": {
+                  "Uint": 3
+                }
+              },
+              "map"
+            ],
+            "list": [],
+            "nah": "Null",
+            "others": [
+              {
+                "a": {
+                  "Str": "b"
+                },
+                "c": {
+                  "Str": "c"
+                }
+              },
+              "map"
+            ],
+            "yep": "Null"
+          },
+          "map"
+        ]
+        "###)
     });
 }
 
@@ -149,22 +161,28 @@ fn to_automerge_attribute() {
     settings.bind(|| assert_json_snapshot!(a.to_automerge(), @r###"
                      [
                        {
-                         "a_counter": 0,
-                         "a_timestamp": 0,
+                         "a_counter": {
+                           "Counter": 0
+                         },
+                         "a_timestamp": {
+                           "Timestamp": 0
+                         },
                          "b": [
                            {
-                             "inner": 2
+                             "inner": {
+                               "Uint": 2
+                             }
                            },
                            "map"
                          ],
                          "en": [
                            {
-                             "Part2": null
+                             "Part2": "Null"
                            },
                            "map"
                          ],
                          "list": [],
-                         "nah": null,
+                         "nah": "Null",
                          "others": [
                            {},
                            "map"
@@ -185,8 +203,10 @@ fn to_automerge_attribute() {
                              "i"
                            ]
                          ],
-                         "u": null,
-                         "yep": -234
+                         "u": "Null",
+                         "yep": {
+                           "Int": -234
+                         }
                        },
                        "map"
                      ]
@@ -199,11 +219,17 @@ fn to_automerge_attribute() {
         assert_json_snapshot!(a.to_automerge(), @r###"
         [
           {
-            "a_counter": 0,
-            "a_timestamp": 0,
+            "a_counter": {
+              "Counter": 0
+            },
+            "a_timestamp": {
+              "Timestamp": 0
+            },
             "b": [
               {
-                "inner": 2
+                "inner": {
+                  "Uint": 2
+                }
               },
               "map"
             ],
@@ -211,16 +237,20 @@ fn to_automerge_attribute() {
               {
                 "Part1": [
                   [],
-                  42
+                  {
+                    "Int": 42
+                  }
                 ]
               },
               "map"
             ],
             "list": [],
-            "nah": null,
+            "nah": "Null",
             "others": [
               {
-                "a": "b"
+                "a": {
+                  "Str": "b"
+                }
               },
               "map"
             ],
@@ -243,8 +273,10 @@ fn to_automerge_attribute() {
                 "i"
               ]
             ],
-            "u": null,
-            "yep": -234
+            "u": "Null",
+            "yep": {
+              "Int": -234
+            }
           },
           "map"
         ]
@@ -260,11 +292,17 @@ fn to_automerge_attribute() {
         assert_json_snapshot!(a.to_automerge(), @r###"
         [
           {
-            "a_counter": 0,
-            "a_timestamp": 0,
+            "a_counter": {
+              "Counter": 0
+            },
+            "a_timestamp": {
+              "Timestamp": 0
+            },
             "b": [
               {
-                "inner": 3
+                "inner": {
+                  "Uint": 3
+                }
               },
               "map"
             ],
@@ -272,7 +310,9 @@ fn to_automerge_attribute() {
               {
                 "Part3": [
                   {
-                    "a": ""
+                    "a": {
+                      "Str": ""
+                    }
                   },
                   "map"
                 ]
@@ -280,11 +320,15 @@ fn to_automerge_attribute() {
               "map"
             ],
             "list": [],
-            "nah": null,
+            "nah": "Null",
             "others": [
               {
-                "a": "b",
-                "c": "c"
+                "a": {
+                  "Str": "b"
+                },
+                "c": {
+                  "Str": "c"
+                }
               },
               "map"
             ],
@@ -313,8 +357,8 @@ fn to_automerge_attribute() {
                 "i"
               ]
             ],
-            "u": null,
-            "yep": null
+            "u": "Null",
+            "yep": "Null"
           },
           "map"
         ]

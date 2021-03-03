@@ -106,10 +106,10 @@ fn get_representation_type(attrs: &[Attribute], field_name: TokenStream) -> Toke
             quote! { ::automerge::Value::Text(#field_name.chars().collect::<::std::vec::Vec<_>>()) }
         }
         Some("Counter") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(#field_name)) }
+            quote! { ::automerge::Value::Primitive(::automerge::Primitive::Counter(#field_name)) }
         }
         Some("Timestamp") => {
-            quote! { ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(#field_name)) }
+            quote! { ::automerge::Value::Primitive(::automerge::Primitive::Timestamp(#field_name)) }
         }
         _ => quote! { #field_name.to_automerge() },
     }
@@ -160,7 +160,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool) -> TokenStream {
         }
         Fields::Unit => {
             quote! {
-                ::automerge::Value::Primitive(::automerge::ScalarValue::Null)
+                ::automerge::Value::Primitive(::automerge::Primitive::Null)
             }
         }
     }

@@ -107,7 +107,7 @@ fn get_representation_type(
         Some("Counter") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Counter(i)) = value {
+                    if let ::automerge::Value::Primitive(::automerge::Primitive::Counter(i)) = value {
                     *i
                     } else {
                         return Err(::automergeable_traits::FromAutomergeError::WrongType {
@@ -122,7 +122,7 @@ fn get_representation_type(
         Some("Timestamp") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    if let ::automerge::Value::Primitive(::automerge::ScalarValue::Timestamp(i)) = value {
+                    if let ::automerge::Value::Primitive(::automerge::Primitive::Timestamp(i)) = value {
                         *i
                     } else {
                         return Err(::automergeable_traits::FromAutomergeError::WrongType {
@@ -206,7 +206,7 @@ fn fields_from_automerge(fields: &Fields, variant_name: Option<Ident>) -> TokenS
         }
         Fields::Unit => {
             quote! {
-                if let ::automerge::Value::Primitive(::automerge::ScalarValue::Null) = value {
+                if let ::automerge::Value::Primitive(::automerge::Primitive::Null) = value {
                     Ok(#ty_name)
                 } else {
                     Err(::automergeable_traits::FromAutomergeError::WrongType {

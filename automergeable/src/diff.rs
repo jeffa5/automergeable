@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use automerge::{LocalChange, Path, ScalarValue, Value};
+use automerge::{LocalChange, Path, Primitive, Value};
 
 /// Calculate the `LocalChange`s between the two values.
 ///
@@ -65,13 +65,13 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                     // changed
                     changes.push(LocalChange::set(
                         path.clone().index(i.try_into().unwrap()),
-                        Value::Primitive(ScalarValue::Str(v.to_string())),
+                        Value::Primitive(Primitive::Str(v.to_string())),
                     ))
                 } else {
                     // new
                     changes.push(LocalChange::insert(
                         path.clone().index(i.try_into().unwrap()),
-                        Value::Primitive(ScalarValue::Str(v.to_string())),
+                        Value::Primitive(Primitive::Str(v.to_string())),
                     ))
                 }
             }
@@ -84,58 +84,49 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             changes
         }
         (
-            Value::Primitive(ScalarValue::Str(new_string)),
-            Value::Primitive(ScalarValue::Str(_old_string)),
+            Value::Primitive(Primitive::Str(new_string)),
+            Value::Primitive(Primitive::Str(_old_string)),
         ) => {
             // just set this, we can't address the characters so this may be a thing such as an enum
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Str(new_string.to_owned())),
+                Value::Primitive(Primitive::Str(new_string.to_owned())),
+            )]
+        }
+        (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(_old_int))) => {
+            // naive
+            vec![LocalChange::set(
+                path,
+                Value::Primitive(Primitive::Int(*new_int)),
             )]
         }
         (
-            Value::Primitive(ScalarValue::Int(new_int)),
-            Value::Primitive(ScalarValue::Int(_old_int)),
+            Value::Primitive(Primitive::Uint(new_int)),
+            Value::Primitive(Primitive::Uint(_old_int)),
         ) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Int(*new_int)),
+                Value::Primitive(Primitive::Uint(*new_int)),
             )]
         }
-        (
-            Value::Primitive(ScalarValue::Uint(new_int)),
-            Value::Primitive(ScalarValue::Uint(_old_int)),
-        ) => {
+        (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(_old_int))) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Uint(*new_int)),
+                Value::Primitive(Primitive::F64(*new_int)),
             )]
         }
-        (
-            Value::Primitive(ScalarValue::F64(new_int)),
-            Value::Primitive(ScalarValue::F64(_old_int)),
-        ) => {
+        (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(_old_int))) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::F64(*new_int)),
+                Value::Primitive(Primitive::F32(*new_int)),
             )]
         }
         (
-            Value::Primitive(ScalarValue::F32(new_int)),
-            Value::Primitive(ScalarValue::F32(_old_int)),
-        ) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(ScalarValue::F32(*new_int)),
-            )]
-        }
-        (
-            Value::Primitive(ScalarValue::Counter(new_int)),
-            Value::Primitive(ScalarValue::Counter(old_int)),
+            Value::Primitive(Primitive::Counter(new_int)),
+            Value::Primitive(Primitive::Counter(old_int)),
         ) => {
             // naive
             vec![LocalChange::increment_by(
@@ -144,39 +135,39 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             )]
         }
         (
-            Value::Primitive(ScalarValue::Timestamp(new_int)),
-            Value::Primitive(ScalarValue::Timestamp(_old_int)),
+            Value::Primitive(Primitive::Timestamp(new_int)),
+            Value::Primitive(Primitive::Timestamp(_old_int)),
         ) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Timestamp(*new_int)),
+                Value::Primitive(Primitive::Timestamp(*new_int)),
             )]
         }
         (
-            Value::Primitive(ScalarValue::Cursor(new_cursor)),
-            Value::Primitive(ScalarValue::Cursor(_old_cursor)),
+            Value::Primitive(Primitive::Cursor(new_cursor)),
+            Value::Primitive(Primitive::Cursor(_old_cursor)),
         ) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Cursor(new_cursor.clone())),
+                Value::Primitive(Primitive::Cursor(new_cursor.clone())),
             )]
         }
         (
-            Value::Primitive(ScalarValue::Boolean(new_bool)),
-            Value::Primitive(ScalarValue::Boolean(_old_bool)),
+            Value::Primitive(Primitive::Boolean(new_bool)),
+            Value::Primitive(Primitive::Boolean(_old_bool)),
         ) => {
             // naive
             vec![LocalChange::set(
                 path,
-                Value::Primitive(ScalarValue::Boolean(*new_bool)),
+                Value::Primitive(Primitive::Boolean(*new_bool)),
             )]
         }
-        (Value::Primitive(ScalarValue::Null), _) => {
-            vec![LocalChange::set(path, Value::Primitive(ScalarValue::Null))]
+        (Value::Primitive(Primitive::Null), _) => {
+            vec![LocalChange::set(path, Value::Primitive(Primitive::Null))]
         }
-        (v, Value::Primitive(ScalarValue::Null)) => {
+        (v, Value::Primitive(Primitive::Null)) => {
             vec![LocalChange::set(path, v.clone())]
         }
         (n, _) => {
@@ -203,7 +194,7 @@ mod tests {
 
         new_map.insert(
             "abc".to_owned(),
-            ScalarValue::Str("some val".to_owned()).into(),
+            Primitive::Str("some val".to_owned()).into(),
         );
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
         [
@@ -229,7 +220,7 @@ mod tests {
         old_map = new_map.clone();
         new_map.insert(
             "abc".to_owned(),
-            ScalarValue::Str("some newer val".to_owned()).into(),
+            Primitive::Str("some newer val".to_owned()).into(),
         );
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
         [
@@ -277,7 +268,7 @@ mod tests {
 
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @"[]");
 
-        new_vec.push(ScalarValue::Str("some val".to_owned()).into());
+        new_vec.push(Primitive::Str("some val".to_owned()).into());
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
         [
             LocalChange {
@@ -300,7 +291,7 @@ mod tests {
         "###);
 
         old_vec = new_vec.clone();
-        new_vec[0] = ScalarValue::Str("some newer val".to_owned()).into();
+        new_vec[0] = Primitive::Str("some newer val".to_owned()).into();
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
         [
             LocalChange {
@@ -412,9 +403,9 @@ mod tests {
 
     #[test]
     fn new_and_empty() {
-        let old = Value::Primitive(ScalarValue::Null);
+        let old = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
-        hm.insert("a".to_owned(), Value::Primitive(ScalarValue::Uint(2)));
+        hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
         let new = Value::Map(hm, MapType::Map);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
@@ -442,9 +433,9 @@ mod tests {
 
     #[test]
     fn empty_and_new() {
-        let new = Value::Primitive(ScalarValue::Null);
+        let new = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
-        hm.insert("a".to_owned(), Value::Primitive(ScalarValue::Uint(2)));
+        hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
         let old = Value::Map(hm, MapType::Map);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"

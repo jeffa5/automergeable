@@ -1,6 +1,6 @@
 use std::{collections::HashMap, convert::TryInto, error::Error, time::SystemTime};
 
-use automerge::{ScalarValue, Value};
+use automerge::{Primitive, Value};
 
 /// Require a method to convert to a value from an automerge value.
 pub trait FromAutomerge: Sized {
@@ -17,7 +17,7 @@ pub enum FromAutomergeError {
 
 impl FromAutomerge for String {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Str(s)) = value {
+        if let Value::Primitive(Primitive::Str(s)) = value {
             Ok(s.to_owned())
         } else {
             Err(FromAutomergeError::WrongType {
@@ -82,7 +82,7 @@ where
     T: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Null) = value {
+        if let Value::Primitive(Primitive::Null) = value {
             Ok(None)
         } else {
             Ok(Some(T::from_automerge(value)?))
@@ -92,7 +92,7 @@ where
 
 impl FromAutomerge for SystemTime {
     fn from_automerge(value: &automerge::Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Timestamp(t)) = value {
+        if let Value::Primitive(Primitive::Timestamp(t)) = value {
             let duration = std::time::Duration::from_secs((*t).try_into().unwrap());
             Ok(SystemTime::UNIX_EPOCH + duration)
         } else {
@@ -105,7 +105,7 @@ impl FromAutomerge for SystemTime {
 
 impl FromAutomerge for bool {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Boolean(b)) = value {
+        if let Value::Primitive(Primitive::Boolean(b)) = value {
             Ok(*b)
         } else {
             Err(FromAutomergeError::WrongType {
@@ -117,7 +117,7 @@ impl FromAutomerge for bool {
 
 impl FromAutomerge for i64 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Int(i)) = value {
+        if let Value::Primitive(Primitive::Int(i)) = value {
             Ok(*i)
         } else {
             Err(FromAutomergeError::WrongType {
@@ -156,7 +156,7 @@ impl FromAutomerge for i128 {
 
 impl FromAutomerge for u64 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Primitive(ScalarValue::Uint(u)) = value {
+        if let Value::Primitive(Primitive::Uint(u)) = value {
             Ok(*u)
         } else {
             Err(FromAutomergeError::WrongType {
