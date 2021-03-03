@@ -7,6 +7,7 @@ use std::{
 };
 
 use automerge::{Primitive, Value};
+use serde_json::Number;
 
 /// Require a method to convert to a value from an automerge value.
 pub trait FromAutomerge: Sized {
@@ -227,5 +228,40 @@ impl FromAutomerge for usize {
 impl FromAutomerge for u128 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         u64::from_automerge(value).map(|u| u as u128)
+    }
+}
+
+impl FromAutomerge for serde_json::Value {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        let var_name = match value {
+            Value::Map(map, _) => Ok(serde_json::Value::Object(
+                map.iter()
+                    .map(|(k, v)| (k.clone(), serde_json::Value::from_automerge(v).unwrap()))
+                    .collect(),
+            )),
+            Value::Sequence(v) => Ok(serde_json::Value::Array(
+                v.iter()
+                    .map(|i| serde_json::Value::from_automerge(i).unwrap())
+                    .collect::<Vec<_>>(),
+            )),
+            Value::Text(v) => Ok(serde_json::Value::String(v.iter().collect())),
+            Value::Primitive(p) => match p {
+                Primitive::Str(s) => Ok(serde_json::Value::String(s.clone())),
+                Primitive::Int(i) => Ok(serde_json::Value::Number(Number::from(*i))),
+                Primitive::Uint(u) => Ok(serde_json::Value::Number(Number::from(*u))),
+                Primitive::F64(f) => Ok(serde_json::Value::Number(Number::from_f64(*f).unwrap())),
+                Primitive::F32(f) => Ok(serde_json::Value::Number(
+                    Number::from_f64((*f).into()).unwrap(),
+                )),
+                Primitive::Counter(i) => Ok(serde_json::Value::Number(Number::from(*i))),
+                Primitive::Timestamp(i) => Ok(serde_json::Value::Number(Number::from(*i))),
+                Primitive::Boolean(b) => Ok(serde_json::Value::Bool(*b)),
+                Primitive::Cursor(_) => {
+                    panic!("cursor is unsupported")
+                }
+                Primitive::Null => Ok(serde_json::Value::Null),
+            },
+        };
+        var_name
     }
 }

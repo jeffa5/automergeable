@@ -196,3 +196,31 @@ nonzero_to_automerge! {
     std::num::NonZeroU128,
     std::num::NonZeroUsize,
 }
+
+impl ToAutomerge for serde_json::Value {
+    fn to_automerge(&self) -> Value {
+        match self {
+            serde_json::Value::Null => automerge::Value::Primitive(Primitive::Null),
+            serde_json::Value::Bool(b) => automerge::Value::Primitive(Primitive::Boolean(*b)),
+            serde_json::Value::Number(n) => {
+                if n.is_f64() {
+                    automerge::Value::Primitive(Primitive::F64(n.as_f64().unwrap()))
+                } else if n.is_i64() {
+                    Value::Primitive(Primitive::Int(n.as_i64().unwrap()))
+                } else {
+                    Value::Primitive(Primitive::Uint(n.as_u64().unwrap()))
+                }
+            }
+            serde_json::Value::String(s) => Value::Primitive(Primitive::Str(s.clone())),
+            serde_json::Value::Array(a) => {
+                Value::Sequence(a.iter().map(|i| i.to_automerge()).collect::<Vec<_>>())
+            }
+            serde_json::Value::Object(m) => Value::Map(
+                m.iter()
+                    .map(|(k, v)| (k.clone(), v.to_automerge()))
+                    .collect::<HashMap<_, _>>(),
+                MapType::Map,
+            ),
+        }
+    }
+}
