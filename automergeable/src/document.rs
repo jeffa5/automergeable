@@ -38,6 +38,12 @@ where
         }
     }
 
+    pub fn get(&self) -> Option<T> {
+        self.frontend
+            .get_value(&Path::root())
+            .and_then(|t| T::from_automerge(&t).ok())
+    }
+
     fn change_inner<F, E>(
         &mut self,
         message: Option<String>,
