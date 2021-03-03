@@ -18,7 +18,7 @@ fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     let fields_to_automerge = fields_to_automerge(fields, true);
     quote! {
         #[automatically_derived]
-        impl ::automergeable_traits::ToAutomerge for #t_name {
+        impl automergeable_traits::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
                 #fields_to_automerge
             }
@@ -64,7 +64,7 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
     });
     quote! {
         #[automatically_derived]
-        impl ::automergeable_traits::ToAutomerge for #t_name {
+        impl automergeable_traits::ToAutomerge for #t_name {
             fn to_automerge(&self) -> ::automerge::Value {
                 match self {
                     #(#variants)*
