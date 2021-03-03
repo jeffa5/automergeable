@@ -1,8 +1,9 @@
 use std::{
     collections::{BTreeMap, HashMap},
-    convert::{TryFrom, TryInto},
+    convert::TryInto,
     error::Error,
     hash::Hash,
+    str::FromStr,
     time::SystemTime,
 };
 
@@ -69,14 +70,14 @@ impl FromAutomerge for Vec<char> {
 
 impl<K, V> FromAutomerge for HashMap<K, V>
 where
-    K: TryFrom<String> + Eq + Hash,
+    K: FromStr + Eq + Hash,
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
             let mut m = HashMap::new();
             for (k, v) in map {
-                if let Ok(k) = K::try_from(k.clone()) {
+                if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
                 } else {
                     return Err(FromAutomergeError::FailedTryFrom);
@@ -93,14 +94,14 @@ where
 
 impl<K, V> FromAutomerge for BTreeMap<K, V>
 where
-    K: TryFrom<String> + Eq + Ord,
+    K: FromStr + Eq + Ord,
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
             let mut m = BTreeMap::new();
             for (k, v) in map {
-                if let Ok(k) = K::try_from(k.clone()) {
+                if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
                 } else {
                     return Err(FromAutomergeError::FailedTryFrom);
