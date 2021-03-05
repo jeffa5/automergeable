@@ -1,22 +1,26 @@
 use std::convert::TryInto;
 
-use automerge::{LocalChange, Path, Primitive, Value};
+use automerge::{InvalidChangeRequest, LocalChange, Path, Primitive, Value};
 
 /// Calculate the `LocalChange`s between the two values.
 ///
 /// Recursively works from the root.
-pub fn diff_values(new: &Value, old: &Value) -> Vec<LocalChange> {
+pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, InvalidChangeRequest> {
     diff_with_path(new, old, Path::root())
 }
 
-fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
+fn diff_with_path(
+    new: &Value,
+    old: &Value,
+    path: Path,
+) -> Result<Vec<LocalChange>, InvalidChangeRequest> {
     match (new, old) {
         (Value::Map(new_map, mt1), Value::Map(old_map, mt2)) if mt1 == mt2 => {
             let mut changes = Vec::new();
             for (k, v) in new_map {
                 if let Some(old_v) = old_map.get(k) {
                     // changed
-                    changes.append(&mut diff_with_path(v, old_v, path.clone().key(k)))
+                    changes.append(&mut diff_with_path(v, old_v, path.clone().key(k))?)
                 } else {
                     // new
                     changes.push(LocalChange::set(path.clone().key(k), v.clone()))
@@ -28,7 +32,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                     changes.push(LocalChange::delete(path.clone().key(k)))
                 }
             }
-            changes
+            Ok(changes)
         }
         (Value::Sequence(new_vec), Value::Sequence(old_vec)) => {
             let mut changes = Vec::new();
@@ -40,7 +44,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                         v,
                         old_v,
                         path.clone().index(i.try_into().unwrap()),
-                    ))
+                    )?)
                 } else {
                     // new
                     changes.push(LocalChange::insert(
@@ -55,7 +59,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                     path.clone().index(i.try_into().unwrap()),
                 ))
             }
-            changes
+            Ok(changes)
         }
         (Value::Text(new_vec), Value::Text(old_vec)) => {
             let mut changes = Vec::new();
@@ -81,7 +85,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
                     path.clone().index(i.try_into().unwrap()),
                 ))
             }
-            changes
+            Ok(changes)
         }
         (
             Value::Primitive(Primitive::Str(new_string)),
@@ -89,22 +93,22 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
         ) => {
             // just set this, we can't address the characters so this may be a thing such as an enum
             if new_string != old_string {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Str(new_string.to_owned())),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(old_int))) => {
             if new_int != old_int {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Int(*new_int)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (
@@ -112,36 +116,36 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             Value::Primitive(Primitive::Uint(old_int)),
         ) => {
             if new_int != old_int {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Uint(*new_int)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(old_int))) =>
         {
             #[allow(clippy::float_cmp)]
             if new_int != old_int {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::F64(*new_int)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(old_int))) =>
         {
             #[allow(clippy::float_cmp)]
             if new_int != old_int {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::F32(*new_int)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (
@@ -149,12 +153,26 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             Value::Primitive(Primitive::Counter(old_int)),
         ) => {
             if new_int != old_int {
-                vec![LocalChange::increment_by(
-                    path,
-                    (new_int - old_int).try_into().unwrap(),
-                )]
+                if new_int > old_int {
+                    let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
+                        diff
+                    } else {
+                        // TODO: perhaps change this behavior or change error type
+                        return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
+                    };
+                    let diff = diff.try_into();
+                    if let Ok(diff) = diff {
+                        Ok(vec![LocalChange::increment_by(path, diff)])
+                    } else {
+                        // TODO: change this once increment_by has larger values
+                        Err(InvalidChangeRequest::CannotOverwriteCounter { path })
+                    }
+                } else {
+                    // TODO: change this once counters can be decremented
+                    Err(InvalidChangeRequest::CannotOverwriteCounter { path })
+                }
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (
@@ -162,12 +180,12 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             Value::Primitive(Primitive::Timestamp(old_int)),
         ) => {
             if new_int != old_int {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Timestamp(*new_int)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
         (
@@ -175,34 +193,35 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             Value::Primitive(Primitive::Cursor(_old_cursor)),
         ) => {
             // naive
-            vec![LocalChange::set(
+            Ok(vec![LocalChange::set(
                 path,
                 Value::Primitive(Primitive::Cursor(new_cursor.clone())),
-            )]
+            )])
         }
         (
             Value::Primitive(Primitive::Boolean(new_bool)),
             Value::Primitive(Primitive::Boolean(old_bool)),
         ) => {
             if new_bool != old_bool {
-                vec![LocalChange::set(
+                Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Boolean(*new_bool)),
-                )]
+                )])
             } else {
-                Vec::new()
+                Ok(Vec::new())
             }
         }
-        (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => Vec::new(),
-        (Value::Primitive(Primitive::Null), _) => {
-            vec![LocalChange::set(path, Value::Primitive(Primitive::Null))]
+        (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => Ok(Vec::new()),
+        // handle mismatch combinations
+        (_, Value::Primitive(Primitive::Counter(_))) => {
+            Err(InvalidChangeRequest::CannotOverwriteCounter { path })
         }
-        (v, Value::Primitive(Primitive::Null)) => {
-            vec![LocalChange::set(path, v.clone())]
-        }
-        (n, _) => {
-            vec![LocalChange::set(path, n.clone())]
-        }
+        (Value::Primitive(Primitive::Null), _) => Ok(vec![LocalChange::set(
+            path,
+            Value::Primitive(Primitive::Null),
+        )]),
+        (v, Value::Primitive(Primitive::Null)) => Ok(vec![LocalChange::set(path, v.clone())]),
+        (n, _) => Ok(vec![LocalChange::set(path, n.clone())]),
     }
 }
 
@@ -220,31 +239,37 @@ mod tests {
         let mut old_map = HashMap::new();
         let mut new_map = HashMap::new();
 
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        Ok(
+            [],
+        )
+        "###);
 
         new_map.insert(
             "abc".to_owned(),
             Primitive::Str("some val".to_owned()).into(),
         );
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Key(
-                            "abc",
-                        ),
-                    ],
-                ),
-                operation: Set(
-                    Primitive(
-                        Str(
-                            "some val",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Key(
+                                "abc",
+                            ),
+                        ],
+                    ),
+                    operation: Set(
+                        Primitive(
+                            Str(
+                                "some val",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_map = new_map.clone();
@@ -253,41 +278,45 @@ mod tests {
             Primitive::Str("some newer val".to_owned()).into(),
         );
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Key(
-                            "abc",
-                        ),
-                    ],
-                ),
-                operation: Set(
-                    Primitive(
-                        Str(
-                            "some newer val",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Key(
+                                "abc",
+                            ),
+                        ],
+                    ),
+                    operation: Set(
+                        Primitive(
+                            Str(
+                                "some newer val",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_map = new_map.clone();
         new_map.remove("abc");
         assert_debug_snapshot!(diff_values(&Value::Map(new_map, MapType::Map), &Value::Map(old_map, MapType::Map)), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Key(
-                            "abc",
-                        ),
-                    ],
-                ),
-                operation: Delete,
-            },
-        ]
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Key(
+                                "abc",
+                            ),
+                        ],
+                    ),
+                    operation: Delete,
+                },
+            ],
+        )
         "###);
     }
 
@@ -296,68 +325,78 @@ mod tests {
         let mut old_vec = Vec::new();
         let mut new_vec = Vec::new();
 
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
+        Ok(
+            [],
+        )
+        "###);
 
         new_vec.push(Primitive::Str("some val".to_owned()).into());
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Insert(
-                    Primitive(
-                        Str(
-                            "some val",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Insert(
+                        Primitive(
+                            Str(
+                                "some val",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_vec = new_vec.clone();
         new_vec[0] = Primitive::Str("some newer val".to_owned()).into();
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Set(
-                    Primitive(
-                        Str(
-                            "some newer val",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Set(
+                        Primitive(
+                            Str(
+                                "some newer val",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_vec = new_vec.clone();
         new_vec.pop();
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec), &Value::Sequence(old_vec )), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Delete,
-            },
-        ]
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Delete,
+                },
+            ],
+        )
         "###);
     }
 
@@ -366,68 +405,78 @@ mod tests {
         let mut old_text = Vec::new();
         let mut new_text = Vec::new();
 
-        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @"[]");
+        assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
+        Ok(
+            [],
+        )
+        "###);
 
         new_text.push('a');
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Insert(
-                    Primitive(
-                        Str(
-                            "a",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Insert(
+                        Primitive(
+                            Str(
+                                "a",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_text = new_text.clone();
         new_text[0] = 'b';
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Set(
-                    Primitive(
-                        Str(
-                            "b",
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Set(
+                        Primitive(
+                            Str(
+                                "b",
+                            ),
                         ),
                     ),
-                ),
-            },
-        ]
+                },
+            ],
+        )
         "###);
 
         old_text = new_text.clone();
         new_text.pop();
         assert_debug_snapshot!(diff_values(&Value::Text(new_text), &Value::Text(old_text )), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [
-                        Index(
-                            0,
-                        ),
-                    ],
-                ),
-                operation: Delete,
-            },
-        ]
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [
+                            Index(
+                                0,
+                            ),
+                        ],
+                    ),
+                    operation: Delete,
+                },
+            ],
+        )
         "###);
     }
 
@@ -439,25 +488,27 @@ mod tests {
         let new = Value::Map(hm, MapType::Map);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [],
-                ),
-                operation: Set(
-                    Map(
-                        {
-                            "a": Primitive(
-                                Uint(
-                                    2,
-                                ),
-                            ),
-                        },
-                        Map,
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [],
                     ),
-                ),
-            },
-        ]
+                    operation: Set(
+                        Map(
+                            {
+                                "a": Primitive(
+                                    Uint(
+                                        2,
+                                    ),
+                                ),
+                            },
+                            Map,
+                        ),
+                    ),
+                },
+            ],
+        )
         "###);
     }
 
@@ -469,18 +520,20 @@ mod tests {
         let old = Value::Map(hm, MapType::Map);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
-        [
-            LocalChange {
-                path: Path(
-                    [],
-                ),
-                operation: Set(
-                    Primitive(
-                        Null,
+        Ok(
+            [
+                LocalChange {
+                    path: Path(
+                        [],
                     ),
-                ),
-            },
-        ]
+                    operation: Set(
+                        Primitive(
+                            Null,
+                        ),
+                    ),
+                },
+            ],
+        )
         "###);
     }
 }
