@@ -61,7 +61,7 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
             let mut changes = Vec::new();
             // naive
             for (i, v) in new_vec.iter().enumerate() {
-                if i < old_vec.len() {
+                if i < old_vec.len() && *v != old_vec[i] {
                     // changed
                     changes.push(LocalChange::set(
                         path.clone().index(i.try_into().unwrap()),
@@ -85,64 +85,90 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
         }
         (
             Value::Primitive(Primitive::Str(new_string)),
-            Value::Primitive(Primitive::Str(_old_string)),
+            Value::Primitive(Primitive::Str(old_string)),
         ) => {
             // just set this, we can't address the characters so this may be a thing such as an enum
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Str(new_string.to_owned())),
-            )]
+            if new_string != old_string {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Str(new_string.to_owned())),
+                )]
+            } else {
+                Vec::new()
+            }
         }
-        (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(_old_int))) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Int(*new_int)),
-            )]
+        (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(old_int))) => {
+            if new_int != old_int {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Int(*new_int)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
         (
             Value::Primitive(Primitive::Uint(new_int)),
-            Value::Primitive(Primitive::Uint(_old_int)),
+            Value::Primitive(Primitive::Uint(old_int)),
         ) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Uint(*new_int)),
-            )]
+            if new_int != old_int {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Uint(*new_int)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
-        (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(_old_int))) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::F64(*new_int)),
-            )]
+        (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(old_int))) =>
+        {
+            #[allow(clippy::float_cmp)]
+            if new_int != old_int {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::F64(*new_int)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
-        (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(_old_int))) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::F32(*new_int)),
-            )]
+        (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(old_int))) =>
+        {
+            #[allow(clippy::float_cmp)]
+            if new_int != old_int {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::F32(*new_int)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
         (
             Value::Primitive(Primitive::Counter(new_int)),
             Value::Primitive(Primitive::Counter(old_int)),
         ) => {
-            // naive
-            vec![LocalChange::increment_by(
-                path,
-                (new_int - old_int).try_into().unwrap(),
-            )]
+            if new_int != old_int {
+                vec![LocalChange::increment_by(
+                    path,
+                    (new_int - old_int).try_into().unwrap(),
+                )]
+            } else {
+                Vec::new()
+            }
         }
         (
             Value::Primitive(Primitive::Timestamp(new_int)),
-            Value::Primitive(Primitive::Timestamp(_old_int)),
+            Value::Primitive(Primitive::Timestamp(old_int)),
         ) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Timestamp(*new_int)),
-            )]
+            if new_int != old_int {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Timestamp(*new_int)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
         (
             Value::Primitive(Primitive::Cursor(new_cursor)),
@@ -156,14 +182,18 @@ fn diff_with_path(new: &Value, old: &Value, path: Path) -> Vec<LocalChange> {
         }
         (
             Value::Primitive(Primitive::Boolean(new_bool)),
-            Value::Primitive(Primitive::Boolean(_old_bool)),
+            Value::Primitive(Primitive::Boolean(old_bool)),
         ) => {
-            // naive
-            vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Boolean(*new_bool)),
-            )]
+            if new_bool != old_bool {
+                vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Boolean(*new_bool)),
+                )]
+            } else {
+                Vec::new()
+            }
         }
+        (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => Vec::new(),
         (Value::Primitive(Primitive::Null), _) => {
             vec![LocalChange::set(path, Value::Primitive(Primitive::Null))]
         }
