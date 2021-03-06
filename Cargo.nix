@@ -80,6 +80,28 @@ rec {
     #   inject test dependencies into the build
 
     crates = {
+      "aho-corasick" = rec {
+        crateName = "aho-corasick";
+        version = "0.7.15";
+        edition = "2015";
+        sha256 = "1rb8gzhljl8r87dpf2n5pnqnkl694casgns4ma0sqzd4zazzw13l";
+        libName = "aho_corasick";
+        authors = [
+          "Andrew Gallant <jamslam@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "memchr";
+            packageId = "memchr";
+            usesDefaultFeatures = false;
+          }
+        ];
+        features = {
+          "default" = [ "std" ];
+          "std" = [ "memchr/use_std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
+      };
       "automerge" = rec {
         crateName = "automerge";
         version = "0.0.2";
@@ -331,6 +353,10 @@ rec {
           {
             name = "insta";
             packageId = "insta";
+          }
+          {
+            name = "quickcheck";
+            packageId = "quickcheck";
           }
         ];
         
@@ -613,6 +639,33 @@ rec {
           "default" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "default" "std" ];
+      };
+      "env_logger" = rec {
+        crateName = "env_logger";
+        version = "0.8.3";
+        edition = "2018";
+        sha256 = "0gwx1pvbv99fj9wpicknyv4p2vj997xpva8ac5dg03m35q0jlf8p";
+        authors = [
+          "The Rust Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "log";
+            packageId = "log";
+            features = [ "std" ];
+          }
+          {
+            name = "regex";
+            packageId = "regex";
+            optional = true;
+            usesDefaultFeatures = false;
+            features = [ "std" "perf" ];
+          }
+        ];
+        features = {
+          "default" = [ "termcolor" "atty" "humantime" "regex" ];
+        };
+        resolvedDefaultFeatures = [ "regex" ];
       };
       "fake-simd" = rec {
         crateName = "fake-simd";
@@ -974,7 +1027,7 @@ rec {
         ];
         
       };
-      "getrandom" = rec {
+      "getrandom 0.1.16" = rec {
         crateName = "getrandom";
         version = "0.1.16";
         edition = "2018";
@@ -995,7 +1048,7 @@ rec {
           }
           {
             name = "wasi";
-            packageId = "wasi";
+            packageId = "wasi 0.9.0+wasi-snapshot-preview1";
             target = { target, features }: (target."os" == "wasi");
           }
         ];
@@ -1005,6 +1058,36 @@ rec {
           "wasm-bindgen" = [ "bindgen" "js-sys" ];
         };
         resolvedDefaultFeatures = [ "std" ];
+      };
+      "getrandom 0.2.2" = rec {
+        crateName = "getrandom";
+        version = "0.2.2";
+        edition = "2018";
+        sha256 = "1j1jcwahnkn45kapq9i5nvw2s5hcfmp1zpjx0fzl0wcy4w2mfjf9";
+        authors = [
+          "The Rand Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "cfg-if";
+            packageId = "cfg-if";
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+            usesDefaultFeatures = false;
+            target = { target, features }: target."unix";
+          }
+          {
+            name = "wasi";
+            packageId = "wasi 0.10.2+wasi-snapshot-preview1";
+            target = { target, features }: (target."os" == "wasi");
+          }
+        ];
+        features = {
+          "js" = [ "wasm-bindgen" "js-sys" ];
+          "rustc-dep-of-std" = [ "compiler_builtins" "core" "libc/rustc-dep-of-std" "wasi/rustc-dep-of-std" ];
+        };
       };
       "hex" = rec {
         crateName = "hex";
@@ -1185,9 +1268,15 @@ rec {
       };
       "libc" = rec {
         crateName = "libc";
+<<<<<<< HEAD
         version = "0.2.89";
         edition = "2015";
         sha256 = "1iiqm470z1nfrd6i4602i1lf3qr0jakw8y40vpbwvx46alp0k32k";
+=======
+        version = "0.2.88";
+        edition = "2015";
+        sha256 = "0fn7r9r18cghdhjf2181zazlz8wxd00wqxriyr1mx8rh4c47mc03";
+>>>>>>> 1f9712a (Update cargo.nix)
         authors = [
           "The Rust Project Developers"
         ];
@@ -1232,6 +1321,7 @@ rec {
           "kv_unstable_std" = [ "std" "kv_unstable" "value-bag/error" ];
           "kv_unstable_sval" = [ "kv_unstable" "value-bag/sval" "sval" ];
         };
+        resolvedDefaultFeatures = [ "std" ];
       };
       "maplit" = rec {
         crateName = "maplit";
@@ -1256,7 +1346,22 @@ rec {
           "default" = [ "std" ];
           "use_std" = [ "std" ];
         };
-        resolvedDefaultFeatures = [ "default" "std" ];
+        resolvedDefaultFeatures = [ "default" "std" "use_std" ];
+      };
+      "once_cell" = rec {
+        crateName = "once_cell";
+        version = "1.7.2";
+        edition = "2018";
+        sha256 = "18qmpyfigg4ibdhjy5mwcjhzk9adwlgfaqv7nj430ivm86q0i2xg";
+        authors = [
+          "Aleksey Kladov <aleksey.kladov@gmail.com>"
+        ];
+        features = {
+          "alloc" = [ "race" ];
+          "default" = [ "std" ];
+          "std" = [ "alloc" ];
+        };
+        resolvedDefaultFeatures = [ "alloc" "default" "race" "std" ];
       };
       "opaque-debug" = rec {
         crateName = "opaque-debug";
@@ -1341,6 +1446,40 @@ rec {
           "default" = [ "proc-macro" ];
         };
         resolvedDefaultFeatures = [ "default" "proc-macro" ];
+      };
+      "quickcheck" = rec {
+        crateName = "quickcheck";
+        version = "1.0.3";
+        edition = "2018";
+        sha256 = "1mjhkfqwrb8mdyxdqr4zzbj1rm5dfx25n9zcc25lb6fxwiw673sq";
+        authors = [
+          "Andrew Gallant <jamslam@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "env_logger";
+            packageId = "env_logger";
+            optional = true;
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "log";
+            packageId = "log";
+            optional = true;
+          }
+          {
+            name = "rand";
+            packageId = "rand 0.8.3";
+            usesDefaultFeatures = false;
+            features = [ "getrandom" "small_rng" ];
+          }
+        ];
+        features = {
+          "default" = [ "regex" "use_logging" ];
+          "regex" = [ "env_logger/regex" ];
+          "use_logging" = [ "log" "env_logger" ];
+        };
+        resolvedDefaultFeatures = [ "default" "env_logger" "log" "regex" "use_logging" ];
       };
       "quote" = rec {
         crateName = "quote";
@@ -1442,7 +1581,7 @@ rec {
         dependencies = [
           {
             name = "getrandom";
-            packageId = "getrandom";
+            packageId = "getrandom 0.1.16";
             rename = "getrandom_package";
             optional = true;
           }
@@ -1496,6 +1635,32 @@ rec {
           "wasm-bindgen" = [ "getrandom_package/wasm-bindgen" ];
         };
         resolvedDefaultFeatures = [ "alloc" "default" "getrandom" "getrandom_package" "libc" "rand_pcg" "small_rng" "std" ];
+      };
+      "rand 0.8.3" = rec {
+        crateName = "rand";
+        version = "0.8.3";
+        edition = "2018";
+        sha256 = "0zldxfx4gi551n2fna4zz9ab22zsnzw1mj5hzi5nfs24dgkfgy8f";
+        authors = [
+          "The Rand Project Developers"
+          "The Rust Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "rand_core";
+            packageId = "rand_core 0.6.2";
+          }
+        ];
+        features = {
+          "alloc" = [ "rand_core/alloc" ];
+          "default" = [ "std" "std_rng" ];
+          "getrandom" = [ "rand_core/getrandom" ];
+          "serde1" = [ "serde" ];
+          "simd_support" = [ "packed_simd" ];
+          "std" = [ "rand_core/std" "rand_chacha/std" "alloc" "getrandom" "libc" ];
+          "std_rng" = [ "rand_chacha" "rand_hc" ];
+        };
+        resolvedDefaultFeatures = [ "getrandom" "small_rng" ];
       };
       "rand_chacha" = rec {
         crateName = "rand_chacha";
@@ -1573,7 +1738,7 @@ rec {
         dependencies = [
           {
             name = "getrandom";
-            packageId = "getrandom";
+            packageId = "getrandom 0.1.16";
             optional = true;
           }
         ];
@@ -1582,6 +1747,28 @@ rec {
           "std" = [ "alloc" "getrandom" "getrandom/std" ];
         };
         resolvedDefaultFeatures = [ "alloc" "getrandom" "std" ];
+      };
+      "rand_core 0.6.2" = rec {
+        crateName = "rand_core";
+        version = "0.6.2";
+        edition = "2018";
+        sha256 = "1rvas1afjvd2827b8mf2ilg78h3ksl9npkrdds3wbw9x33mndkrl";
+        authors = [
+          "The Rand Project Developers"
+          "The Rust Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "getrandom";
+            packageId = "getrandom 0.2.2";
+            optional = true;
+          }
+        ];
+        features = {
+          "serde1" = [ "serde" ];
+          "std" = [ "alloc" "getrandom" "getrandom/std" ];
+        };
+        resolvedDefaultFeatures = [ "getrandom" ];
       };
       "rand_hc" = rec {
         crateName = "rand_hc";
@@ -1654,6 +1841,67 @@ rec {
           "default" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "default" "std" ];
+      };
+      "regex" = rec {
+        crateName = "regex";
+        version = "1.4.3";
+        edition = "2015";
+        sha256 = "12llbg82js69mdl50lav4yn1iqlx71ckb18dww467q99w4wi49fr";
+        authors = [
+          "The Rust Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "aho-corasick";
+            packageId = "aho-corasick";
+            optional = true;
+          }
+          {
+            name = "memchr";
+            packageId = "memchr";
+            optional = true;
+          }
+          {
+            name = "regex-syntax";
+            packageId = "regex-syntax";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "thread_local";
+            packageId = "thread_local";
+            optional = true;
+          }
+        ];
+        features = {
+          "default" = [ "std" "perf" "unicode" "regex-syntax/default" ];
+          "perf" = [ "perf-cache" "perf-dfa" "perf-inline" "perf-literal" ];
+          "perf-cache" = [ "thread_local" ];
+          "perf-literal" = [ "aho-corasick" "memchr" ];
+          "unicode" = [ "unicode-age" "unicode-bool" "unicode-case" "unicode-gencat" "unicode-perl" "unicode-script" "unicode-segment" "regex-syntax/unicode" ];
+          "unicode-age" = [ "regex-syntax/unicode-age" ];
+          "unicode-bool" = [ "regex-syntax/unicode-bool" ];
+          "unicode-case" = [ "regex-syntax/unicode-case" ];
+          "unicode-gencat" = [ "regex-syntax/unicode-gencat" ];
+          "unicode-perl" = [ "regex-syntax/unicode-perl" ];
+          "unicode-script" = [ "regex-syntax/unicode-script" ];
+          "unicode-segment" = [ "regex-syntax/unicode-segment" ];
+          "unstable" = [ "pattern" ];
+          "use_std" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "aho-corasick" "memchr" "perf" "perf-cache" "perf-dfa" "perf-inline" "perf-literal" "std" "thread_local" ];
+      };
+      "regex-syntax" = rec {
+        crateName = "regex-syntax";
+        version = "0.6.22";
+        edition = "2015";
+        sha256 = "10b56ylil35jkb4nwqxm8hbyx3zq7fws0wpydjln165s8xql3sxm";
+        authors = [
+          "The Rust Project Developers"
+        ];
+        features = {
+          "default" = [ "unicode" ];
+          "unicode" = [ "unicode-age" "unicode-bool" "unicode-case" "unicode-gencat" "unicode-perl" "unicode-script" "unicode-segment" ];
+        };
       };
       "ryu" = rec {
         crateName = "ryu";
@@ -1878,9 +2126,15 @@ rec {
       };
       "syn" = rec {
         crateName = "syn";
+<<<<<<< HEAD
         version = "1.0.64";
         edition = "2018";
         sha256 = "0vsx3448kyym7s5kybrl0qixgya33gzjxaidahya00k1jzlx3n9z";
+=======
+        version = "1.0.62";
+        edition = "2018";
+        sha256 = "04pmc78nq20jzvkwg5323qj65gzcv19cwr347bjzw93bb6iphfhj";
+>>>>>>> 1f9712a (Update cargo.nix)
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -1969,6 +2223,22 @@ rec {
           {
             name = "syn";
             packageId = "syn";
+          }
+        ];
+        
+      };
+      "thread_local" = rec {
+        crateName = "thread_local";
+        version = "1.1.3";
+        edition = "2018";
+        sha256 = "1gccp3grndpi6dyhzylz4hkqnkzc1xyri98n0xwwhnn90i7d4640";
+        authors = [
+          "Amanieu d'Antras <amanieu@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "once_cell";
+            packageId = "once_cell";
           }
         ];
         
@@ -2153,7 +2423,21 @@ rec {
         ];
         
       };
-      "wasi" = rec {
+      "wasi 0.10.2+wasi-snapshot-preview1" = rec {
+        crateName = "wasi";
+        version = "0.10.2+wasi-snapshot-preview1";
+        edition = "2018";
+        sha256 = "1ii7nff4y1mpcrxzzvbpgxm7a1nn3szjf1n21jnx37c2g6dbsvzx";
+        authors = [
+          "The Cranelift Project Developers"
+        ];
+        features = {
+          "default" = [ "std" ];
+          "rustc-dep-of-std" = [ "compiler_builtins" "core" "rustc-std-workspace-alloc" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
+      };
+      "wasi 0.9.0+wasi-snapshot-preview1" = rec {
         crateName = "wasi";
         version = "0.9.0+wasi-snapshot-preview1";
         edition = "2018";
