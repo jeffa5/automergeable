@@ -53,7 +53,8 @@ fn diff_with_path(
                     ))
                 }
             }
-            for i in new_vec.len()..old_vec.len() {
+            // reverse so delete from the end
+            for i in (new_vec.len()..old_vec.len()).rev() {
                 // removed
                 changes.push(LocalChange::delete(
                     path.clone().index(i.try_into().unwrap()),
@@ -79,7 +80,8 @@ fn diff_with_path(
                     ))
                 }
             }
-            for i in new_vec.len()..old_vec.len() {
+            // reverse so delete from the end
+            for i in (new_vec.len()..old_vec.len()).rev() {
                 // removed
                 changes.push(LocalChange::delete(
                     path.clone().index(i.try_into().unwrap()),
