@@ -232,6 +232,30 @@ impl FromAutomerge for u128 {
     }
 }
 
+impl FromAutomerge for f64 {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::F64(f)) = value {
+            Ok(*f)
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
+impl FromAutomerge for f32 {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::F32(f)) = value {
+            Ok(*f)
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
 impl FromAutomerge for serde_json::Value {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         let var_name = match value {
