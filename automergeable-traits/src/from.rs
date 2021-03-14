@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     convert::TryInto,
     error::Error,
     hash::Hash,
@@ -48,6 +48,25 @@ where
                 v.push(T::from_automerge(val)?)
             }
             Ok(v)
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
+impl<T> FromAutomerge for HashSet<T>
+where
+    T: FromAutomerge + Clone + Eq + Hash,
+{
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        if let Value::Sequence(vec) = value {
+            let mut v = Vec::new();
+            for val in vec {
+                v.push(T::from_automerge(val)?)
+            }
+            Ok(v.iter().cloned().collect::<HashSet<_>>())
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),

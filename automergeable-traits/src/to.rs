@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     convert::TryInto,
     time,
 };
@@ -18,6 +18,16 @@ impl ToAutomerge for Vec<char> {
 }
 
 impl<T> ToAutomerge for Vec<T>
+where
+    T: ToAutomerge,
+{
+    fn to_automerge(&self) -> Value {
+        let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
+        Value::Sequence(vals)
+    }
+}
+
+impl<T> ToAutomerge for HashSet<T>
 where
     T: ToAutomerge,
 {
