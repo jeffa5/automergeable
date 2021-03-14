@@ -1,6 +1,6 @@
 use std::{collections::HashMap, convert::Infallible};
 
-use automerge::{MapType, Path, Primitive, Value};
+use automerge::{InvalidChangeRequest, MapType, Path, Primitive, Value};
 use automergeable::diff_values;
 use quickcheck::{empty_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
 
@@ -153,10 +153,10 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
                 .collect::<Vec<_>>();
             Value::Sequence(vec)
         }
-        2 => {
-            let vec = Vec::<char>::arbitrary(g);
-            Value::Text(vec)
-        }
+        // 2 => {
+        //     let vec = Vec::<char>::arbitrary(g);
+        //     Value::Text(vec)
+        // }
         _ => Value::Primitive(Prim::arbitrary(g).0),
     };
     Val(v)
@@ -284,26 +284,30 @@ fn applying_value_diff_result_to_old_gives_new() {
         f.apply_patch(p).unwrap();
 
         // apply changes to reach new value
-        let c = f
-            .change::<_, Infallible>(None, |d| {
-                for change in &changes {
-                    d.add_change(change.clone()).unwrap()
-                }
-                Ok(())
-            })
-            .unwrap();
-        if let Some(c) = c {
-            let (p, _) = b.apply_local_change(c).unwrap();
-            if let Err(e) = f.apply_patch(p) {
-                println!("{:?}", changes);
-                panic!("{}", e)
+        let c = f.change::<_, InvalidChangeRequest>(None, |d| {
+            for change in &changes {
+                d.add_change(change.clone())?
             }
+            Ok(())
+        });
+        if let Ok(c) = c {
+            if let Some(c) = c {
+                let (p, _) = b.apply_local_change(c).unwrap();
+                if let Err(e) = f.apply_patch(p) {
+                    println!("{:?} {:?}", changes, e);
+                    return TestResult::failed();
+                }
+            }
+        } else {
+            println!("changes {:?} {:?}", changes, c);
+            return TestResult::failed();
         }
 
         let val = f.get_value(&Path::root()).unwrap();
         if val == v1.0 {
             TestResult::passed()
         } else {
+            println!("changes {:?}", changes);
             println!("expected: {:?}, found: {:?}", v1, val);
             TestResult::failed()
         }
@@ -311,5 +315,68 @@ fn applying_value_diff_result_to_old_gives_new() {
 
     QuickCheck::new()
         .tests(100_000_000)
+        .gen(Gen::new(10))
         .quickcheck(apply_diff as fn(Val, Val) -> TestResult)
+}
+
+#[test]
+fn broken() {
+    // setup
+    let mut hm = std::collections::HashMap::new();
+    hm.insert(
+        "".to_owned(),
+        automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
+    );
+    let mut b = automerge::Backend::init();
+
+    // new frontend with initial state
+    let (mut f, c) =
+        automerge::Frontend::new_with_initial_state(Value::Map(hm, automerge::MapType::Map))
+            .unwrap();
+
+    // get patch and apply
+    let (p, _) = b.apply_local_change(c).unwrap();
+    f.apply_patch(p).unwrap();
+
+    // change first value and insert into the sequence
+    let c = f
+        .change::<_, automerge::InvalidChangeRequest>(None, |d| {
+            d.add_change(automerge::LocalChange::set(
+                automerge::Path::root().key("").index(0),
+                automerge::Value::Primitive(automerge::Primitive::Int(0)),
+            ))
+            .unwrap();
+            d.add_change(automerge::LocalChange::insert(
+                automerge::Path::root().key("").index(1),
+                automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
+            ))
+            .unwrap();
+            Ok(())
+        })
+        .unwrap();
+
+    // setup first expected
+    let mut ehm = HashMap::new();
+    ehm.insert(
+        "".to_owned(),
+        automerge::Value::Sequence(vec![
+            automerge::Value::Primitive(automerge::Primitive::Int(0)),
+            automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
+        ]),
+    );
+    let expected = automerge::Value::Map(ehm.clone(), automerge::MapType::Map);
+
+    // ok, sequence has int then bool
+    assert_eq!(expected, f.get_value(&Path::root()).unwrap());
+
+    // now apply the change to the backend and bring the patch back to the frontend
+    if let Some(c) = c {
+        let (p, _) = b.apply_local_change(c).unwrap();
+        f.apply_patch(p).unwrap();
+    }
+    let v = f.get_value(&Path::root()).unwrap();
+
+    let expected = automerge::Value::Map(ehm, automerge::MapType::Map);
+    // not ok! sequence has bool then int
+    assert_eq!(expected, v);
 }
