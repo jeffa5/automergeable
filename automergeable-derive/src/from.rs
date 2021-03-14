@@ -7,7 +7,7 @@ use syn::{
 
 use crate::utils;
 
-pub(crate) fn from_automerge(input: DeriveInput) -> TokenStream {
+pub(crate) fn from_automerge(input: &DeriveInput) -> TokenStream {
     match &input.data {
         Data::Struct(DataStruct { fields, .. }) => from_automerge_struct(&input, &fields),
         Data::Enum(DataEnum { variants, .. }) => from_automerge_enum(&input, &variants),
