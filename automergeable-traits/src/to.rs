@@ -234,12 +234,3 @@ impl ToAutomerge for serde_json::Value {
         }
     }
 }
-
-impl<Tz> ToAutomerge for chrono::DateTime<Tz>
-where
-    Tz: chrono::TimeZone,
-{
-    fn to_automerge(&self) -> automerge::Value {
-        Value::Primitive(Primitive::Timestamp(self.timestamp()))
-    }
-}
