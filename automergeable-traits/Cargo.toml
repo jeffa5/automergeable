@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
-automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "update-uuid" }
+automerge-protocol = { git = "https://github.com/jeffa5/automerge-rs", branch = "update-uuid" }
 thiserror = "1.0.24"
 serde_json = "1.0.62"
