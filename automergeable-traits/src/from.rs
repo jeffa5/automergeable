@@ -309,3 +309,29 @@ impl FromAutomerge for serde_json::Value {
         var_name
     }
 }
+
+impl FromAutomerge for chrono::DateTime<chrono::Utc> {
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::Timestamp(i)) = value {
+            use chrono::TimeZone;
+            Ok(chrono::Utc.timestamp(*i, 0))
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
+impl FromAutomerge for chrono::DateTime<chrono::Local> {
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::Timestamp(i)) = value {
+            use chrono::TimeZone;
+            Ok(chrono::Local.timestamp(*i, 0))
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
