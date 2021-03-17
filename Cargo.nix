@@ -1268,15 +1268,9 @@ rec {
       };
       "libc" = rec {
         crateName = "libc";
-<<<<<<< HEAD
         version = "0.2.89";
         edition = "2015";
         sha256 = "1iiqm470z1nfrd6i4602i1lf3qr0jakw8y40vpbwvx46alp0k32k";
-=======
-        version = "0.2.88";
-        edition = "2015";
-        sha256 = "0fn7r9r18cghdhjf2181zazlz8wxd00wqxriyr1mx8rh4c47mc03";
->>>>>>> 1f9712a (Update cargo.nix)
         authors = [
           "The Rust Project Developers"
         ];
@@ -1347,21 +1341,6 @@ rec {
           "use_std" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "default" "std" "use_std" ];
-      };
-      "once_cell" = rec {
-        crateName = "once_cell";
-        version = "1.7.2";
-        edition = "2018";
-        sha256 = "18qmpyfigg4ibdhjy5mwcjhzk9adwlgfaqv7nj430ivm86q0i2xg";
-        authors = [
-          "Aleksey Kladov <aleksey.kladov@gmail.com>"
-        ];
-        features = {
-          "alloc" = [ "race" ];
-          "default" = [ "std" ];
-          "std" = [ "alloc" ];
-        };
-        resolvedDefaultFeatures = [ "alloc" "default" "race" "std" ];
       };
       "opaque-debug" = rec {
         crateName = "opaque-debug";
@@ -1844,9 +1823,9 @@ rec {
       };
       "regex" = rec {
         crateName = "regex";
-        version = "1.4.3";
+        version = "1.4.5";
         edition = "2015";
-        sha256 = "12llbg82js69mdl50lav4yn1iqlx71ckb18dww467q99w4wi49fr";
+        sha256 = "06awg9164h7w4pmbchmj9pkrqn78sa8y252ijqk1pfmyvpn5cw4m";
         authors = [
           "The Rust Project Developers"
         ];
@@ -1866,16 +1845,10 @@ rec {
             packageId = "regex-syntax";
             usesDefaultFeatures = false;
           }
-          {
-            name = "thread_local";
-            packageId = "thread_local";
-            optional = true;
-          }
         ];
         features = {
           "default" = [ "std" "perf" "unicode" "regex-syntax/default" ];
           "perf" = [ "perf-cache" "perf-dfa" "perf-inline" "perf-literal" ];
-          "perf-cache" = [ "thread_local" ];
           "perf-literal" = [ "aho-corasick" "memchr" ];
           "unicode" = [ "unicode-age" "unicode-bool" "unicode-case" "unicode-gencat" "unicode-perl" "unicode-script" "unicode-segment" "regex-syntax/unicode" ];
           "unicode-age" = [ "regex-syntax/unicode-age" ];
@@ -1888,13 +1861,13 @@ rec {
           "unstable" = [ "pattern" ];
           "use_std" = [ "std" ];
         };
-        resolvedDefaultFeatures = [ "aho-corasick" "memchr" "perf" "perf-cache" "perf-dfa" "perf-inline" "perf-literal" "std" "thread_local" ];
+        resolvedDefaultFeatures = [ "aho-corasick" "memchr" "perf" "perf-cache" "perf-dfa" "perf-inline" "perf-literal" "std" ];
       };
       "regex-syntax" = rec {
         crateName = "regex-syntax";
-        version = "0.6.22";
+        version = "0.6.23";
         edition = "2015";
-        sha256 = "10b56ylil35jkb4nwqxm8hbyx3zq7fws0wpydjln165s8xql3sxm";
+        sha256 = "0j25v3pbfaprpr1k7h8smw5xrs6j5kzznddq50nzcq1f2n4z1m94";
         authors = [
           "The Rust Project Developers"
         ];
@@ -2126,15 +2099,9 @@ rec {
       };
       "syn" = rec {
         crateName = "syn";
-<<<<<<< HEAD
         version = "1.0.64";
         edition = "2018";
         sha256 = "0vsx3448kyym7s5kybrl0qixgya33gzjxaidahya00k1jzlx3n9z";
-=======
-        version = "1.0.62";
-        edition = "2018";
-        sha256 = "04pmc78nq20jzvkwg5323qj65gzcv19cwr347bjzw93bb6iphfhj";
->>>>>>> 1f9712a (Update cargo.nix)
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -2223,22 +2190,6 @@ rec {
           {
             name = "syn";
             packageId = "syn";
-          }
-        ];
-        
-      };
-      "thread_local" = rec {
-        crateName = "thread_local";
-        version = "1.1.3";
-        edition = "2018";
-        sha256 = "1gccp3grndpi6dyhzylz4hkqnkzc1xyri98n0xwwhnn90i7d4640";
-        authors = [
-          "Amanieu d'Antras <amanieu@gmail.com>"
-        ];
-        dependencies = [
-          {
-            name = "once_cell";
-            packageId = "once_cell";
           }
         ];
         
