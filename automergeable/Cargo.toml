@@ -15,3 +15,7 @@ thiserror = "1.0.24"
 
 [dev-dependencies]
 insta = "1.6.1"
+
+[features]
+default = ["std"]
+std = []

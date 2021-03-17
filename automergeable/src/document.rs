@@ -31,9 +31,17 @@ impl<T> Document<T>
 where
     T: Automergeable + Clone + Default,
 {
+    #[cfg(feature = "std")]
     pub fn new() -> Self {
         Self {
             frontend: automerge::Frontend::new(),
+            _data: PhantomData,
+        }
+    }
+
+    pub fn new_with_timestamper(t: Box<(dyn Fn() -> Option<i64>)>) -> Self {
+        Self {
+            frontend: automerge::Frontend::new_with_timestamper(t),
             _data: PhantomData,
         }
     }
