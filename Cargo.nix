@@ -86,9 +86,9 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/automerge/automerge-rs";
-          rev = "c103b0638e24076e6cd755f102f3c75926c25d51";
-          sha256 = "0ymhay14pwijgwiwsqg7gnn2fxapjffchl0jgwa14flqq4q47v21";
+          url = "https://github.com/jeffa5/automerge-rs";
+          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
+          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -129,9 +129,9 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/automerge/automerge-rs";
-          rev = "c103b0638e24076e6cd755f102f3c75926c25d51";
-          sha256 = "0ymhay14pwijgwiwsqg7gnn2fxapjffchl0jgwa14flqq4q47v21";
+          url = "https://github.com/jeffa5/automerge-rs";
+          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
+          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -210,9 +210,9 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/automerge/automerge-rs";
-          rev = "c103b0638e24076e6cd755f102f3c75926c25d51";
-          sha256 = "0ymhay14pwijgwiwsqg7gnn2fxapjffchl0jgwa14flqq4q47v21";
+          url = "https://github.com/jeffa5/automerge-rs";
+          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
+          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -253,7 +253,10 @@ rec {
             features = [ "v4" ];
           }
         ];
-        
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
       "automerge-protocol" = rec {
         crateName = "automerge-protocol";
@@ -261,9 +264,9 @@ rec {
         edition = "2018";
         workspace_member = null;
         src = pkgs.fetchgit {
-          url = "https://github.com/automerge/automerge-rs";
-          rev = "c103b0638e24076e6cd755f102f3c75926c25d51";
-          sha256 = "0ymhay14pwijgwiwsqg7gnn2fxapjffchl0jgwa14flqq4q47v21";
+          url = "https://github.com/jeffa5/automerge-rs";
+          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
+          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -302,6 +305,10 @@ rec {
           {
             name = "automerge";
             packageId = "automerge";
+          }
+          {
+            name = "automerge-frontend";
+            packageId = "automerge-frontend";
           }
           {
             name = "automerge-protocol";
@@ -361,6 +368,10 @@ rec {
         ];
         devDependencies = [
           {
+            name = "automergeable";
+            packageId = "automergeable";
+          }
+          {
             name = "insta";
             packageId = "insta";
           }
@@ -387,6 +398,10 @@ rec {
           {
             name = "automerge-protocol";
             packageId = "automerge-protocol";
+          }
+          {
+            name = "serde_json";
+            packageId = "serde_json";
           }
           {
             name = "thiserror";
@@ -483,9 +498,9 @@ rec {
       };
       "byteorder" = rec {
         crateName = "byteorder";
-        version = "1.4.2";
+        version = "1.4.3";
         edition = "2018";
-        sha256 = "0srh0h0594jmsnbvm7n0g8xabhla8lwb3gn8s0fzd7d1snix2i5f";
+        sha256 = "0456lv9xi1a5bcm32arknf33ikv76p3fr9yzki4lb2897p2qkh8l";
         authors = [
           "Andrew Gallant <jamslam@gmail.com>"
         ];
@@ -508,9 +523,9 @@ rec {
       };
       "console" = rec {
         crateName = "console";
-        version = "0.14.0";
+        version = "0.14.1";
         edition = "2018";
-        sha256 = "1ajnr0rga4vya0fza12ighf3ffkm86w1rv8p5wf443s8nd30kj3w";
+        sha256 = "0i8z1bdbv8is1lamd81jdsf4pa1ww2jl3h0yjdshc5mabd2fd4rr";
         authors = [
           "Armin Ronacher <armin.ronacher@active-4.com>"
         ];
@@ -1170,9 +1185,9 @@ rec {
       };
       "libc" = rec {
         crateName = "libc";
-        version = "0.2.87";
+        version = "0.2.89";
         edition = "2015";
-        sha256 = "04r2lkffw4j29yk4pa75xr7dk8pb5w1bidbbjlzhly6n64fpap96";
+        sha256 = "1iiqm470z1nfrd6i4602i1lf3qr0jakw8y40vpbwvx46alp0k32k";
         authors = [
           "The Rust Project Developers"
         ];
@@ -1255,9 +1270,9 @@ rec {
       };
       "pin-project-lite" = rec {
         crateName = "pin-project-lite";
-        version = "0.2.5";
+        version = "0.2.6";
         edition = "2018";
-        sha256 = "12jlqmyw8sy3d5jc8ri4d3gg9z7wyl6rzjr2qz8kw0sb5r293x0c";
+        sha256 = "01g96zxghb33s1vsjmjpn9l3a2nxdqj7glf9lhq7q5wjkhjiy3nw";
         authors = [
           "Taiki Endo <te316e89@gmail.com>"
         ];
@@ -1653,9 +1668,9 @@ rec {
       };
       "serde" = rec {
         crateName = "serde";
-        version = "1.0.123";
+        version = "1.0.124";
         edition = "2015";
-        sha256 = "1bk9733mgiv5sg8yb19y8mc85fb2aaqp1k02v10alavj688idmcj";
+        sha256 = "17yjk4g886jzq8ihn5k6523mbpp95m8scgdbp7xlaanbazwiyxmx";
         authors = [
           "Erick Tryzelaar <erick.tryzelaar@gmail.com>"
           "David Tolnay <dtolnay@gmail.com>"
@@ -1681,9 +1696,9 @@ rec {
       };
       "serde_derive" = rec {
         crateName = "serde_derive";
-        version = "1.0.123";
+        version = "1.0.124";
         edition = "2015";
-        sha256 = "0ccg4m7ww6mfs5vjdbdifri2kf1wyd4difjnqnraph2gssaw54ck";
+        sha256 = "16q6k7zmc7pcbl4pmngpmw4aj3apw4d2ja2swbsqdqcl7rlzf00q";
         procMacro = true;
         authors = [
           "Erick Tryzelaar <erick.tryzelaar@gmail.com>"
@@ -1863,9 +1878,9 @@ rec {
       };
       "syn" = rec {
         crateName = "syn";
-        version = "1.0.60";
+        version = "1.0.64";
         edition = "2018";
-        sha256 = "1080gw6mlja7yl26crya3k403wjdp7v3wx9mxcmpcnlar9z5j067";
+        sha256 = "0vsx3448kyym7s5kybrl0qixgya33gzjxaidahya00k1jzlx3n9z";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -2008,9 +2023,9 @@ rec {
       };
       "tracing-attributes" = rec {
         crateName = "tracing-attributes";
-        version = "0.1.13";
+        version = "0.1.15";
         edition = "2018";
-        sha256 = "01scz4qv8cqfbd2ksvs81hskkakc2ikx1c4hl5rj6vvhnwfvvad8";
+        sha256 = "1qni83p58nrp20i256zm169dnf7cylfchkfd9iza3j076fjnybn4";
         procMacro = true;
         authors = [
           "Tokio Contributors <team@tokio.rs>"
@@ -2030,7 +2045,7 @@ rec {
             name = "syn";
             packageId = "syn";
             usesDefaultFeatures = false;
-            features = [ "full" "parsing" "printing" "visit-mut" "clone-impls" "extra-traits" "proc-macro" ];
+            features = [ "full" "parsing" "printing" "visit" "visit-mut" "clone-impls" "extra-traits" "proc-macro" ];
           }
         ];
         features = {
@@ -2059,9 +2074,9 @@ rec {
       };
       "typenum" = rec {
         crateName = "typenum";
-        version = "1.12.0";
-        edition = "2015";
-        sha256 = "0cvbksljz61ian21fnn0h51kphl0pwpzb932bv4s0rwy1wh8lg1p";
+        version = "1.13.0";
+        edition = "2018";
+        sha256 = "01lbbspn4080yg8wp6y7q3xcqih1c1dmkkx4pwax4z1a9436k7w7";
         build = "build/main.rs";
         authors = [
           "Paho Lurie-Gregg <paho@paholg.com>"
@@ -2130,9 +2145,9 @@ rec {
       };
       "version_check" = rec {
         crateName = "version_check";
-        version = "0.9.2";
+        version = "0.9.3";
         edition = "2015";
-        sha256 = "1vbaqdf802qinsq8q20w8w0qn2pv0rkq5p73ijcblrwxcvjp5adm";
+        sha256 = "1zmkcgj2m0pq0l4wnhrp1wl1lygf7x2h5p7pvjwc4719lnlxrv2z";
         authors = [
           "Sergio Benitez <sb@sergio.bz>"
         ];
