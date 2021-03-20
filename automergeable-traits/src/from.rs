@@ -4,7 +4,6 @@ use std::{
     error::Error,
     hash::Hash,
     str::FromStr,
-    time::SystemTime,
 };
 
 use automerge::{Primitive, Value};
@@ -148,11 +147,12 @@ where
     }
 }
 
-impl FromAutomerge for SystemTime {
+#[cfg(feature = "std")]
+impl FromAutomerge for std::time::SystemTime {
     fn from_automerge(value: &automerge::Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Timestamp(t)) = value {
             let duration = std::time::Duration::from_secs((*t).try_into().unwrap());
-            Ok(SystemTime::UNIX_EPOCH + duration)
+            Ok(std::time::SystemTime::UNIX_EPOCH + duration)
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),

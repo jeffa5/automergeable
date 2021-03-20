@@ -10,3 +10,7 @@ automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "fix-pani
 automerge-protocol = { git = "https://github.com/jeffa5/automerge-rs", branch = "fix-panic-in-change" }
 thiserror = "1.0.24"
 serde_json = "1.0.62"
+
+[features]
+default = ["std"]
+std = []

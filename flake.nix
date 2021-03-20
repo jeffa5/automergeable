@@ -32,6 +32,7 @@
             buildInputs = with pkgs;[
               (rust.override {
                 extensions = [ "rust-src" "rustfmt" ];
+                targets = [ "wasm32-unknown-unknown" ];
               })
               cargo-edit
               cargo-watch
@@ -40,6 +41,9 @@
               cargo-insta
               crate2nix
               rust-analyzer
+
+              wasm-pack
+              nodejs
 
               rnix-lsp
               nixpkgs-fmt

@@ -15,6 +15,9 @@ thiserror = "1.0.24"
 
 [dev-dependencies]
 insta = "1.6.1"
+wasm-bindgen-test = "0.3.22"
+getrandom = { version = "0.2.2", features=["js"] }
+uuid = { version = "0.8", features = ["wasm-bindgen"] }
 
 [features]
 default = ["std"]

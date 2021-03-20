@@ -46,6 +46,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn new_with_patch(
         patch: automerge_protocol::Patch,
     ) -> Result<Self, automerge_frontend::InvalidPatch> {
@@ -160,7 +161,11 @@ mod tests {
         struct B {
             inner: u64,
         }
-        let mut doc: Document<A> = Document::new();
+        #[cfg(feature = "std")]
+        let mut doc = Document::<A>::new();
+        #[cfg(not(feature = "std"))]
+        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
+
         let mut back = automerge::Backend::init();
         let change = doc
             .change::<_, automerge::InvalidChangeRequest>(|_t| Ok(()))
@@ -194,7 +199,12 @@ mod tests {
         struct B {
             inner: u64,
         }
-        let mut doc: Document<A> = Document::new();
+
+        #[cfg(feature = "std")]
+        let mut doc = Document::<A>::new();
+        #[cfg(not(feature = "std"))]
+        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
+
         let mut back = automerge::Backend::init();
         let change = doc
             .change::<_, automerge::InvalidChangeRequest>(|t| {
@@ -232,7 +242,11 @@ mod tests {
         struct B {
             inner: u64,
         }
-        let mut doc: Document<A> = Document::new();
+        #[cfg(feature = "std")]
+        let mut doc = Document::<A>::new();
+        #[cfg(not(feature = "std"))]
+        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
+
         let mut back = automerge::Backend::init();
         let change = doc
             .change::<_, automerge::InvalidChangeRequest>(|t| {

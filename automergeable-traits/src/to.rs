@@ -1,7 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     convert::TryInto,
-    time,
 };
 
 use automerge::{MapType, Primitive, Value};
@@ -102,10 +101,11 @@ where
     }
 }
 
-impl ToAutomerge for time::SystemTime {
+#[cfg(feature = "std")]
+impl ToAutomerge for std::time::SystemTime {
     fn to_automerge(&self) -> Value {
         let ts = self
-            .duration_since(time::UNIX_EPOCH)
+            .duration_since(std::time::UNIX_EPOCH)
             .expect("time went backwards");
         Value::Primitive(Primitive::Timestamp(ts.as_secs().try_into().unwrap()))
     }
