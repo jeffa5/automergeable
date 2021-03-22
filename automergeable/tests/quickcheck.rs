@@ -69,6 +69,12 @@ impl Arbitrary for MapTy {
 #[derive(Debug, Clone, PartialEq)]
 struct Val(Value);
 
+impl Default for Val {
+    fn default() -> Self {
+        Self(Value::Primitive(Primitive::Null))
+    }
+}
+
 impl Arbitrary for Val {
     fn arbitrary(g: &mut quickcheck::Gen) -> Self {
         let depth = g.choose(&[1, 2, 3]).unwrap();
@@ -317,6 +323,199 @@ fn applying_value_diff_result_to_old_gives_new() {
         .tests(100_000_000)
         .gen(Gen::new(10))
         .quickcheck(apply_diff as fn(Val, Val) -> TestResult)
+}
+
+#[test]
+fn save_then_load() {
+    fn apply_diff(vals: Vec<Val>) -> TestResult {
+        for val in &vals {
+            if let Val(Value::Map(_, MapType::Map)) = val {
+            } else {
+                return TestResult::discard();
+            }
+        }
+
+        let mut backend_bytes = Vec::new();
+        let mut old: Option<Val> = None;
+        for val in vals {
+            let changes = diff_values(&val.0, &old.unwrap_or_default().0).unwrap();
+            old = Some(val);
+            let mut backend = if backend_bytes.is_empty() {
+                automerge::Backend::init()
+            } else {
+                let b = automerge::Backend::load(backend_bytes);
+                if let Ok(b) = b {
+                    b
+                } else {
+                    println!("error loading: {:?}", b);
+                    return TestResult::failed();
+                }
+            };
+
+            let mut frontend = automerge::Frontend::new();
+            let patch = backend.get_patch().unwrap();
+            frontend.apply_patch(patch).unwrap();
+
+            let c = frontend
+                .change::<_, InvalidChangeRequest>(None, |d| {
+                    for change in &changes {
+                        d.add_change(change.clone())?
+                    }
+                    Ok(())
+                })
+                .unwrap();
+            if let Some(change) = c {
+                backend.apply_local_change(change).unwrap();
+            }
+            backend_bytes = backend.save().unwrap();
+        }
+        TestResult::passed()
+    }
+
+    QuickCheck::new()
+        .tests(100_000_000)
+        .gen(Gen::new(30))
+        .quickcheck(apply_diff as fn(Vec<Val>) -> TestResult)
+}
+
+#[test]
+fn broken_save_load() {
+    let mut m = HashMap::new();
+    m.insert(
+        "\u{0}\u{0}".to_owned(),
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Boolean(false)),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Int(0)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Boolean(false)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
+        ]),
+    );
+    m.insert(
+        "\u{2}".to_owned(),
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+        ]),
+    );
+    m.insert(
+        "\u{0}".to_owned(),
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Int(0)),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+        ]),
+    );
+    m.insert(
+        "".to_owned(),
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::Int(0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Uint(0)),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Timestamp(0)),
+            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Boolean(false)),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Int(0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Null),
+            Value::Primitive(Primitive::F64(0.0)),
+            Value::Primitive(Primitive::Counter(0)),
+            Value::Primitive(Primitive::Boolean(false)),
+        ]),
+    );
+    m.insert(
+        "\u{1}".to_owned(),
+        Value::Map(
+            {
+                let mut m = HashMap::new();
+                m.insert("".to_owned(), Value::Primitive(Primitive::F64(0.0)));
+                m
+            },
+            MapType::Table,
+        ),
+    );
+    let vals = vec![
+        Val(Value::Map(m, MapType::Map)),
+        Val(Value::Map(HashMap::new(), MapType::Map)),
+    ];
+
+    let mut backend_bytes = Vec::new();
+    let mut old: Option<Val> = None;
+    for val in vals {
+        let changes = diff_values(&val.0, &old.unwrap_or_default().0).unwrap();
+        println!("changes: {:?}", changes);
+        old = Some(val);
+        let mut backend = if backend_bytes.is_empty() {
+            automerge::Backend::init()
+        } else {
+            let b = automerge::Backend::load(backend_bytes);
+            if let Ok(b) = b {
+                b
+            } else {
+                println!("error loading: {:?}", b);
+                panic!("failed loading")
+            }
+        };
+
+        let mut frontend = automerge::Frontend::new();
+        let patch = backend.get_patch().unwrap();
+        frontend.apply_patch(patch).unwrap();
+
+        let c = frontend
+            .change::<_, InvalidChangeRequest>(None, |d| {
+                for change in &changes {
+                    d.add_change(change.clone())?
+                }
+                Ok(())
+            })
+            .unwrap();
+        if let Some(change) = c {
+            backend.apply_local_change(change).unwrap();
+        }
+        backend_bytes = backend.save().unwrap();
+    }
 }
 
 #[test]
