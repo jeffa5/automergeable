@@ -10,6 +10,12 @@ pub trait ToAutomerge {
     fn to_automerge(&self) -> Value;
 }
 
+impl ToAutomerge for Value {
+    fn to_automerge(&self) -> Value {
+        self.clone()
+    }
+}
+
 impl ToAutomerge for Vec<char> {
     fn to_automerge(&self) -> Value {
         Value::Text(self.clone())

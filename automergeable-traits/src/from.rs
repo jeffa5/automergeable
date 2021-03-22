@@ -24,6 +24,12 @@ pub enum FromAutomergeError {
     Unknown(#[from] Box<dyn Error>),
 }
 
+impl FromAutomerge for Value {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        Ok(value.clone())
+    }
+}
+
 impl FromAutomerge for String {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Str(s)) = value {
