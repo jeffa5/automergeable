@@ -9,13 +9,13 @@ use automerge::Path;
 use crate::traits::Automergeable;
 
 #[derive(Debug, thiserror::Error)]
-pub enum DocumentChangeError<E: Error> {
+pub enum DocumentChangeError {
     #[error(transparent)]
     InvalidChangeRequest(#[from] automerge::InvalidChangeRequest),
     #[error(transparent)]
     FromError(#[from] crate::traits::FromAutomergeError),
     #[error("change error: {0}")]
-    ChangeError(E),
+    ChangeError(Box<dyn Error>),
 }
 
 #[derive(Default)]
@@ -65,9 +65,9 @@ where
         &mut self,
         message: Option<String>,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError>
     where
-        E: Error,
+        E: Error + 'static,
         F: FnOnce(&mut T) -> Result<(), E>,
     {
         let original = self
@@ -76,7 +76,7 @@ where
             .expect("no root value");
         let mut new_t = T::from_automerge(&original)?;
         if let Err(e) = change(&mut new_t) {
-            return Err(DocumentChangeError::ChangeError(e));
+            return Err(DocumentChangeError::ChangeError(Box::new(e)));
         }
         let changes = crate::diff_values(&new_t.to_automerge(), &original);
         let change =
@@ -93,9 +93,9 @@ where
     pub fn change<F, E>(
         &mut self,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError>
     where
-        E: Error,
+        E: Error + 'static,
         F: FnOnce(&mut T) -> Result<(), E>,
     {
         self.change_inner(None, change)
@@ -105,9 +105,9 @@ where
         &mut self,
         message: String,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError>
     where
-        E: Error,
+        E: Error + 'static,
         F: FnOnce(&mut T) -> Result<(), E>,
     {
         self.change_inner(Some(message), change)
