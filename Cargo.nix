@@ -109,8 +109,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
-          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
+          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
+          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -139,7 +139,7 @@ rec {
           }
           {
             name = "uuid";
-            packageId = "uuid 0.5.1";
+            packageId = "uuid";
             features = [ "v4" ];
           }
         ];
@@ -152,8 +152,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
-          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
+          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
+          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -233,8 +233,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
-          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
+          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
+          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -271,7 +271,7 @@ rec {
           }
           {
             name = "uuid";
-            packageId = "uuid 0.5.1";
+            packageId = "uuid";
             features = [ "v4" ];
           }
         ];
@@ -287,8 +287,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "9cd5c971761dd8072cc4fd50dbc1414e42e57bbe";
-          sha256 = "1b6k8jq3v83yw90n6vwwzqzxa1jfpb9n4gfk8sm5mrbl8j3q7310";
+          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
+          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -309,7 +309,7 @@ rec {
           }
           {
             name = "uuid";
-            packageId = "uuid 0.5.1";
+            packageId = "uuid";
             features = [ "v4" ];
           }
         ];
@@ -351,6 +351,11 @@ rec {
         ];
         devDependencies = [
           {
+            name = "getrandom";
+            packageId = "getrandom 0.2.2";
+            features = [ "js" ];
+          }
+          {
             name = "insta";
             packageId = "insta";
           }
@@ -358,8 +363,20 @@ rec {
             name = "quickcheck";
             packageId = "quickcheck";
           }
+          {
+            name = "uuid";
+            packageId = "uuid";
+            features = [ "wasm-bindgen" ];
+          }
+          {
+            name = "wasm-bindgen-test";
+            packageId = "wasm-bindgen-test";
+          }
         ];
-        
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
       "automergeable-derive" = rec {
         crateName = "automergeable-derive";
@@ -434,7 +451,10 @@ rec {
             packageId = "thiserror";
           }
         ];
-        
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
       "bitmaps" = rec {
         crateName = "bitmaps";
@@ -535,7 +555,19 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" "std" ];
       };
-      "cfg-if" = rec {
+      "cfg-if 0.1.10" = rec {
+        crateName = "cfg-if";
+        version = "0.1.10";
+        edition = "2018";
+        sha256 = "08h80ihs74jcyp24cd75wwabygbbdgl05k6p5dmq8akbr78vv1a7";
+        authors = [
+          "Alex Crichton <alex@alexcrichton.com>"
+        ];
+        features = {
+          "rustc-dep-of-std" = [ "core" "compiler_builtins" ];
+        };
+      };
+      "cfg-if 1.0.0" = rec {
         crateName = "cfg-if";
         version = "1.0.0";
         edition = "2018";
@@ -585,6 +617,26 @@ rec {
           "default" = [ "unicode-width" "ansi-parsing" ];
           "windows-console-colors" = [ "ansi-parsing" "winapi-util" ];
         };
+      };
+      "console_error_panic_hook" = rec {
+        crateName = "console_error_panic_hook";
+        version = "0.1.6";
+        edition = "2015";
+        sha256 = "04d2narcrzk9bnddz17rr2l819l82pr0h6d98s2w9q236n87dndq";
+        authors = [
+          "Nick Fitzgerald <fitzgen@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "cfg-if";
+            packageId = "cfg-if 0.1.10";
+          }
+          {
+            name = "wasm-bindgen";
+            packageId = "wasm-bindgen";
+          }
+        ];
+        
       };
       "digest" = rec {
         crateName = "digest";
@@ -674,16 +726,6 @@ rec {
         sha256 = "1vfylvk4va2ivqx85603lyqqp0zk52cgbs4n5nfbbbqx577qm2p8";
         authors = [
           "The Rust-Crypto Project Developers"
-        ];
-        
-      };
-      "fuchsia-cprng" = rec {
-        crateName = "fuchsia-cprng";
-        version = "0.1.1";
-        edition = "2018";
-        sha256 = "1fnkqrbz7ixxzsb04bsz9p0zzazanma8znfdqjvh39n14vapfvx0";
-        authors = [
-          "Erick Tryzelaar <etryzelaar@google.com>"
         ];
         
       };
@@ -1038,7 +1080,7 @@ rec {
         dependencies = [
           {
             name = "cfg-if";
-            packageId = "cfg-if";
+            packageId = "cfg-if 1.0.0";
           }
           {
             name = "libc";
@@ -1070,7 +1112,13 @@ rec {
         dependencies = [
           {
             name = "cfg-if";
-            packageId = "cfg-if";
+            packageId = "cfg-if 1.0.0";
+          }
+          {
+            name = "js-sys";
+            packageId = "js-sys";
+            optional = true;
+            target = { target, features }: ((target."arch" == "wasm32") && (target."os" == "unknown"));
           }
           {
             name = "libc";
@@ -1083,11 +1131,19 @@ rec {
             packageId = "wasi 0.10.2+wasi-snapshot-preview1";
             target = { target, features }: (target."os" == "wasi");
           }
+          {
+            name = "wasm-bindgen";
+            packageId = "wasm-bindgen";
+            optional = true;
+            usesDefaultFeatures = false;
+            target = { target, features }: ((target."arch" == "wasm32") && (target."os" == "unknown"));
+          }
         ];
         features = {
           "js" = [ "wasm-bindgen" "js-sys" ];
           "rustc-dep-of-std" = [ "compiler_builtins" "core" "libc/rustc-dep-of-std" "wasi/rustc-dep-of-std" ];
         };
+        resolvedDefaultFeatures = [ "js" "js-sys" "wasm-bindgen" ];
       };
       "hex" = rec {
         crateName = "hex";
@@ -1182,7 +1238,7 @@ rec {
           }
           {
             name = "uuid";
-            packageId = "uuid 0.8.2";
+            packageId = "uuid";
           }
         ];
         features = {
@@ -1227,9 +1283,9 @@ rec {
       };
       "js-sys" = rec {
         crateName = "js-sys";
-        version = "0.3.48";
+        version = "0.3.49";
         edition = "2018";
-        sha256 = "0y2dgsfzy52ngi2b1ggwzl5nh5m948ady1h7sr1pikhmn7wq97yw";
+        sha256 = "08f8avgmlwb44jqjmw4gjhx6rzw1adpl3flm1kv7al0jja9y65fw";
         authors = [
           "The wasm-bindgen Developers"
         ];
@@ -1268,9 +1324,9 @@ rec {
       };
       "libc" = rec {
         crateName = "libc";
-        version = "0.2.89";
+        version = "0.2.91";
         edition = "2015";
-        sha256 = "1iiqm470z1nfrd6i4602i1lf3qr0jakw8y40vpbwvx46alp0k32k";
+        sha256 = "1rq2clij7a22p2ik62486whd2shmgkicxv4gav30w4qprbvb25l9";
         authors = [
           "The Rust Project Developers"
         ];
@@ -1306,7 +1362,7 @@ rec {
         dependencies = [
           {
             name = "cfg-if";
-            packageId = "cfg-if";
+            packageId = "cfg-if 1.0.0";
           }
         ];
         features = {
@@ -1481,73 +1537,6 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" "proc-macro" ];
       };
-      "rand 0.3.23" = rec {
-        crateName = "rand";
-        version = "0.3.23";
-        edition = "2015";
-        sha256 = "0v679h38pjjqj5h4md7v2slsvj6686qgcn7p9fbw3h43iwnk1b34";
-        authors = [
-          "The Rust Project Developers"
-        ];
-        dependencies = [
-          {
-            name = "libc";
-            packageId = "libc";
-          }
-          {
-            name = "rand";
-            packageId = "rand 0.4.6";
-          }
-        ];
-        features = {
-          "nightly" = [ "i128_support" ];
-        };
-      };
-      "rand 0.4.6" = rec {
-        crateName = "rand";
-        version = "0.4.6";
-        edition = "2015";
-        sha256 = "14qjfv3gggzhnma20k0sc1jf8y6pplsaq7n1j9ls5c8kf2wl0a2m";
-        authors = [
-          "The Rust Project Developers"
-        ];
-        dependencies = [
-          {
-            name = "fuchsia-cprng";
-            packageId = "fuchsia-cprng";
-            target = { target, features }: (target."os" == "fuchsia");
-          }
-          {
-            name = "libc";
-            packageId = "libc";
-            optional = true;
-            target = { target, features }: target."unix";
-          }
-          {
-            name = "rand_core";
-            packageId = "rand_core 0.3.1";
-            usesDefaultFeatures = false;
-            target = { target, features }: (target."env" == "sgx");
-          }
-          {
-            name = "rdrand";
-            packageId = "rdrand";
-            target = { target, features }: (target."env" == "sgx");
-          }
-          {
-            name = "winapi";
-            packageId = "winapi";
-            target = { target, features }: target."windows";
-            features = [ "minwindef" "ntsecapi" "profileapi" "winnt" ];
-          }
-        ];
-        features = {
-          "default" = [ "std" ];
-          "nightly" = [ "i128_support" ];
-          "std" = [ "libc" ];
-        };
-        resolvedDefaultFeatures = [ "default" "libc" "std" ];
-      };
       "rand 0.7.3" = rec {
         crateName = "rand";
         version = "0.7.3";
@@ -1669,42 +1658,6 @@ rec {
         };
         resolvedDefaultFeatures = [ "std" ];
       };
-      "rand_core 0.3.1" = rec {
-        crateName = "rand_core";
-        version = "0.3.1";
-        edition = "2015";
-        sha256 = "0jzdgszfa4bliigiy4hi66k7fs3gfwi2qxn8vik84ph77fwdwvvs";
-        authors = [
-          "The Rand Project Developers"
-          "The Rust Project Developers"
-        ];
-        dependencies = [
-          {
-            name = "rand_core";
-            packageId = "rand_core 0.4.2";
-          }
-        ];
-        features = {
-          "alloc" = [ "rand_core/alloc" ];
-          "default" = [ "std" ];
-          "serde1" = [ "rand_core/serde1" ];
-          "std" = [ "rand_core/std" ];
-        };
-      };
-      "rand_core 0.4.2" = rec {
-        crateName = "rand_core";
-        version = "0.4.2";
-        edition = "2015";
-        sha256 = "1p09ynysrq1vcdlmcqnapq4qakl2yd1ng3kxh3qscpx09k2a6cww";
-        authors = [
-          "The Rand Project Developers"
-          "The Rust Project Developers"
-        ];
-        features = {
-          "serde1" = [ "serde" "serde_derive" ];
-          "std" = [ "alloc" ];
-        };
-      };
       "rand_core 0.5.1" = rec {
         crateName = "rand_core";
         version = "0.5.1";
@@ -1801,26 +1754,6 @@ rec {
           "serde1" = [ "serde" ];
         };
       };
-      "rdrand" = rec {
-        crateName = "rdrand";
-        version = "0.4.0";
-        edition = "2015";
-        sha256 = "1cjq0kwx1bk7jx3kzyciiish5gqsj7620dm43dc52sr8fzmm9037";
-        authors = [
-          "Simonas Kazlauskas <rdrand@kazlauskas.me>"
-        ];
-        dependencies = [
-          {
-            name = "rand_core";
-            packageId = "rand_core 0.3.1";
-            usesDefaultFeatures = false;
-          }
-        ];
-        features = {
-          "default" = [ "std" ];
-        };
-        resolvedDefaultFeatures = [ "default" "std" ];
-      };
       "regex" = rec {
         crateName = "regex";
         version = "1.4.5";
@@ -1887,11 +1820,21 @@ rec {
         features = {
         };
       };
+      "scoped-tls" = rec {
+        crateName = "scoped-tls";
+        version = "1.0.0";
+        edition = "2015";
+        sha256 = "1hj8lifzvivdb1z02lfnzkshpvk85nkgzxsy2hc0zky9wf894spa";
+        authors = [
+          "Alex Crichton <alex@alexcrichton.com>"
+        ];
+        
+      };
       "serde" = rec {
         crateName = "serde";
-        version = "1.0.124";
+        version = "1.0.125";
         edition = "2015";
-        sha256 = "17yjk4g886jzq8ihn5k6523mbpp95m8scgdbp7xlaanbazwiyxmx";
+        sha256 = "0w8i0f4wsq4zd9vz1k6lq00066rjrgzlxkm25h8sfpss387cb3am";
         authors = [
           "Erick Tryzelaar <erick.tryzelaar@gmail.com>"
           "David Tolnay <dtolnay@gmail.com>"
@@ -1917,9 +1860,9 @@ rec {
       };
       "serde_derive" = rec {
         crateName = "serde_derive";
-        version = "1.0.124";
+        version = "1.0.125";
         edition = "2015";
-        sha256 = "16q6k7zmc7pcbl4pmngpmw4aj3apw4d2ja2swbsqdqcl7rlzf00q";
+        sha256 = "0vfhndim4sa1i1x38dyvrxyq5v8zxjs0av05ldfkn82qpfibg4xh";
         procMacro = true;
         authors = [
           "Erick Tryzelaar <erick.tryzelaar@gmail.com>"
@@ -2206,7 +2149,7 @@ rec {
         dependencies = [
           {
             name = "cfg-if";
-            packageId = "cfg-if";
+            packageId = "cfg-if 1.0.0";
           }
           {
             name = "log";
@@ -2319,30 +2262,7 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" ];
       };
-      "uuid 0.5.1" = rec {
-        crateName = "uuid";
-        version = "0.5.1";
-        edition = "2015";
-        sha256 = "08nw3famk1w1zf9ck32pmklk24wd4n4nqnr9wl46qvxak2wf7ixw";
-        authors = [
-          "The Rust Project Developers"
-        ];
-        dependencies = [
-          {
-            name = "rand";
-            packageId = "rand 0.3.23";
-            optional = true;
-          }
-        ];
-        features = {
-          "v1" = [ "rand" ];
-          "v3" = [ "md5" ];
-          "v4" = [ "rand" ];
-          "v5" = [ "sha1" ];
-        };
-        resolvedDefaultFeatures = [ "rand" "v4" ];
-      };
-      "uuid 0.8.2" = rec {
+      "uuid" = rec {
         crateName = "uuid";
         version = "0.8.2";
         edition = "2018";
@@ -2353,6 +2273,13 @@ rec {
           "Dylan DPC<dylan.dpc@gmail.com>"
           "Hunar Roop Kahlon<hunar.roop@gmail.com>"
         ];
+        dependencies = [
+          {
+            name = "getrandom";
+            packageId = "getrandom 0.2.2";
+            optional = true;
+          }
+        ];
         features = {
           "default" = [ "std" ];
           "guid" = [ "winapi" ];
@@ -2362,7 +2289,7 @@ rec {
           "v5" = [ "sha1" ];
           "wasm-bindgen" = [ "getrandom" "getrandom/js" ];
         };
-        resolvedDefaultFeatures = [ "default" "std" ];
+        resolvedDefaultFeatures = [ "default" "getrandom" "std" "v4" "wasm-bindgen" ];
       };
       "version_check" = rec {
         crateName = "version_check";
@@ -2404,16 +2331,16 @@ rec {
       };
       "wasm-bindgen" = rec {
         crateName = "wasm-bindgen";
-        version = "0.2.71";
+        version = "0.2.72";
         edition = "2018";
-        sha256 = "19qssg8ifass5qv60hpicl1hp9ilizh164q7l3b63i5p8012iqby";
+        sha256 = "1ghgmhxv7yj0v472qp84w7aix1k619xdqcl19md68pcfp8fzds4g";
         authors = [
           "The wasm-bindgen Developers"
         ];
         dependencies = [
           {
             name = "cfg-if";
-            packageId = "cfg-if";
+            packageId = "cfg-if 1.0.0";
           }
           {
             name = "wasm-bindgen-macro";
@@ -2432,9 +2359,9 @@ rec {
       };
       "wasm-bindgen-backend" = rec {
         crateName = "wasm-bindgen-backend";
-        version = "0.2.71";
+        version = "0.2.72";
         edition = "2018";
-        sha256 = "1a1apjim8rq9kpjiaxi4zbk7v8lmh2wpkz3k1sdkmfxq89lqnzav";
+        sha256 = "1lqzvkdzw66wdhm7wgs80aih0zx349dvmd3w5h3xlqphiyjynv04";
         authors = [
           "The wasm-bindgen Developers"
         ];
@@ -2474,11 +2401,43 @@ rec {
         };
         resolvedDefaultFeatures = [ "spans" ];
       };
+      "wasm-bindgen-futures" = rec {
+        crateName = "wasm-bindgen-futures";
+        version = "0.4.22";
+        edition = "2018";
+        sha256 = "0s1lxjm3y30dd60d4wdi9nj39hy7s6phk82rpdjbavzjkbxpw5bk";
+        authors = [
+          "The wasm-bindgen Developers"
+        ];
+        dependencies = [
+          {
+            name = "cfg-if";
+            packageId = "cfg-if 1.0.0";
+          }
+          {
+            name = "js-sys";
+            packageId = "js-sys";
+          }
+          {
+            name = "wasm-bindgen";
+            packageId = "wasm-bindgen";
+          }
+          {
+            name = "web-sys";
+            packageId = "web-sys";
+            target = { target, features }: (target."feature" == "atomics");
+            features = [ "MessageEvent" "Worker" ];
+          }
+        ];
+        features = {
+          "futures-core-03-stream" = [ "futures-core" ];
+        };
+      };
       "wasm-bindgen-macro" = rec {
         crateName = "wasm-bindgen-macro";
-        version = "0.2.71";
+        version = "0.2.72";
         edition = "2018";
-        sha256 = "0fqdrsbb9zxscpgazh6723z8w0l91crdih1n1wgnc5ppivd3ib75";
+        sha256 = "16w1frwyqcaqaj6pm6b3rk4ibipkyngramvwg5ph9nkcsc0smy8f";
         procMacro = true;
         authors = [
           "The wasm-bindgen Developers"
@@ -2501,9 +2460,9 @@ rec {
       };
       "wasm-bindgen-macro-support" = rec {
         crateName = "wasm-bindgen-macro-support";
-        version = "0.2.71";
+        version = "0.2.72";
         edition = "2018";
-        sha256 = "07j0xchgxlxpllxxm1xsjp5mmzbgnfmyhkipp63z4ka59p3kw1fc";
+        sha256 = "0pbknfjlh57zyzvk9aslxgvqnhan72sxp4ish5d58czfnb0lbswn";
         authors = [
           "The wasm-bindgen Developers"
         ];
@@ -2538,19 +2497,76 @@ rec {
       };
       "wasm-bindgen-shared" = rec {
         crateName = "wasm-bindgen-shared";
-        version = "0.2.71";
+        version = "0.2.72";
         edition = "2018";
-        sha256 = "1cc3cc7lr1051avi24jwadh91kaandzq9991ybsp3p929328wvvx";
+        sha256 = "1yjzil4mndy1bzvm1xr1pbmw86ianjzhp9pa8sin0jgvjr38y55p";
         authors = [
           "The wasm-bindgen Developers"
         ];
         
       };
+      "wasm-bindgen-test" = rec {
+        crateName = "wasm-bindgen-test";
+        version = "0.3.22";
+        edition = "2018";
+        sha256 = "0hygqbsdk5fcdjja01ga6v7k2sbz19dbp36lmydb3gasgfljw04z";
+        authors = [
+          "The wasm-bindgen Developers"
+        ];
+        dependencies = [
+          {
+            name = "console_error_panic_hook";
+            packageId = "console_error_panic_hook";
+          }
+          {
+            name = "js-sys";
+            packageId = "js-sys";
+          }
+          {
+            name = "scoped-tls";
+            packageId = "scoped-tls";
+          }
+          {
+            name = "wasm-bindgen";
+            packageId = "wasm-bindgen";
+          }
+          {
+            name = "wasm-bindgen-futures";
+            packageId = "wasm-bindgen-futures";
+          }
+          {
+            name = "wasm-bindgen-test-macro";
+            packageId = "wasm-bindgen-test-macro";
+          }
+        ];
+        
+      };
+      "wasm-bindgen-test-macro" = rec {
+        crateName = "wasm-bindgen-test-macro";
+        version = "0.3.22";
+        edition = "2018";
+        sha256 = "0db7ls4fkl88sq1zlxqzwakrzxrh4m2sf9gwg16gdnik76yw19hh";
+        procMacro = true;
+        authors = [
+          "The wasm-bindgen Developers"
+        ];
+        dependencies = [
+          {
+            name = "proc-macro2";
+            packageId = "proc-macro2";
+          }
+          {
+            name = "quote";
+            packageId = "quote";
+          }
+        ];
+        
+      };
       "web-sys" = rec {
         crateName = "web-sys";
-        version = "0.3.48";
+        version = "0.3.49";
         edition = "2018";
-        sha256 = "0ayrqjk57bvs16rxfhvgc7pizkvdfnk0lanyvz74ha9v48k0nq7c";
+        sha256 = "0413s7f96k5xdk55cpap04warrfaz89p4xs6dqzw1b2x1zbikzjr";
         authors = [
           "The wasm-bindgen Developers"
         ];
@@ -2984,7 +3000,7 @@ rec {
           "XrSpace" = [ "EventTarget" ];
           "XrViewerPose" = [ "XrPose" ];
         };
-        resolvedDefaultFeatures = [ "console" ];
+        resolvedDefaultFeatures = [ "Event" "EventTarget" "MessageEvent" "Worker" "console" ];
       };
       "winapi" = rec {
         crateName = "winapi";
@@ -3009,7 +3025,7 @@ rec {
         features = {
           "debug" = [ "impl-debug" ];
         };
-        resolvedDefaultFeatures = [ "consoleapi" "handleapi" "minwindef" "ntsecapi" "processenv" "profileapi" "winbase" "wincon" "winnt" "winuser" ];
+        resolvedDefaultFeatures = [ "consoleapi" "handleapi" "processenv" "winbase" "wincon" "winnt" "winuser" ];
       };
       "winapi-i686-pc-windows-gnu" = rec {
         crateName = "winapi-i686-pc-windows-gnu";
