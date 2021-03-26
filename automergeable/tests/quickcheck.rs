@@ -393,44 +393,58 @@ fn save_then_load() {
 
         let mut backend_bytes = Vec::new();
         let mut old: Option<Val> = None;
+        let mut change_history = Vec::new();
         for val in vals {
-            let changes = diff_values(&val.0, &old.unwrap_or_default().0).unwrap();
-            old = Some(val);
-            let mut backend = if backend_bytes.is_empty() {
-                automerge::Backend::init()
-            } else {
-                let b = automerge::Backend::load(backend_bytes);
-                if let Ok(b) = b {
-                    b
-                } else {
-                    println!("error loading: {:?}", b);
+            let changes = diff_values(&val.0, &old.unwrap_or_default().0);
+            match changes {
+                Err(InvalidChangeRequest::CannotOverwriteCounter { .. }) => {
+                    return TestResult::discard()
+                }
+                Err(e) => {
+                    println!("failed: {:?}", e);
                     return TestResult::failed();
                 }
-            };
+                Ok(changes) => {
+                    change_history.push(changes.clone());
+                    old = Some(val);
+                    let mut backend = if backend_bytes.is_empty() {
+                        automerge::Backend::init()
+                    } else {
+                        let b = automerge::Backend::load(backend_bytes);
+                        if let Ok(b) = b {
+                            b
+                        } else {
+                            println!("changes: {:?}", change_history);
+                            println!("error loading: {:?}", b);
+                            return TestResult::failed();
+                        }
+                    };
 
-            let mut frontend = automerge::Frontend::new();
-            let patch = backend.get_patch().unwrap();
-            frontend.apply_patch(patch).unwrap();
+                    let mut frontend = automerge::Frontend::new();
+                    let patch = backend.get_patch().unwrap();
+                    frontend.apply_patch(patch).unwrap();
 
-            let c = frontend
-                .change::<_, InvalidChangeRequest>(None, |d| {
-                    for change in &changes {
-                        d.add_change(change.clone())?
+                    let c = frontend
+                        .change::<_, InvalidChangeRequest>(None, |d| {
+                            for change in &changes {
+                                d.add_change(change.clone())?
+                            }
+                            Ok(())
+                        })
+                        .unwrap();
+                    if let Some(change) = c {
+                        backend.apply_local_change(change).unwrap();
                     }
-                    Ok(())
-                })
-                .unwrap();
-            if let Some(change) = c {
-                backend.apply_local_change(change).unwrap();
+                    backend_bytes = backend.save().unwrap();
+                }
             }
-            backend_bytes = backend.save().unwrap();
         }
         TestResult::passed()
     }
 
     QuickCheck::new()
-        .tests(100_000_000)
-        .gen(Gen::new(30))
+        .tests(10_000_000_000)
+        .gen(Gen::new(50))
         .quickcheck(apply_diff as fn(Vec<Val>) -> TestResult)
 }
 
@@ -582,19 +596,19 @@ fn broken() {
         "".to_owned(),
         automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
     );
-    let mut b = automerge::Backend::init();
+    let mut backend = automerge::Backend::init();
 
     // new frontend with initial state
-    let (mut f, c) =
+    let (mut frontend, change) =
         automerge::Frontend::new_with_initial_state(Value::Map(hm, automerge::MapType::Map))
             .unwrap();
 
     // get patch and apply
-    let (p, _) = b.apply_local_change(c).unwrap();
-    f.apply_patch(p).unwrap();
+    let (patch, _) = backend.apply_local_change(change).unwrap();
+    frontend.apply_patch(patch).unwrap();
 
     // change first value and insert into the sequence
-    let c = f
+    let c = frontend
         .change::<_, automerge::InvalidChangeRequest>(None, |d| {
             d.add_change(automerge::LocalChange::set(
                 automerge::Path::root().key("").index(0),
@@ -622,14 +636,14 @@ fn broken() {
     let expected = automerge::Value::Map(ehm.clone(), automerge::MapType::Map);
 
     // ok, sequence has int then bool
-    assert_eq!(expected, f.get_value(&Path::root()).unwrap());
+    assert_eq!(expected, frontend.get_value(&Path::root()).unwrap());
 
     // now apply the change to the backend and bring the patch back to the frontend
     if let Some(c) = c {
-        let (p, _) = b.apply_local_change(c).unwrap();
-        f.apply_patch(p).unwrap();
+        let (p, _) = backend.apply_local_change(c).unwrap();
+        frontend.apply_patch(p).unwrap();
     }
-    let v = f.get_value(&Path::root()).unwrap();
+    let v = frontend.get_value(&Path::root()).unwrap();
 
     let expected = automerge::Value::Map(ehm, automerge::MapType::Map);
     // not ok! sequence has bool then int
