@@ -2,7 +2,7 @@ use std::{collections::HashMap, convert::Infallible};
 
 use automerge::{InvalidChangeRequest, MapType, Path, Primitive, Value};
 use automergeable::diff_values;
-use quickcheck::{empty_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
+use quickcheck::{empty_shrinker, single_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
 
 #[derive(Debug, Clone, PartialEq)]
 struct Prim(Primitive);
@@ -39,14 +39,62 @@ impl Arbitrary for Prim {
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
         match &self.0 {
-            Primitive::Str(s) => Box::new(s.shrink().map(Primitive::Str).map(Prim)),
-            Primitive::Int(i) => Box::new(i.shrink().map(Primitive::Int).map(Prim)),
-            Primitive::Uint(u) => Box::new(u.shrink().map(Primitive::Uint).map(Prim)),
-            Primitive::F64(f) => Box::new(f.shrink().map(Primitive::F64).map(Prim)),
-            Primitive::F32(f) => Box::new(f.shrink().map(Primitive::F32).map(Prim)),
-            Primitive::Counter(c) => Box::new(c.shrink().map(Primitive::Counter).map(Prim)),
-            Primitive::Timestamp(t) => Box::new(t.shrink().map(Primitive::Timestamp).map(Prim)),
-            Primitive::Boolean(b) => Box::new(b.shrink().map(Primitive::Boolean).map(Prim)),
+            Primitive::Str(s) => {
+                if s.is_empty() {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(s.shrink().map(Primitive::Str).map(Prim))
+                }
+            }
+            Primitive::Int(i) => {
+                if *i == 0 {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(i.shrink().map(Primitive::Int).map(Prim))
+                }
+            }
+            Primitive::Uint(u) => {
+                if *u == 0 {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(u.shrink().map(Primitive::Uint).map(Prim))
+                }
+            }
+            Primitive::F64(f) => {
+                if *f == 0. {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(f.shrink().map(Primitive::F64).map(Prim))
+                }
+            }
+            Primitive::F32(f) => {
+                if *f == 0. {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(f.shrink().map(Primitive::F32).map(Prim))
+                }
+            }
+            Primitive::Counter(c) => {
+                if *c == 0 {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(c.shrink().map(Primitive::Counter).map(Prim))
+                }
+            }
+            Primitive::Timestamp(t) => {
+                if *t == 0 {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(t.shrink().map(Primitive::Timestamp).map(Prim))
+                }
+            }
+            Primitive::Boolean(b) => {
+                if !b {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(b.shrink().map(Primitive::Boolean).map(Prim))
+                }
+            }
             Primitive::Cursor(_) => empty_shrinker(),
             Primitive::Null => empty_shrinker(),
         }
@@ -84,33 +132,41 @@ impl Arbitrary for Val {
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
         match &self.0 {
             Value::Map(m, mt) => {
-                let m = m
-                    .iter()
-                    .map(|(k, v)| (k.clone(), Val(v.clone())))
-                    .collect::<HashMap<_, _>>();
-                let mt = *mt;
-                Box::new(
-                    m.shrink()
-                        .map(move |m| {
-                            let m = m
-                                .into_iter()
-                                .map(|(k, v)| (k, v.0))
-                                .collect::<HashMap<_, _>>();
-                            Value::Map(m, mt)
-                        })
-                        .map(Val),
-                )
+                if m.is_empty() {
+                    single_shrinker(Val(Value::Primitive(Primitive::Null)))
+                } else {
+                    let m = m
+                        .iter()
+                        .map(|(k, v)| (k.clone(), Val(v.clone())))
+                        .collect::<HashMap<_, _>>();
+                    let mt = *mt;
+                    Box::new(
+                        m.shrink()
+                            .map(move |m| {
+                                let m = m
+                                    .into_iter()
+                                    .map(|(k, v)| (k, v.0))
+                                    .collect::<HashMap<_, _>>();
+                                Value::Map(m, mt)
+                            })
+                            .map(Val),
+                    )
+                }
             }
             Value::Sequence(v) => {
-                let v = v.iter().map(|v| Val(v.clone())).collect::<Vec<_>>();
-                Box::new(
-                    v.shrink()
-                        .map(|v| {
-                            let v = v.into_iter().map(|i| i.0).collect::<Vec<_>>();
-                            Value::Sequence(v)
-                        })
-                        .map(Val),
-                )
+                if v.is_empty() {
+                    single_shrinker(Val(Value::Primitive(Primitive::Null)))
+                } else {
+                    let v = v.iter().map(|v| Val(v.clone())).collect::<Vec<_>>();
+                    Box::new(
+                        v.shrink()
+                            .map(|v| {
+                                let v = v.into_iter().map(|i| i.0).collect::<Vec<_>>();
+                                Value::Sequence(v)
+                            })
+                            .map(Val),
+                    )
+                }
             }
             Value::Text(v) => Box::new(v.shrink().map(Value::Text).map(Val)),
             Value::Primitive(p) => Box::new(
