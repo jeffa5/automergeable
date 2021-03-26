@@ -443,8 +443,8 @@ fn save_then_load() {
     }
 
     QuickCheck::new()
-        .tests(10_000_000_000)
-        .gen(Gen::new(50))
+        .tests(100)
+        .gen(Gen::new(30))
         .quickcheck(apply_diff as fn(Vec<Val>) -> TestResult)
 }
 
@@ -589,7 +589,7 @@ fn broken_save_load() {
 }
 
 #[test]
-fn broken() {
+fn broken_reordering_of_values() {
     // setup
     let mut hm = std::collections::HashMap::new();
     hm.insert(
