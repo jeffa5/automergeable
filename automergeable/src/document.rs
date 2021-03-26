@@ -82,7 +82,7 @@ where
         let change =
             self.frontend
                 .change::<_, automerge::InvalidChangeRequest>(message, |doc| {
-                    for change in changes {
+                    for change in changes? {
                         doc.add_change(change)?
                     }
                     Ok(())

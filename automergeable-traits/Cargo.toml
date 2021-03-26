@@ -6,8 +6,8 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "fix-panic-in-change" }
-automerge-protocol = { git = "https://github.com/jeffa5/automerge-rs", branch = "fix-panic-in-change" }
+automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "save-load-missing-object" }
+automerge-protocol = { git = "https://github.com/jeffa5/automerge-rs", branch = "save-load-missing-object" }
 thiserror = "1.0.24"
 serde_json = "1.0.62"
 
