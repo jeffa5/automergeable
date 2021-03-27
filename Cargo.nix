@@ -109,8 +109,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
-          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
+          rev = "1e36b6227281ad710964f19b0be228f5c14fcd27";
+          sha256 = "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -152,8 +152,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
-          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
+          rev = "1e36b6227281ad710964f19b0be228f5c14fcd27";
+          sha256 = "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -233,8 +233,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
-          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
+          rev = "1e36b6227281ad710964f19b0be228f5c14fcd27";
+          sha256 = "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -287,8 +287,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/jeffa5/automerge-rs";
-          rev = "ae3549d214f8d36b792de3ecd27f46bae7724364";
-          sha256 = "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk";
+          rev = "1e36b6227281ad710964f19b0be228f5c14fcd27";
+          sha256 = "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy";
         };
         authors = [
           "Alex Good <alex@memoryandthought.me>"
@@ -2042,9 +2042,9 @@ rec {
       };
       "syn" = rec {
         crateName = "syn";
-        version = "1.0.64";
+        version = "1.0.65";
         edition = "2018";
-        sha256 = "0vsx3448kyym7s5kybrl0qixgya33gzjxaidahya00k1jzlx3n9z";
+        sha256 = "0qyn28h2bm0q7ayrz2bv3y6yhm746xdzgybfjl9adi91q84dg8gk";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];

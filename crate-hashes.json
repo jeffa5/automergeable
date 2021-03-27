@@ -1,6 +1,6 @@
 {
-  "automerge 0.0.2 (git+https://github.com/jeffa5/automerge-rs?branch=save-load-missing-object#ae3549d214f8d36b792de3ecd27f46bae7724364)": "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk",
-  "automerge-backend 0.0.1 (git+https://github.com/jeffa5/automerge-rs?branch=save-load-missing-object#ae3549d214f8d36b792de3ecd27f46bae7724364)": "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk",
-  "automerge-frontend 0.1.0 (git+https://github.com/jeffa5/automerge-rs?branch=save-load-missing-object#ae3549d214f8d36b792de3ecd27f46bae7724364)": "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk",
-  "automerge-protocol 0.1.0 (git+https://github.com/jeffa5/automerge-rs?branch=save-load-missing-object#ae3549d214f8d36b792de3ecd27f46bae7724364)": "13m7yv9phq308hh75f842i1ibxd6k5sjcg11c757ij9725v8adlk"
+  "automerge 0.0.2 (git+https://github.com/jeffa5/automerge-rs?branch=main#1e36b6227281ad710964f19b0be228f5c14fcd27)": "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy",
+  "automerge-backend 0.0.1 (git+https://github.com/jeffa5/automerge-rs?branch=main#1e36b6227281ad710964f19b0be228f5c14fcd27)": "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy",
+  "automerge-frontend 0.1.0 (git+https://github.com/jeffa5/automerge-rs?branch=main#1e36b6227281ad710964f19b0be228f5c14fcd27)": "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy",
+  "automerge-protocol 0.1.0 (git+https://github.com/jeffa5/automerge-rs?branch=main#1e36b6227281ad710964f19b0be228f5c14fcd27)": "02ymnbw7rma2d8qww1p7j1g8m9nfh18arrlsla39rhwq26grbpwy"
 }
