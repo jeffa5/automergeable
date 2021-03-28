@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use automergeable::{
     automerge::{Backend, InvalidChangeRequest, MapType, Primitive, Value},
+    unicode_segmentation::UnicodeSegmentation,
     DocumentChangeError,
 };
 use libfuzzer_sys::fuzz_target;
@@ -36,6 +37,9 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
         }
 
         if has_cursor(val) {
+            return;
+        }
+        if has_empty_text(val) {
             return;
         }
     }
@@ -85,5 +89,14 @@ fn has_cursor(v: &Value) -> bool {
                 false
             }
         }
+    }
+}
+
+fn has_empty_text(v: &Value) -> bool {
+    match v {
+        Value::Map(m, _) => m.values().any(|v| has_empty_text(v)),
+        Value::Sequence(v) => v.iter().any(|i| has_empty_text(i)),
+        Value::Text(t) => t.iter().any(|i| i.graphemes(true).count() != 1),
+        Value::Primitive(_) => false,
     }
 }
