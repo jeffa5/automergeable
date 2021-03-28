@@ -42,6 +42,24 @@ impl FromAutomerge for String {
     }
 }
 
+impl FromAutomerge for char {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::Str(s)) = value {
+            if s.chars().count() == 1 {
+                Ok(s.chars().next().unwrap())
+            } else {
+                Err(FromAutomergeError::WrongType {
+                    found: value.clone(),
+                })
+            }
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
 impl<T> FromAutomerge for Vec<T>
 where
     T: FromAutomerge,
@@ -61,6 +79,20 @@ where
     }
 }
 
+pub struct Text(pub Vec<String>);
+
+impl FromAutomerge for Text {
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        if let Value::Text(vec) = value {
+            Ok(Text(vec.clone()))
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
 impl<T> FromAutomerge for HashSet<T>
 where
     T: FromAutomerge + Clone + Eq + Hash,
@@ -72,18 +104,6 @@ where
                 v.push(T::from_automerge(val)?)
             }
             Ok(v.iter().cloned().collect::<HashSet<_>>())
-        } else {
-            Err(FromAutomergeError::WrongType {
-                found: value.clone(),
-            })
-        }
-    }
-}
-
-impl FromAutomerge for Vec<char> {
-    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Text(vec) = value {
-            Ok(vec.to_vec())
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
@@ -294,7 +314,7 @@ impl FromAutomerge for serde_json::Value {
                     .map(|i| serde_json::Value::from_automerge(i).unwrap())
                     .collect::<Vec<_>>(),
             )),
-            Value::Text(v) => Ok(serde_json::Value::String(v.iter().collect())),
+            Value::Text(v) => Ok(serde_json::Value::String(v.concat())),
             Value::Primitive(p) => match p {
                 Primitive::Str(s) => Ok(serde_json::Value::String(s.clone())),
                 Primitive::Int(i) => Ok(serde_json::Value::Number(Number::from(*i))),

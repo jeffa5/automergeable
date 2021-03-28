@@ -104,7 +104,7 @@ fn get_representation_type(
         Some("text") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    <::std::vec::Vec<char>>::from_automerge(value)?.into_iter().collect()
+                    <#crate_path::traits::Text>::from_automerge(value)?.0.into_iter().collect()
                 } else {
                     <#field_ty>::default()
                 }

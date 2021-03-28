@@ -111,7 +111,10 @@ fn get_representation_type(
     }
     match ty.map(|s| s.to_lowercase()).as_deref() {
         Some("text") => {
-            quote! { #crate_path::automerge::Value::Text(#field_name.chars().collect::<::std::vec::Vec<_>>()) }
+            quote! {{
+                use #crate_path::unicode_segmentation::UnicodeSegmentation;
+                #crate_path::automerge::Value::Text(#field_name.graphemes(true).map(|s| s.to_owned()).collect::<::std::vec::Vec<_>>())
+            }}
         }
         Some("counter") => {
             quote! { #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(#field_name)) }

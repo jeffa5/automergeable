@@ -12,6 +12,7 @@ automerge-frontend = { git = "https://github.com/jeffa5/automerge-rs", branch = 
 automergeable-traits = { path = "../automergeable-traits" }
 automergeable-derive = { path = "../automergeable-derive" }
 thiserror = "1.0.24"
+unicode-segmentation = "1.7.1"
 
 [dev-dependencies]
 insta = "1.6.1"

@@ -159,58 +159,62 @@ fn to_automerge_attribute() {
     settings.set_sort_maps(true);
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-                     [
-                       {
-                         "a_counter": {
-                           "Counter": 0
-                         },
-                         "a_timestamp": {
-                           "Timestamp": 0
-                         },
-                         "b": [
-                           {
-                             "inner": {
-                               "Uint": 2
-                             }
-                           },
-                           "map"
-                         ],
-                         "en": [
-                           {
-                             "Part2": "Null"
-                           },
-                           "map"
-                         ],
-                         "list": [],
-                         "nah": "Null",
-                         "others": [
-                           {},
-                           "map"
-                         ],
-                         "some_text": [],
-                         "tup": [
-                           [
-                             "a",
-                             " ",
-                             "t",
-                             "u",
-                             "p",
-                             "l",
-                             "e"
-                           ],
-                           [
-                             "h",
-                             "i"
-                           ]
-                         ],
-                         "u": "Null",
-                         "yep": {
-                           "Int": -234
-                         }
-                       },
-                       "map"
-                     ]
-                     "###)
+        [
+          {
+            "a_counter": {
+              "Counter": 0
+            },
+            "a_timestamp": {
+              "Timestamp": 0
+            },
+            "b": [
+              {
+                "inner": {
+                  "Uint": 2
+                }
+              },
+              "map"
+            ],
+            "en": [
+              {
+                "Part2": "Null"
+              },
+              "map"
+            ],
+            "list": [],
+            "nah": "Null",
+            "others": [
+              {},
+              "map"
+            ],
+            "some_text": [],
+            "tup": [
+              [
+                "a",
+                " ",
+                "t",
+                "u",
+                "p",
+                "l",
+                "e"
+              ],
+              [
+                {
+                  "Str": "h"
+                },
+                {
+                  "Str": "i"
+                }
+              ]
+            ],
+            "u": "Null",
+            "yep": {
+              "Int": -234
+            }
+          },
+          "map"
+        ]
+        "###)
     });
 
     a.others.insert("a".to_owned(), "b".to_owned());
@@ -270,8 +274,12 @@ fn to_automerge_attribute() {
                 "e"
               ],
               [
-                "h",
-                "i"
+                {
+                  "Str": "h"
+                },
+                {
+                  "Str": "i"
+                }
               ]
             ],
             "u": "Null",
@@ -354,8 +362,12 @@ fn to_automerge_attribute() {
                 "e"
               ],
               [
-                "h",
-                "i"
+                {
+                  "Str": "h"
+                },
+                {
+                  "Str": "i"
+                }
               ]
             ],
             "u": "Null",

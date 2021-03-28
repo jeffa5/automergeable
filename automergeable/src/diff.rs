@@ -413,7 +413,7 @@ mod tests {
         )
         "###);
 
-        new_text.push('a');
+        new_text.push("a".to_owned());
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
         Ok(
             [
@@ -438,7 +438,7 @@ mod tests {
         "###);
 
         old_text = new_text.clone();
-        new_text[0] = 'b';
+        new_text[0] = "b".to_owned();
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
         Ok(
             [

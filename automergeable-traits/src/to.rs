@@ -16,12 +16,6 @@ impl ToAutomerge for Value {
     }
 }
 
-impl ToAutomerge for Vec<char> {
-    fn to_automerge(&self) -> Value {
-        Value::Text(self.clone())
-    }
-}
-
 impl<T> ToAutomerge for Vec<T>
 where
     T: ToAutomerge,
@@ -73,6 +67,12 @@ where
 impl ToAutomerge for String {
     fn to_automerge(&self) -> Value {
         Value::Primitive(Primitive::Str(self.to_owned()))
+    }
+}
+
+impl ToAutomerge for char {
+    fn to_automerge(&self) -> Value {
+        Value::Primitive(Primitive::Str(self.to_string()))
     }
 }
 
