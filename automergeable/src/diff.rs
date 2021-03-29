@@ -5,10 +5,12 @@ use automerge::{InvalidChangeRequest, LocalChange, Path, Primitive, Value};
 /// Calculate the `LocalChange`s between the two values.
 ///
 /// Recursively works from the root.
+#[tracing::instrument(skip(new, old))]
 pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, InvalidChangeRequest> {
     diff_with_path(new, old, Path::root())
 }
 
+#[tracing::instrument(skip(new, old))]
 fn diff_with_path(
     new: &Value,
     old: &Value,

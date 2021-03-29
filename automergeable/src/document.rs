@@ -55,6 +55,7 @@ where
     }
 
     #[cfg(feature = "std")]
+    #[tracing::instrument(skip(patch))]
     pub fn new_with_patch(
         patch: automerge_protocol::Patch,
     ) -> Result<Self, automerge_frontend::InvalidPatch> {
@@ -63,12 +64,14 @@ where
         Ok(s)
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn get(&self) -> Option<T> {
         self.frontend
             .get_value(&Path::root())
             .and_then(|t| T::from_automerge(&t).ok())
     }
 
+    #[tracing::instrument(skip(self, message, change))]
     fn change_inner<F, E>(
         &mut self,
         message: Option<String>,
@@ -98,6 +101,7 @@ where
         Ok(change)
     }
 
+    #[tracing::instrument(skip(self, change))]
     pub fn change<F, E>(
         &mut self,
         change: F,
@@ -109,6 +113,7 @@ where
         self.change_inner(None, change)
     }
 
+    #[tracing::instrument(skip(self, message, change))]
     pub fn change_with_message<F, E>(
         &mut self,
         message: String,
