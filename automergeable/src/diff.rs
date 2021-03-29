@@ -10,7 +10,6 @@ pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, Invalid
     diff_with_path(new, old, Path::root())
 }
 
-#[tracing::instrument(skip(new, old))]
 fn diff_with_path(
     new: &Value,
     old: &Value,
