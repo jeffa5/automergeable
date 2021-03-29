@@ -13,6 +13,7 @@ automergeable-traits = { path = "../automergeable-traits" }
 automergeable-derive = { path = "../automergeable-derive" }
 thiserror = "1.0.24"
 unicode-segmentation = "1.7.1"
+uuid = "0.8.2"
 
 [dev-dependencies]
 insta = "1.6.1"

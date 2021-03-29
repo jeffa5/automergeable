@@ -39,6 +39,14 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
+    pub fn new_with_actor_id(actor_id: uuid::Uuid) -> Self {
+        Self {
+            frontend: automerge::Frontend::new_with_actor_id(actor_id),
+            _data: PhantomData,
+        }
+    }
+
     pub fn new_with_timestamper(t: Box<(dyn Fn() -> Option<i64>)>) -> Self {
         Self {
             frontend: automerge::Frontend::new_with_timestamper(t),
