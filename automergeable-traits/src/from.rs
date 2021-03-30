@@ -335,3 +335,71 @@ impl FromAutomerge for serde_json::Value {
         var_name
     }
 }
+
+macro_rules! nonzero_to_automerge_unsigned {
+    ( $( ($x:ty, $y:ty) ),* $(,)? ) => {
+        $(
+        impl FromAutomerge for $x {
+            fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+                if let Value::Primitive(Primitive::Uint(u)) = value {
+                    let val = <$x>::new(*u as $y);
+                    if let Some(val) = val {
+                        Ok(val)
+                    } else {
+                        Err(FromAutomergeError::FailedTryFrom)
+                    }
+                } else {
+                    Err(FromAutomergeError::WrongType {
+                        found: value.clone(),
+                    })
+                }
+            }
+        })*
+    };
+}
+
+nonzero_to_automerge_unsigned! {
+    // std::num::NonZeroI8,
+    // std::num::NonZeroI16,
+    // std::num::NonZeroI32,
+    // std::num::NonZeroI64,
+    // std::num::NonZeroI128,
+    // std::num::NonZeroIsize,
+    (std::num::NonZeroU8, u8),
+    (std::num::NonZeroU16, u16),
+    (std::num::NonZeroU32, u32),
+    (std::num::NonZeroU64, u64),
+    (std::num::NonZeroU128, u128),
+    (std::num::NonZeroUsize, usize),
+}
+
+macro_rules! nonzero_to_automerge_signed {
+    ( $( ($x:ty, $y:ty) ),* $(,)? ) => {
+        $(
+        impl FromAutomerge for $x {
+            fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+                if let Value::Primitive(Primitive::Int(i)) = value {
+                    let val = <$x>::new(*i as $y);
+                    if let Some(val) = val {
+                        Ok(val)
+                    } else {
+                        Err(FromAutomergeError::FailedTryFrom)
+                    }
+                } else {
+                    Err(FromAutomergeError::WrongType {
+                        found: value.clone(),
+                    })
+                }
+            }
+        })*
+    };
+}
+
+nonzero_to_automerge_signed! {
+    (std::num::NonZeroI8, i8),
+    (std::num::NonZeroI16, i16),
+    (std::num::NonZeroI32, i32),
+    (std::num::NonZeroI64, i64),
+    (std::num::NonZeroI128, i128),
+    (std::num::NonZeroIsize, isize),
+}
