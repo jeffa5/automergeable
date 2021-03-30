@@ -16,6 +16,12 @@ impl ToAutomerge for Value {
     }
 }
 
+impl ToAutomerge for () {
+    fn to_automerge(&self) -> automerge::Value {
+        Value::Primitive(Primitive::Null)
+    }
+}
+
 impl<T> ToAutomerge for Vec<T>
 where
     T: ToAutomerge,

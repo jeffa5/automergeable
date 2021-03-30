@@ -30,6 +30,18 @@ impl FromAutomerge for Value {
     }
 }
 
+impl FromAutomerge for () {
+    fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
+        if let Value::Primitive(Primitive::Null) = value {
+            Ok(())
+        } else {
+            Err(FromAutomergeError::WrongType {
+                found: value.clone(),
+            })
+        }
+    }
+}
+
 impl FromAutomerge for String {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Str(s)) = value {
