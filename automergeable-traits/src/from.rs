@@ -78,7 +78,7 @@ where
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Sequence(vec) = value {
-            let mut v = Vec::new();
+            let mut v = Vec::with_capacity(vec.len());
             for val in vec {
                 v.push(T::from_automerge(val)?)
             }
@@ -111,7 +111,7 @@ where
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Sequence(vec) = value {
-            let mut v = Vec::new();
+            let mut v = Vec::with_capacity(vec.len());
             for val in vec {
                 v.push(T::from_automerge(val)?)
             }
@@ -131,7 +131,7 @@ where
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
-            let mut m = HashMap::new();
+            let mut m = HashMap::with_capacity(map.len());
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
@@ -155,7 +155,7 @@ where
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
-            let mut m = BTreeMap::new();
+            let mut m = BTreeMap::with_capacity(map.len());
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
@@ -371,12 +371,6 @@ macro_rules! nonzero_to_automerge_unsigned {
 }
 
 nonzero_to_automerge_unsigned! {
-    // std::num::NonZeroI8,
-    // std::num::NonZeroI16,
-    // std::num::NonZeroI32,
-    // std::num::NonZeroI64,
-    // std::num::NonZeroI128,
-    // std::num::NonZeroIsize,
     (std::num::NonZeroU8, u8),
     (std::num::NonZeroU16, u16),
     (std::num::NonZeroU32, u32),
