@@ -48,7 +48,7 @@ where
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
-        let mut hm = HashMap::new();
+        let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
             hm.insert(k.to_string(), v.to_automerge());
         }
@@ -62,7 +62,7 @@ where
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
-        let mut hm = HashMap::new();
+        let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
             hm.insert(k.to_string(), v.to_automerge());
         }
