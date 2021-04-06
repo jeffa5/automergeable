@@ -155,7 +155,7 @@ where
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, automerge::MapType::Map) = value {
-            let mut m = BTreeMap::with_capacity(map.len());
+            let mut m = BTreeMap::new();
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
