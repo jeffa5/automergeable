@@ -18,7 +18,7 @@ pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
     ChangeError(E),
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Document<T>
 where
     T: Automergeable,
