@@ -21,7 +21,7 @@ pub enum FromAutomergeError {
     #[error("failed converting from automerge")]
     FailedTryFrom,
     #[error("unknown error: {0}")]
-    Unknown(#[from] Box<dyn Error>),
+    Unknown(#[from] Box<dyn Error + Send + Sync>),
 }
 
 impl FromAutomerge for Value {
