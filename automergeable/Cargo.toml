@@ -21,7 +21,16 @@ wasm-bindgen-test = "0.3.22"
 getrandom = { version = "0.2.2", features=["js"] }
 uuid = { version = "0.8", features = ["wasm-bindgen"] }
 quickcheck = "1.0.3"
+criterion = "0.3.4"
 
 [features]
 default = ["std"]
 std = []
+
+[[bench]]
+name = "diff"
+harness = false
+
+[[bench]]
+name = "change"
+harness = false
