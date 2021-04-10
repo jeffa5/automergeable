@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
+use automerge::{MapType, Primitive, Value};
 use automergeable::{traits::ToAutomerge, Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
+use maplit::hashmap;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn to_automerge() {
@@ -175,12 +178,9 @@ fn to_automerge_attribute() {
               },
               "map"
             ],
-            "en": [
-              {
-                "Part2": "Null"
-              },
-              "map"
-            ],
+            "en": {
+              "Str": "Part2"
+            },
             "list": [],
             "nah": "Null",
             "others": [
@@ -377,4 +377,167 @@ fn to_automerge_attribute() {
         ]
         "###)
     });
+}
+
+#[test]
+fn unit_struct() {
+    #[derive(ToAutomerge)]
+    struct Unit;
+
+    assert_eq!(Value::Primitive(Primitive::Null), Unit.to_automerge());
+}
+
+#[test]
+fn tuple_struct_1() {
+    #[derive(ToAutomerge)]
+    struct Single(u64);
+
+    assert_eq!(
+        Value::Primitive(Primitive::Uint(1)),
+        Single(1).to_automerge()
+    );
+}
+
+#[test]
+fn tuple_struct_2() {
+    #[derive(ToAutomerge)]
+    struct Double(u64, i64);
+
+    assert_eq!(
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Uint(1)),
+            Value::Primitive(Primitive::Int(-2))
+        ]),
+        Double(1, -2).to_automerge()
+    );
+}
+
+#[test]
+fn tuple_struct_3() {
+    #[derive(ToAutomerge)]
+    struct Triple(u64, i64, String);
+
+    assert_eq!(
+        Value::Sequence(vec![
+            Value::Primitive(Primitive::Uint(1)),
+            Value::Primitive(Primitive::Int(-2)),
+            Value::Primitive(Primitive::Str(String::new()))
+        ]),
+        Triple(1, -2, String::new()).to_automerge()
+    );
+}
+
+#[test]
+fn struct_1() {
+    #[derive(ToAutomerge)]
+    struct Single {
+        a: u64,
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {"a".to_owned() => Value::Primitive(Primitive::Uint(1))},
+            MapType::Map
+        ),
+        Single { a: 1 }.to_automerge()
+    );
+}
+
+#[test]
+fn struct_2() {
+    #[derive(ToAutomerge)]
+    struct Double {
+        a: u64,
+        b: String,
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {
+                "a".to_owned() => Value::Primitive(Primitive::Uint(1)),
+                "b".to_owned() => Value::Primitive(Primitive::Str(String::new()))
+            },
+            MapType::Map
+        ),
+        Double {
+            a: 1,
+            b: String::new()
+        }
+        .to_automerge()
+    );
+}
+
+#[test]
+fn enum_multi() {
+    #[derive(ToAutomerge)]
+    enum E {
+        W { a: i32, b: i32 },
+        X(i32, i32),
+        Y(i32),
+        Z,
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {
+                "W".to_owned() => Value::Map(hashmap!{
+                    "a".to_owned() => Value::Primitive(Primitive::Int(0)),
+                    "b".to_owned() => Value::Primitive(Primitive::Int(1)),
+                },MapType::Map),
+            },
+            MapType::Map
+        ),
+        E::W { a: 0, b: 1 }.to_automerge()
+    );
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {
+                "X".to_owned() => Value::Sequence(vec![
+                    Value::Primitive(Primitive::Int(0)),
+                    Value::Primitive(Primitive::Int(1)),
+                ]),
+            },
+            MapType::Map
+        ),
+        E::X(0, 1).to_automerge()
+    );
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {
+                "Y".to_owned() => Value::Primitive(Primitive::Int(0)),
+            },
+            MapType::Map
+        ),
+        E::Y(0).to_automerge()
+    );
+
+    assert_eq!(
+        Value::Primitive(Primitive::Str("Z".to_owned())),
+        E::Z.to_automerge()
+    );
+}
+
+#[test]
+fn enum_names() {
+    #[derive(ToAutomerge)]
+    enum Names {
+        A,
+        B,
+        C,
+    }
+
+    assert_eq!(
+        Value::Primitive(Primitive::Str("A".to_owned())),
+        Names::A.to_automerge()
+    );
+    assert_eq!(
+        Value::Primitive(Primitive::Str("B".to_owned())),
+        Names::B.to_automerge()
+    );
+    assert_eq!(
+        Value::Primitive(Primitive::Str("C".to_owned())),
+        Names::C.to_automerge()
+    );
 }

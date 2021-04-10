@@ -40,29 +40,35 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
                     let name = &n.ident;
                     quote! { #name, }
                 });
-                quote! {{
+                Some(quote! {{
                     #(#names)*
-                }}
+                }})
             }
             Fields::Unnamed(u) => {
                 let items = u.unnamed.iter().enumerate().map(|(i, _)| {
                     let a = Ident::new(&format!("f{}", i), Span::call_site());
                     quote! { #a, }
                 });
-                quote! {( #(#items)* )}
+                Some(quote! {( #(#items)* )})
             }
-            Fields::Unit => {
-                quote! {}
-            }
+            Fields::Unit => None,
         };
-        let fields_to_automerge = fields_to_automerge(&v.fields, false, &crate_path);
         let v_name_string = v_name.to_string();
-        quote! {
-            Self::#v_name#fields => {
-                let mut outer = ::std::collections::HashMap::new();
-                let fields = {#fields_to_automerge};
-                outer.insert(#v_name_string.to_owned(), fields);
-                #crate_path::automerge::Value::Map(outer, #crate_path::automerge::MapType::Map)
+        if let Some(fields) = fields {
+            let fields_to_automerge = fields_to_automerge(&v.fields, false, &crate_path);
+            quote! {
+                Self::#v_name#fields => {
+                    let mut outer = ::std::collections::HashMap::new();
+                    let fields = {#fields_to_automerge};
+                    outer.insert(#v_name_string.to_owned(), fields);
+                    #crate_path::automerge::Value::Map(outer, #crate_path::automerge::MapType::Map)
+                }
+            }
+        } else {
+            quote! {
+                Self::#v_name#fields => {
+                    #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Str(#v_name_string.to_owned()))
+                }
             }
         }
     });
@@ -150,23 +156,38 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
             }
         }
         Fields::Unnamed(u) => {
-            let fields = u.unnamed.iter().enumerate().map(|(i, f)| {
+            if u.unnamed.len() == 1 {
+                let field = u.unnamed.first().unwrap();
                 let field_name = if is_struct {
-                    let field_name = syn::Index::from(i);
+                    let field_name = syn::Index::from(0);
                     quote! {self.#field_name}
                 } else {
-                    let f = Ident::new(&format!("f{}", i), Span::call_site());
+                    let f = Ident::new(&format!("f{}", 0), Span::call_site());
                     quote! {#f}
                 };
-                let repr = get_representation_type(&f.attrs, field_name, crate_path);
+                let repr = get_representation_type(&field.attrs, field_name, crate_path);
                 quote! {
-                    fields.push(#repr);
+                    #repr
                 }
-            });
-            quote! {
-                let mut fields = Vec::new();
-                #(#fields)*
-                #crate_path::automerge::Value::Sequence(fields)
+            } else {
+                let fields = u.unnamed.iter().enumerate().map(|(i, f)| {
+                    let field_name = if is_struct {
+                        let field_name = syn::Index::from(i);
+                        quote! {self.#field_name}
+                    } else {
+                        let f = Ident::new(&format!("f{}", i), Span::call_site());
+                        quote! {#f}
+                    };
+                    let repr = get_representation_type(&f.attrs, field_name, crate_path);
+                    quote! {
+                        fields.push(#repr);
+                    }
+                });
+                quote! {
+                    let mut fields = Vec::new();
+                    #(#fields)*
+                    #crate_path::automerge::Value::Sequence(fields)
+                }
             }
         }
         Fields::Unit => {

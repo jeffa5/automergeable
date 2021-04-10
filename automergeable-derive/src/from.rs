@@ -32,7 +32,7 @@ fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
 fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
     let crate_path = utils::crate_path(input);
     let t_name = &input.ident;
-    let variant_match = variants.iter().map(|v| {
+    let variant_match = variants.iter().filter(|v| !v.fields.is_empty()).map(|v| {
         let v_name = &v.ident;
         let v_name_string = v_name.to_string();
         let fields_from_automerge =
@@ -41,6 +41,14 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
             (#v_name_string, value) => {#fields_from_automerge}
         }
     });
+    let unit_variant_match = variants.iter().filter(|v| v.fields.is_empty()).map(|v| {
+        let v_name = &v.ident;
+        let v_name_string = v_name.to_string();
+        quote! {
+            #v_name_string => {Ok(Self::#v_name)}
+        }
+    });
+
     quote! {
         #[automatically_derived]
         impl #crate_path::traits::FromAutomerge for #t_name {
@@ -57,6 +65,13 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                                 found: value.clone(),
                             })
                         }
+                    }
+                } else if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Str(s)) = value {
+                    match s.as_str() {
+                        #(#unit_variant_match)*
+                        _ => Err(#crate_path::traits::FromAutomergeError::WrongType {
+                            found: value.clone(),
+                        })
                     }
                 } else {
                     Err(#crate_path::traits::FromAutomergeError::WrongType {
@@ -190,27 +205,37 @@ fn fields_from_automerge(
             }
         }
         Fields::Unnamed(u) => {
-            let fields = u.unnamed.iter().enumerate().map(|(i, f)| {
-                let field_name = syn::Index::from(i);
-                let field_ty = &f.ty;
+            if u.unnamed.len() == 1 {
+                let field = u.unnamed.first().unwrap();
+                let field_ty = &field.ty;
 
-                let value_for_field = quote! {
-                    seq.get(#field_name)
-                };
-                let repr = get_representation_type(&f.attrs, field_ty, value_for_field, crate_path);
                 quote! {
-                    #repr,
+                    #field_ty::from_automerge(value).map(#ty_name)
                 }
-            });
-            quote! {
-                if let #crate_path::automerge::Value::Sequence(seq) = value {
-                    Ok(#ty_name(
-                        #(#fields)*
-                    ))
-                } else {
-                    Err(#crate_path::traits::FromAutomergeError::WrongType {
-                        found: value.clone(),
-                    })
+            } else {
+                let fields = u.unnamed.iter().enumerate().map(|(i, f)| {
+                    let field_name = syn::Index::from(i);
+                    let field_ty = &f.ty;
+
+                    let value_for_field = quote! {
+                        seq.get(#field_name)
+                    };
+                    let repr =
+                        get_representation_type(&f.attrs, field_ty, value_for_field, crate_path);
+                    quote! {
+                        #repr,
+                    }
+                });
+                quote! {
+                    if let #crate_path::automerge::Value::Sequence(seq) = value {
+                        Ok(#ty_name(
+                            #(#fields)*
+                        ))
+                    } else {
+                        Err(#crate_path::traits::FromAutomergeError::WrongType {
+                            found: value.clone(),
+                        })
+                    }
                 }
             }
         }
