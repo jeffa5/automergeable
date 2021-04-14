@@ -63,10 +63,10 @@ where
         Ok(s)
     }
 
-    pub fn get(&self) -> Option<T> {
+    pub fn get(&self) -> Option<Result<T, crate::traits::FromAutomergeError>> {
         self.frontend
             .get_value(&Path::root())
-            .and_then(|t| T::from_automerge(&t).ok())
+            .map(|t| T::from_automerge(&t))
     }
 
     fn change_inner<F, E>(
