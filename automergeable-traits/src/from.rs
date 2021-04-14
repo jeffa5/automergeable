@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use automerge::{Primitive, Value};
+use automerge::{MapType, Primitive, Value};
 use serde_json::Number;
 
 /// Require a method to convert to a value from an automerge value.
@@ -17,7 +17,10 @@ pub trait FromAutomerge: Sized {
 #[derive(thiserror::Error, Debug)]
 pub enum FromAutomergeError {
     #[error("found the wrong type")]
-    WrongType { found: automerge::Value },
+    WrongType {
+        found: automerge::Value,
+        expected: String,
+    },
     #[error("failed converting from automerge")]
     FailedTryFrom,
     #[error("unknown error: {0}")]
@@ -37,6 +40,7 @@ impl FromAutomerge for () {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive null".to_owned(),
             })
         }
     }
@@ -49,6 +53,7 @@ impl FromAutomerge for String {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive string".to_owned(),
             })
         }
     }
@@ -62,11 +67,13 @@ impl FromAutomerge for char {
             } else {
                 Err(FromAutomergeError::WrongType {
                     found: value.clone(),
+                    expected: "a primitive string".to_owned(),
                 })
             }
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive string".to_owned(),
             })
         }
     }
@@ -86,6 +93,7 @@ where
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a sequence".to_owned(),
             })
         }
     }
@@ -100,6 +108,7 @@ impl FromAutomerge for Text {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "some text".to_owned(),
             })
         }
     }
@@ -119,6 +128,7 @@ where
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a sequence".to_owned(),
             })
         }
     }
@@ -130,7 +140,7 @@ where
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Map(map, automerge::MapType::Map) = value {
+        if let Value::Map(map, MapType::Map) = value {
             let mut m = HashMap::with_capacity(map.len());
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
@@ -143,6 +153,7 @@ where
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a map".to_owned(),
             })
         }
     }
@@ -154,7 +165,7 @@ where
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Map(map, automerge::MapType::Map) = value {
+        if let Value::Map(map, MapType::Map) = value {
             let mut m = BTreeMap::new();
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
@@ -167,6 +178,7 @@ where
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a map".to_owned(),
             })
         }
     }
@@ -194,6 +206,7 @@ impl FromAutomerge for std::time::SystemTime {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive timestamp".to_owned(),
             })
         }
     }
@@ -206,6 +219,7 @@ impl FromAutomerge for bool {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive boolean".to_owned(),
             })
         }
     }
@@ -218,6 +232,7 @@ impl FromAutomerge for i64 {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive int".to_owned(),
             })
         }
     }
@@ -257,6 +272,7 @@ impl FromAutomerge for u64 {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive uint".to_owned(),
             })
         }
     }
@@ -296,6 +312,7 @@ impl FromAutomerge for f64 {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive f64".to_owned(),
             })
         }
     }
@@ -308,6 +325,7 @@ impl FromAutomerge for f32 {
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
+                expected: "a primitive f32".to_owned(),
             })
         }
     }
@@ -363,6 +381,7 @@ macro_rules! nonzero_to_automerge_unsigned {
                 } else {
                     Err(FromAutomergeError::WrongType {
                         found: value.clone(),
+                        expected: "a primitive uint".to_owned(),
                     })
                 }
             }
@@ -394,6 +413,7 @@ macro_rules! nonzero_to_automerge_signed {
                 } else {
                     Err(FromAutomergeError::WrongType {
                         found: value.clone(),
+                        expected: "a primitive int".to_owned(),
                     })
                 }
             }

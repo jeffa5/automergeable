@@ -57,12 +57,14 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                     if hm.len() != 1 {
                         Err(#crate_path::traits::FromAutomergeError::WrongType {
                             found: value.clone(),
+                            expected: "a map with one item".to_owned(),
                         })
                     } else {
                         match hm.iter().map(|(k,v)| (k.as_str(), v)).next().unwrap() {
                             #(#variant_match)*
                             _ => Err(#crate_path::traits::FromAutomergeError::WrongType {
                                 found: value.clone(),
+                                expected: format!("a non-unit variant of {}", std::any::type_name::<#t_name>()),
                             })
                         }
                     }
@@ -71,11 +73,13 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                         #(#unit_variant_match)*
                         _ => Err(#crate_path::traits::FromAutomergeError::WrongType {
                             found: value.clone(),
+                            expected: format!("a unit variant of {}", std::any::type_name::<#t_name>()),
                         })
                     }
                 } else {
                     Err(#crate_path::traits::FromAutomergeError::WrongType {
                         found: value.clone(),
+                        expected: "a map".to_owned(),
                     })
                 }
             }
@@ -133,6 +137,7 @@ fn get_representation_type(
                     } else {
                         return Err(#crate_path::traits::FromAutomergeError::WrongType {
                             found: value.clone(),
+                            expected: "a primitive counter".to_owned(),
                         })
                     }
                 } else {
@@ -148,6 +153,7 @@ fn get_representation_type(
                     } else {
                         return Err(#crate_path::traits::FromAutomergeError::WrongType {
                             found: value.clone(),
+                            expected: "a primitive timestamp".to_owned(),
                         })
                     }
                 } else {
@@ -200,6 +206,7 @@ fn fields_from_automerge(
                 } else {
                     Err(#crate_path::traits::FromAutomergeError::WrongType {
                         found: value.clone(),
+                        expected: "a map".to_owned(),
                     })
                 }
             }
@@ -234,6 +241,7 @@ fn fields_from_automerge(
                     } else {
                         Err(#crate_path::traits::FromAutomergeError::WrongType {
                             found: value.clone(),
+                            expected: "a sequence".to_owned(),
                         })
                     }
                 }
@@ -246,6 +254,7 @@ fn fields_from_automerge(
                 } else {
                     Err(#crate_path::traits::FromAutomergeError::WrongType {
                         found: value.clone(),
+                        expected: "a primitive null".to_owned(),
                     })
                 }
             }
