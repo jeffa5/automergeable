@@ -210,7 +210,7 @@ fn fields_from_automerge(
                 let field_ty = &field.ty;
 
                 quote! {
-                    #field_ty::from_automerge(value).map(#ty_name)
+                    <#field_ty>::from_automerge(value).map(#ty_name)
                 }
             } else {
                 let fields = u.unnamed.iter().enumerate().map(|(i, f)| {

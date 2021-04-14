@@ -265,6 +265,14 @@ fn tuple_struct_1() {
         Single(1),
         Single::from_automerge(&Single(1).to_automerge()).unwrap()
     );
+
+    #[derive(ToAutomerge, FromAutomerge, PartialEq, Debug)]
+    struct SingleVec(Vec<u8>);
+
+    assert_eq!(
+        SingleVec(vec![1]),
+        SingleVec::from_automerge(&SingleVec(vec![1]).to_automerge()).unwrap()
+    );
 }
 
 #[test]
