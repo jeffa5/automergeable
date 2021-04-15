@@ -10,6 +10,6 @@ fn make_change() {
 
     let mut doc = automergeable::Document::<DocumentInner>::new_with_timestamper(Box::new(|| None));
     let _change_result = doc
-        .change::<_, automerge::InvalidChangeRequest>(|_d| Ok(()))
+        .change::<_, _, automerge::InvalidChangeRequest>(|_d| Ok(()))
         .unwrap();
 }

@@ -22,6 +22,7 @@ getrandom = { version = "0.2.2", features=["js"] }
 uuid = { version = "0.8", features = ["wasm-bindgen"] }
 quickcheck = "1.0.3"
 criterion = "0.3.4"
+maplit = "1.0.2"
 
 [features]
 default = ["std"]

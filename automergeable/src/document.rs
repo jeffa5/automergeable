@@ -69,54 +69,52 @@ where
             .map(|t| T::from_automerge(&t))
     }
 
-    fn change_inner<F, E>(
+    fn change_inner<F, O, E>(
         &mut self,
         message: Option<String>,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<(), E>,
+        F: FnOnce(&mut T) -> Result<O, E>,
     {
         let original = self
             .frontend
             .get_value(&Path::root())
             .expect("no root value");
         let mut new_t = T::from_automerge(&original)?;
-        if let Err(e) = change(&mut new_t) {
-            return Err(DocumentChangeError::ChangeError(e));
-        }
+        let res = change(&mut new_t).map_err(DocumentChangeError::ChangeError)?;
         let changes = crate::diff_values(&new_t.to_automerge(), &original);
-        let change =
-            self.frontend
-                .change::<_, automerge::InvalidChangeRequest>(message, |doc| {
-                    for change in changes? {
-                        doc.add_change(change)?
-                    }
-                    Ok(())
-                })?;
-        Ok(change)
+        let ((), change) = self
+            .frontend
+            .change::<_, _, automerge::InvalidChangeRequest>(message, |doc| {
+                for change in changes? {
+                    doc.add_change(change)?
+                }
+                Ok(())
+            })?;
+        Ok((res, change))
     }
 
-    pub fn change<F, E>(
+    pub fn change<F, O, E>(
         &mut self,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<(), E>,
+        F: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(None, change)
     }
 
-    pub fn change_with_message<F, E>(
+    pub fn change_with_message<F, O, E>(
         &mut self,
         message: String,
         change: F,
-    ) -> Result<Option<automerge_protocol::UncompressedChange>, DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<(), E>,
+        F: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(Some(message), change)
     }
@@ -175,8 +173,8 @@ mod tests {
         let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
 
         let mut back = automerge::Backend::init();
-        let change = doc
-            .change::<_, automerge::InvalidChangeRequest>(|_t| Ok(()))
+        let ((), change) = doc
+            .change::<_, _, automerge::InvalidChangeRequest>(|_t| Ok(()))
             .unwrap();
         if let Some(change) = change {
             let (patch, _) = back.apply_local_change(change).unwrap();
@@ -214,8 +212,8 @@ mod tests {
         let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
 
         let mut back = automerge::Backend::init();
-        let change = doc
-            .change::<_, automerge::InvalidChangeRequest>(|t| {
+        let ((), change) = doc
+            .change::<_, _, automerge::InvalidChangeRequest>(|t| {
                 t.list.push("hi".to_owned());
                 t.others.insert("hellow there".to_owned(), "abc".to_owned());
                 Ok(())
@@ -256,8 +254,8 @@ mod tests {
         let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
 
         let mut back = automerge::Backend::init();
-        let change = doc
-            .change::<_, automerge::InvalidChangeRequest>(|t| {
+        let ((), change) = doc
+            .change::<_, _, automerge::InvalidChangeRequest>(|t| {
                 t.list.push("hi".to_owned());
                 t.others.insert("hellow there".to_owned(), "abc".to_owned());
                 Ok(())
@@ -269,8 +267,8 @@ mod tests {
             doc.apply_patch(patch).unwrap();
         }
 
-        let change = doc
-            .change::<_, automerge::InvalidChangeRequest>(|t| {
+        let ((), change) = doc
+            .change::<_, _, automerge::InvalidChangeRequest>(|t| {
                 t.b.inner += 1;
                 Ok(())
             })

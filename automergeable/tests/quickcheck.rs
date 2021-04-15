@@ -2,6 +2,7 @@ use std::{collections::HashMap, convert::Infallible};
 
 use automerge::{InvalidChangeRequest, MapType, Path, Primitive, Value};
 use automergeable::diff_values;
+use maplit::hashmap;
 use quickcheck::{empty_shrinker, single_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -295,8 +296,8 @@ fn applying_primitive_diff_result_to_old_gives_new() {
         f.apply_patch(p).unwrap();
 
         // apply changes to reach new value
-        let c = f
-            .change::<_, Infallible>(None, |d| {
+        let ((), c) = f
+            .change::<_, _, Infallible>(None, |d| {
                 for change in changes {
                     d.add_change(change).unwrap()
                 }
@@ -346,13 +347,13 @@ fn applying_value_diff_result_to_old_gives_new() {
         f.apply_patch(p).unwrap();
 
         // apply changes to reach new value
-        let c = f.change::<_, InvalidChangeRequest>(None, |d| {
+        let c = f.change::<_, _, InvalidChangeRequest>(None, |d| {
             for change in &changes {
                 d.add_change(change.clone())?
             }
             Ok(())
         });
-        if let Ok(c) = c {
+        if let Ok(((), c)) = c {
             if let Some(c) = c {
                 let (p, _) = b.apply_local_change(c).unwrap();
                 if let Err(e) = f.apply_patch(p) {
@@ -379,6 +380,49 @@ fn applying_value_diff_result_to_old_gives_new() {
         .tests(100_000_000)
         .gen(Gen::new(10))
         .quickcheck(apply_diff as fn(Val, Val) -> TestResult)
+}
+
+#[test]
+fn broken_reordering_of_values_2() {
+    let v1 = Val(Value::Map(
+        hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
+        MapType::Map,
+    ));
+
+    let v2 = Val(Value::Map(
+        hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Null)])},
+        MapType::Map,
+    ));
+
+    let changes = diff_values(&v1.0, &v2.0).unwrap();
+    let mut b = automerge::Backend::init();
+    // new with old value
+    let (mut f, c) = automerge::Frontend::new_with_initial_state(v2.0).unwrap();
+    let (p, _) = b.apply_local_change(c).unwrap();
+    f.apply_patch(p).unwrap();
+
+    // apply changes to reach new value
+    let c = f.change::<_, _, InvalidChangeRequest>(None, |d| {
+        for change in &changes {
+            d.add_change(change.clone())?
+        }
+        Ok(())
+    });
+    if let Ok(((), c)) = c {
+        if let Some(c) = c {
+            let (p, _) = b.apply_local_change(c).unwrap();
+            if let Err(e) = f.apply_patch(p) {
+                println!("{:?} {:?}", changes, e);
+                panic!("failed apply_patch")
+            }
+        }
+    } else {
+        println!("changes {:?} {:?}", changes, c);
+        panic!("failed change")
+    }
+
+    let val = f.get_value(&Path::root()).unwrap();
+    assert_eq!(val, v1.0);
 }
 
 #[test]
@@ -424,8 +468,8 @@ fn save_then_load() {
                     let patch = backend.get_patch().unwrap();
                     frontend.apply_patch(patch).unwrap();
 
-                    let c = frontend
-                        .change::<_, InvalidChangeRequest>(None, |d| {
+                    let ((), c) = frontend
+                        .change::<_, _, InvalidChangeRequest>(None, |d| {
                             for change in &changes {
                                 d.add_change(change.clone())?
                             }
@@ -573,8 +617,8 @@ fn broken_save_load() {
         let patch = backend.get_patch().unwrap();
         frontend.apply_patch(patch).unwrap();
 
-        let c = frontend
-            .change::<_, InvalidChangeRequest>(None, |d| {
+        let ((), c) = frontend
+            .change::<_, _, InvalidChangeRequest>(None, |d| {
                 for change in &changes {
                     d.add_change(change.clone())?
                 }
@@ -608,8 +652,8 @@ fn broken_reordering_of_values() {
     frontend.apply_patch(patch).unwrap();
 
     // change first value and insert into the sequence
-    let c = frontend
-        .change::<_, automerge::InvalidChangeRequest>(None, |d| {
+    let ((), c) = frontend
+        .change::<_, _, automerge::InvalidChangeRequest>(None, |d| {
             d.add_change(automerge::LocalChange::set(
                 automerge::Path::root().key("").index(0),
                 automerge::Value::Primitive(automerge::Primitive::Int(0)),
