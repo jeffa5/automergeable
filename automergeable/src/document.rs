@@ -30,7 +30,7 @@ pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
 
 /// A typed automerge document, wrapping a typical frontend.
 ///
-/// This provides similar functionality to an automerge frontend (including deref to one) but with
+/// This provides similar functionality to an automerge frontend (including [`Deref`] to one) but with
 /// stronger typed data.
 ///
 /// For instance from a document we can get the value as a typical Rust struct and perform
