@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use automerge::{InvalidChangeRequest, LocalChange, Path, Primitive, Value};
 
-/// Calculate the `LocalChange`s between the two values.
+/// Calculate the [`LocalChange`]s between the two values.
 ///
 /// Recursively works from the root.
 pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, InvalidChangeRequest> {

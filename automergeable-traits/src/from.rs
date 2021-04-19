@@ -14,6 +14,7 @@ pub trait FromAutomerge: Sized {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError>;
 }
 
+/// A failure converting from an automerge value to Rust type.
 #[derive(thiserror::Error, Debug)]
 pub enum FromAutomergeError {
     #[error("found the wrong type")]
@@ -99,6 +100,7 @@ where
     }
 }
 
+/// A new-type struct for working with the automerge Text value type.
 pub struct Text(pub Vec<String>);
 
 impl FromAutomerge for Text {

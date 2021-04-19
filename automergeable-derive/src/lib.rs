@@ -6,7 +6,7 @@ mod from;
 mod to;
 mod utils;
 
-/// Derive the `Automergeable` trait.
+/// Derive the [`Automergeable`](automergeable_traits::Automergeable) trait.
 ///
 /// Covers:
 /// - conversion into an automerge `Value`
@@ -23,14 +23,14 @@ pub fn automergeable(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Derive the `ToAutomerge` trait.
+/// Derive the [`ToAutomerge`](automergeable_traits::ToAutomerge) trait.
 #[proc_macro_derive(ToAutomerge, attributes(automergeable))]
 pub fn to_automerge(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     to::to_automerge(&input).into()
 }
 
-/// Derive the `FromAutomerge` trait.
+/// Derive the [`FromAutomerge`](automergeable_traits::FromAutomerge) trait.
 #[proc_macro_derive(FromAutomerge, attributes(automergeable))]
 pub fn from_automerge(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

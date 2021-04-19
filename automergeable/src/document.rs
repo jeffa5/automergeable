@@ -8,16 +8,33 @@ use automerge::Path;
 
 use crate::Automergeable;
 
+/// An error type for change operations on documents.
 #[derive(Debug, thiserror::Error)]
 pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
+    /// An invalid change request was created.
+    ///
+    /// Automerge imposes some limits on what can be changed and how. See the
+    /// [`automerge::InvalidChangeRequest`] documentation for more details.
     #[error(transparent)]
     InvalidChangeRequest(#[from] automerge::InvalidChangeRequest),
+    /// A failure to convert the value in automerge to a typed value.
     #[error(transparent)]
     FromError(#[from] crate::FromAutomergeError),
-    #[error("change error: {0}")]
+    /// A custom error from the users closure.
+    #[error(
+        "change error:
+        {0}"
+    )]
     ChangeError(E),
 }
 
+/// A typed automerge document, wrapping a typical frontend.
+///
+/// This provides similar functionality to an automerge frontend (including deref to one) but with
+/// stronger typed data.
+///
+/// For instance from a document we can get the value as a typical Rust struct and perform
+/// automerge change operations on it with automatic diffing behind the scenes.
 #[derive(Debug, Default)]
 pub struct Document<T>
 where
