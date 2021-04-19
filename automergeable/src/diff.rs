@@ -155,24 +155,13 @@ fn diff_with_path(
             Value::Primitive(Primitive::Counter(old_int)),
         ) => {
             if new_int != old_int {
-                if new_int > old_int {
-                    let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
-                        diff
-                    } else {
-                        // TODO: perhaps change this behavior or change error type
-                        return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
-                    };
-                    let diff = diff.try_into();
-                    if let Ok(diff) = diff {
-                        Ok(vec![LocalChange::increment_by(path, diff)])
-                    } else {
-                        // TODO: change this once increment_by has larger values
-                        Err(InvalidChangeRequest::CannotOverwriteCounter { path })
-                    }
+                let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
+                    diff
                 } else {
-                    // TODO: change this once counters can be decremented
-                    Err(InvalidChangeRequest::CannotOverwriteCounter { path })
-                }
+                    // TODO: perhaps change this behavior or change error type
+                    return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
+                };
+                Ok(vec![LocalChange::increment_by(path, diff)])
             } else {
                 Ok(Vec::new())
             }
