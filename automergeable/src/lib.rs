@@ -2,7 +2,9 @@ mod diff;
 mod document;
 
 /// Convenience re-exports for maintaining the same automerge versions
+#[doc(hidden)]
 pub use automerge;
+#[doc(hidden)]
 pub use automerge_protocol;
 
 pub use automergeable_traits::{
