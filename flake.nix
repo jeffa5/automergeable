@@ -39,6 +39,7 @@
               cargo-udeps
               cargo-expand
               cargo-insta
+              cargo-release
               crate2nix
               rust-analyzer
 
