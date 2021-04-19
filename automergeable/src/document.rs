@@ -48,6 +48,7 @@ impl<T> Document<T>
 where
     T: Automergeable + Clone + Default,
 {
+    /// Construct a new document.
     #[cfg(feature = "std")]
     pub fn new() -> Self {
         Self {
@@ -56,6 +57,7 @@ where
         }
     }
 
+    /// Construct a new document with a given actor id.
     #[cfg(feature = "std")]
     pub fn new_with_actor_id(actor_id: uuid::Uuid) -> Self {
         Self {
@@ -64,6 +66,7 @@ where
         }
     }
 
+    /// Construct a new document with a given timestamper function.
     pub fn new_with_timestamper(t: Box<(dyn Fn() -> Option<i64>)>) -> Self {
         Self {
             frontend: automerge::Frontend::new_with_timestamper(t),
@@ -71,15 +74,7 @@ where
         }
     }
 
-    #[cfg(feature = "std")]
-    pub fn new_with_patch(
-        patch: automerge_protocol::Patch,
-    ) -> Result<Self, automerge_frontend::InvalidPatch> {
-        let mut s = Self::new();
-        s.apply_patch(patch)?;
-        Ok(s)
-    }
-
+    /// Retrieve the root value from the frontend and convert it.
     pub fn get(&self) -> Option<Result<T, crate::FromAutomergeError>> {
         self.frontend
             .get_value(&Path::root())
@@ -113,6 +108,7 @@ where
         Ok((res, change))
     }
 
+    /// Perform a change on the frontend.
     pub fn change<F, O, E>(
         &mut self,
         change: F,
@@ -124,6 +120,7 @@ where
         self.change_inner(None, change)
     }
 
+    /// Perform a change on the frontend with a message.
     pub fn change_with_message<F, O, E>(
         &mut self,
         message: String,
