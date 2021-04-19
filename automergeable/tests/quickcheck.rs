@@ -27,8 +27,8 @@ impl Arbitrary for Prim {
             0 => Primitive::Str(String::arbitrary(g)),
             1 => Primitive::Int(i64::arbitrary(g)),
             2 => Primitive::Uint(u64::arbitrary(g)),
-            3 => Primitive::F64(i32::arbitrary(g) as f64), // avoid having NaN in as it breaks the equality
-            4 => Primitive::F32(i32::arbitrary(g) as f32), // avoid having NaN in as it breaks the equality
+            3 => Primitive::F64(i32::arbitrary(g) as f64), /* avoid having NaN in as it breaks the equality */
+            4 => Primitive::F32(i32::arbitrary(g) as f32), /* avoid having NaN in as it breaks the equality */
             5 => Primitive::Counter(i64::arbitrary(g)),
             6 => Primitive::Timestamp(i64::arbitrary(g)),
             7 => Primitive::Boolean(bool::arbitrary(g)),
