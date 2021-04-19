@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use automerge::{Primitive, Value};
-use automergeable::traits::ToAutomerge;
+use automergeable::ToAutomerge;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn criterion_benchmark(c: &mut Criterion) {

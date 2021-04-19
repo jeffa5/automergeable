@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use automerge::{MapType, Primitive, Value};
-use automergeable::{traits::ToAutomerge, Automergeable, ToAutomerge};
+use automergeable::{Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 use maplit::hashmap;
 use pretty_assertions::assert_eq;

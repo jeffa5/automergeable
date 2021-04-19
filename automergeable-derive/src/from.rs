@@ -21,8 +21,8 @@ fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     let fields_from_automerge = fields_from_automerge(fields, None, &crate_path);
     quote! {
         #[automatically_derived]
-        impl #crate_path::traits::FromAutomerge for #t_name {
-            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::traits::FromAutomergeError> {
+        impl #crate_path::FromAutomerge for #t_name {
+            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
                 #fields_from_automerge
             }
         }
@@ -51,18 +51,18 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
 
     quote! {
         #[automatically_derived]
-        impl #crate_path::traits::FromAutomerge for #t_name {
-            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::traits::FromAutomergeError> {
+        impl #crate_path::FromAutomerge for #t_name {
+            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
                 if let #crate_path::automerge::Value::Map(hm, #crate_path::automerge::MapType::Map) = value {
                     if hm.len() != 1 {
-                        Err(#crate_path::traits::FromAutomergeError::WrongType {
+                        Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                             expected: "a map with one item".to_owned(),
                         })
                     } else {
                         match hm.iter().map(|(k,v)| (k.as_str(), v)).next().unwrap() {
                             #(#variant_match)*
-                            _ => Err(#crate_path::traits::FromAutomergeError::WrongType {
+                            _ => Err(#crate_path::FromAutomergeError::WrongType {
                                 found: value.clone(),
                                 expected: format!("a non-unit variant of {}", std::any::type_name::<#t_name>()),
                             })
@@ -71,13 +71,13 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                 } else if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Str(s)) = value {
                     match s.as_str() {
                         #(#unit_variant_match)*
-                        _ => Err(#crate_path::traits::FromAutomergeError::WrongType {
+                        _ => Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                             expected: format!("a unit variant of {}", std::any::type_name::<#t_name>()),
                         })
                     }
                 } else {
-                    Err(#crate_path::traits::FromAutomergeError::WrongType {
+                    Err(#crate_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                         expected: "a map".to_owned(),
                     })
@@ -123,7 +123,7 @@ fn get_representation_type(
         Some("text") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    <#crate_path::traits::Text>::from_automerge(value)?.0.into_iter().collect()
+                    <#crate_path::Text>::from_automerge(value)?.0.into_iter().collect()
                 } else {
                     <#field_ty>::default()
                 }
@@ -133,9 +133,9 @@ fn get_representation_type(
             quote! {
                 if let Some(value) = #value_for_field {
                     if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(i)) = value {
-                    *i
+                        *i
                     } else {
-                        return Err(#crate_path::traits::FromAutomergeError::WrongType {
+                        return Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                             expected: "a primitive counter".to_owned(),
                         })
@@ -151,7 +151,7 @@ fn get_representation_type(
                     if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Timestamp(i)) = value {
                         *i
                     } else {
-                        return Err(#crate_path::traits::FromAutomergeError::WrongType {
+                        return Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                             expected: "a primitive timestamp".to_owned(),
                         })
@@ -204,7 +204,7 @@ fn fields_from_automerge(
                         #(#fields)*
                     })
                 } else {
-                    Err(#crate_path::traits::FromAutomergeError::WrongType {
+                    Err(#crate_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                         expected: "a map".to_owned(),
                     })
@@ -239,7 +239,7 @@ fn fields_from_automerge(
                             #(#fields)*
                         ))
                     } else {
-                        Err(#crate_path::traits::FromAutomergeError::WrongType {
+                        Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
                             expected: "a sequence".to_owned(),
                         })
@@ -252,7 +252,7 @@ fn fields_from_automerge(
                 if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Null) = value {
                     Ok(#ty_name)
                 } else {
-                    Err(#crate_path::traits::FromAutomergeError::WrongType {
+                    Err(#crate_path::FromAutomergeError::WrongType {
                         found: value.clone(),
                         expected: "a primitive null".to_owned(),
                     })

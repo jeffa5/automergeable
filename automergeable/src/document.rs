@@ -6,14 +6,14 @@ use std::{
 
 use automerge::Path;
 
-use crate::traits::Automergeable;
+use crate::Automergeable;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
     #[error(transparent)]
     InvalidChangeRequest(#[from] automerge::InvalidChangeRequest),
     #[error(transparent)]
-    FromError(#[from] crate::traits::FromAutomergeError),
+    FromError(#[from] crate::FromAutomergeError),
     #[error("change error: {0}")]
     ChangeError(E),
 }
@@ -63,7 +63,7 @@ where
         Ok(s)
     }
 
-    pub fn get(&self) -> Option<Result<T, crate::traits::FromAutomergeError>> {
+    pub fn get(&self) -> Option<Result<T, crate::FromAutomergeError>> {
         self.frontend
             .get_value(&Path::root())
             .map(|t| T::from_automerge(&t))
