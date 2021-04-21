@@ -541,3 +541,75 @@ fn enum_names() {
         Names::C.to_automerge()
     );
 }
+
+#[test]
+fn single_generics() {
+    #[derive(ToAutomerge)]
+    struct A<T: ToAutomerge> {
+        inner: T,
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0))},
+            MapType::Map
+        ),
+        A { inner: 0u32 }.to_automerge()
+    );
+
+    #[derive(ToAutomerge)]
+    enum B<T: ToAutomerge> {
+        C(T),
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},
+            MapType::Map
+        ),
+        B::C(0u32).to_automerge()
+    )
+}
+
+#[test]
+fn multi_generics() {
+    #[derive(ToAutomerge)]
+    struct A<T: ToAutomerge, U: ToAutomerge> {
+        inner: T,
+        outer: U,
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0)),
+            "outer".to_owned() => Value::Primitive(Primitive::Str(String::new()))},
+            MapType::Map
+        ),
+        A {
+            inner: 0u32,
+            outer: String::new()
+        }
+        .to_automerge()
+    );
+
+    #[derive(ToAutomerge)]
+    enum B<T: ToAutomerge, U: ToAutomerge> {
+        C(T),
+        D(U),
+    }
+
+    assert_eq!(
+        Value::Map(
+            hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},
+            MapType::Map
+        ),
+        B::<u32, String>::C(0u32).to_automerge()
+    );
+    assert_eq!(
+        Value::Map(
+            hashmap! {"D".to_owned() => Value::Primitive(Primitive::Str(String::new()))},
+            MapType::Map
+        ),
+        B::<u32, String>::D(String::new()).to_automerge()
+    );
+}

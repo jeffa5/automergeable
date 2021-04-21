@@ -18,10 +18,11 @@ pub(crate) fn to_automerge(input: &DeriveInput) -> TokenStream {
 fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     let crate_path = utils::crate_path(input);
     let t_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let fields_to_automerge = fields_to_automerge(fields, true, &crate_path);
     quote! {
         #[automatically_derived]
-        impl #crate_path::ToAutomerge for #t_name {
+        impl #impl_generics #crate_path::ToAutomerge for #t_name #ty_generics #where_clause {
             fn to_automerge(&self) -> #crate_path::automerge::Value {
                 #fields_to_automerge
             }
@@ -32,6 +33,7 @@ fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
 fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
     let crate_path = utils::crate_path(input);
     let t_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let variants = variants.iter().map(|v| {
         let v_name = &v.ident;
         let fields = match &v.fields {
@@ -74,7 +76,7 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
     });
     quote! {
         #[automatically_derived]
-        impl #crate_path::ToAutomerge for #t_name {
+        impl #impl_generics #crate_path::ToAutomerge for #t_name #ty_generics #where_clause {
             fn to_automerge(&self) -> #crate_path::automerge::Value {
                 match self {
                     #(#variants)*
