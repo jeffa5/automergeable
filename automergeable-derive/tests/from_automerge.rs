@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use automergeable::{Automergeable, FromAutomerge, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 use pretty_assertions::assert_eq;
 use serde::Serialize;
+use std::collections::HashMap;
 
 #[test]
 fn from_automerge() {
@@ -376,5 +375,67 @@ fn enum_names() {
     assert_eq!(
         Names::C,
         Names::from_automerge(&Names::C.to_automerge()).unwrap()
+    );
+}
+
+#[test]
+fn single_generics() {
+    #[derive(ToAutomerge, FromAutomerge, PartialEq, Debug)]
+    struct A<T: ToAutomerge + FromAutomerge + Default> {
+        inner: T,
+    }
+
+    assert_eq!(
+        A { inner: 0u32 },
+        A::from_automerge(&A { inner: 0u32 }.to_automerge()).unwrap()
+    );
+
+    #[derive(ToAutomerge, FromAutomerge, PartialEq, Debug)]
+    enum B<T: ToAutomerge + FromAutomerge> {
+        C(T),
+    }
+
+    assert_eq!(
+        B::C(0u32),
+        B::from_automerge(&B::C(0u32).to_automerge()).unwrap()
+    )
+}
+
+#[test]
+fn multi_generics() {
+    #[derive(ToAutomerge, FromAutomerge, PartialEq, Debug)]
+    struct A<T: ToAutomerge + FromAutomerge + Default, U: ToAutomerge + FromAutomerge + Default> {
+        inner: T,
+        outer: U,
+    }
+
+    assert_eq!(
+        A {
+            inner: 0u32,
+            outer: String::new()
+        },
+        A::from_automerge(
+            &A {
+                inner: 0u32,
+                outer: String::new()
+            }
+            .to_automerge()
+        )
+        .unwrap()
+    );
+
+    #[derive(ToAutomerge, FromAutomerge, PartialEq, Debug)]
+    enum B<T: ToAutomerge + FromAutomerge + Default, U: ToAutomerge + FromAutomerge + Default> {
+        C(T),
+        D(U),
+    }
+
+    assert_eq!(
+        B::<u32, String>::C(0u32),
+        B::from_automerge(&B::<u32, String>::C(0u32).to_automerge()).unwrap()
+    );
+    assert_eq!(
+        B::<u32, String>::D(String::new()),
+        B::from_automerge(&B::<u32, String>::D(String::new()).to_automerge()).unwrap()
     );
 }

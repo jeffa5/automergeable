@@ -18,10 +18,11 @@ pub(crate) fn from_automerge(input: &DeriveInput) -> TokenStream {
 fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     let crate_path = utils::crate_path(input);
     let t_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let fields_from_automerge = fields_from_automerge(fields, None, &crate_path);
     quote! {
         #[automatically_derived]
-        impl #crate_path::FromAutomerge for #t_name {
+        impl #impl_generics #crate_path::FromAutomerge for #t_name #ty_generics #where_clause {
             fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
                 #fields_from_automerge
             }
@@ -32,6 +33,7 @@ fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
 fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> TokenStream {
     let crate_path = utils::crate_path(input);
     let t_name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let variant_match = variants.iter().filter(|v| !v.fields.is_empty()).map(|v| {
         let v_name = &v.ident;
         let v_name_string = v_name.to_string();
@@ -51,7 +53,7 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
 
     quote! {
         #[automatically_derived]
-        impl #crate_path::FromAutomerge for #t_name {
+        impl #impl_generics #crate_path::FromAutomerge for #t_name #ty_generics #where_clause {
             fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
                 if let #crate_path::automerge::Value::Map(hm, #crate_path::automerge::MapType::Map) = value {
                     if hm.len() != 1 {
@@ -64,7 +66,7 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                             #(#variant_match)*
                             _ => Err(#crate_path::FromAutomergeError::WrongType {
                                 found: value.clone(),
-                                expected: format!("a non-unit variant of {}", std::any::type_name::<#t_name>()),
+                                expected: format!("a non-unit variant of {}", std::any::type_name::<#t_name#ty_generics>()),
                             })
                         }
                     }
@@ -73,7 +75,7 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                         #(#unit_variant_match)*
                         _ => Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
-                            expected: format!("a unit variant of {}", std::any::type_name::<#t_name>()),
+                            expected: format!("a unit variant of {}", std::any::type_name::<#t_name#ty_generics>()),
                         })
                     }
                 } else {
