@@ -29,11 +29,11 @@ pub fn automergeable(input: TokenStream) -> TokenStream {
 ///
 /// # Supported attributes
 ///
-/// `#[automerge(representation = "text")]`: Converts a [`String`] to an [`automerge::Value::Text`] type, separating the string into grapheme clusters.
+/// `#[automergeable(representation = "text")]`: Converts a [`String`] to an [`automerge::Value::Text`] type, separating the string into grapheme clusters.
 ///
-/// `#[automerge(representation = "counter")]`: Converts an [`i64`] into an [`automerge::Primitive::Counter`] type.
+/// `#[automergeable(representation = "counter")]`: Converts an [`i64`] into an [`automerge::Primitive::Counter`] type.
 ///
-/// `#[automerge(representation = "timestamp")]`: Converts an [`i64`] into an [`automerge::Primitive::Timestamp`] type.
+/// `#[automergeable(representation = "timestamp")]`: Converts an [`i64`] into an [`automerge::Primitive::Timestamp`] type.
 #[proc_macro_derive(ToAutomerge, attributes(automergeable))]
 pub fn to_automerge(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -44,11 +44,11 @@ pub fn to_automerge(input: TokenStream) -> TokenStream {
 ///
 /// # Supported attributes
 ///
-/// `#[automerge(representation = "text")]`: Converts an [`automerge::Value::Text`] type to a [`String`], joining grapheme clusters together.
+/// `#[automergeable(representation = "text")]`: Converts an [`automerge::Value::Text`] type to a [`String`], joining grapheme clusters together.
 ///
-/// `#[automerge(representation = "counter")]`: Converts an [`automerge::Primitive::Counter`] type to an [`i64`].
+/// `#[automergeable(representation = "counter")]`: Converts an [`automerge::Primitive::Counter`] type to an [`i64`].
 ///
-/// `#[automerge(representation = "timestamp")]`: Converts an [`automerge::Primitive::Timestamp`] type to an [`i64`].
+/// `#[automergeable(representation = "timestamp")]`: Converts an [`automerge::Primitive::Timestamp`] type to an [`i64`].
 #[proc_macro_derive(FromAutomerge, attributes(automergeable))]
 pub fn from_automerge(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
