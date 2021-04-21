@@ -35,7 +35,7 @@ pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
 ///
 /// For instance from a document we can get the value as a typical Rust struct and perform
 /// automerge change operations on it with automatic diffing behind the scenes.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Document<T>
 where
     T: Automergeable,
@@ -46,7 +46,7 @@ where
 
 impl<T> Document<T>
 where
-    T: Automergeable + Clone + Default,
+    T: Automergeable + Clone,
 {
     /// Construct a new document.
     #[cfg(feature = "std")]
