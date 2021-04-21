@@ -1,6 +1,8 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     convert::TryInto,
+    rc::Rc,
+    sync::Arc,
 };
 
 use automerge::{MapType, Primitive, Value};
@@ -245,4 +247,24 @@ impl ToAutomerge for serde_json::Value {
             ),
         }
     }
+}
+
+macro_rules! refs {
+    ( $( $x:ty ),* $(,)? ) => {
+        $(
+        impl<T> ToAutomerge for $x
+        where
+            T: ToAutomerge,
+        {
+            fn to_automerge(&self) -> Value {
+                (**self).to_automerge()
+            }
+        })*
+    };
+}
+
+refs! {
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
 }

@@ -3,7 +3,9 @@ use std::{
     convert::TryInto,
     error::Error,
     hash::Hash,
+    rc::Rc,
     str::FromStr,
+    sync::Arc,
 };
 
 use automerge::{MapType, Primitive, Value};
@@ -430,4 +432,31 @@ nonzero_to_automerge_signed! {
     (std::num::NonZeroI64, i64),
     (std::num::NonZeroI128, i128),
     (std::num::NonZeroIsize, isize),
+}
+
+impl<T> FromAutomerge for Box<T>
+where
+    T: FromAutomerge,
+{
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        T::from_automerge(value).map(Box::new)
+    }
+}
+
+impl<T> FromAutomerge for Rc<T>
+where
+    T: FromAutomerge,
+{
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        T::from_automerge(value).map(|o| Rc::new(o))
+    }
+}
+
+impl<T> FromAutomerge for Arc<T>
+where
+    T: FromAutomerge,
+{
+    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+        T::from_automerge(value).map(|o| Arc::new(o))
+    }
 }
