@@ -4,7 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use automerge::Path;
+use automerge::{Frontend, Path, Value};
 
 use crate::Automergeable;
 
@@ -40,8 +40,17 @@ pub struct Document<T>
 where
     T: Automergeable,
 {
-    frontend: automerge::Frontend,
+    frontend: Frontend,
     _data: PhantomData<T>,
+}
+
+impl<T> Default for Document<T>
+where
+    T: Automergeable + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T> Document<T>
@@ -75,10 +84,14 @@ where
     }
 
     /// Retrieve the root value from the frontend and convert it.
-    pub fn get(&self) -> Option<Result<T, crate::FromAutomergeError>> {
+    pub fn get(&self) -> Result<T, crate::FromAutomergeError> {
+        T::from_automerge(&self.get_root())
+    }
+
+    fn get_root(&self) -> Value {
         self.frontend
             .get_value(&Path::root())
-            .map(|t| T::from_automerge(&t))
+            .expect("Failed to get root value")
     }
 
     fn change_inner<F, O, E>(
@@ -90,10 +103,7 @@ where
         E: Debug + Display,
         F: FnOnce(&mut T) -> Result<O, E>,
     {
-        let original = self
-            .frontend
-            .get_value(&Path::root())
-            .expect("no root value");
+        let original = self.get_root();
         let mut new_t = T::from_automerge(&original)?;
         let res = change(&mut new_t).map_err(DocumentChangeError::ChangeError)?;
         let changes = crate::diff_values(&new_t.to_automerge(), &original)?;
@@ -138,7 +148,7 @@ impl<T> Deref for Document<T>
 where
     T: Automergeable,
 {
-    type Target = automerge::Frontend;
+    type Target = Frontend;
 
     fn deref(&self) -> &Self::Target {
         &self.frontend
