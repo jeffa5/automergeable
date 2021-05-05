@@ -96,11 +96,11 @@ where
             .expect("no root value");
         let mut new_t = T::from_automerge(&original)?;
         let res = change(&mut new_t).map_err(DocumentChangeError::ChangeError)?;
-        let changes = crate::diff_values(&new_t.to_automerge(), &original);
+        let changes = crate::diff_values(&new_t.to_automerge(), &original)?;
         let ((), change) = self
             .frontend
             .change::<_, _, automerge::InvalidChangeRequest>(message, |doc| {
-                for change in changes? {
+                for change in changes {
                     doc.add_change(change)?
                 }
                 Ok(())
