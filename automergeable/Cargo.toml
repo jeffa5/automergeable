@@ -35,3 +35,7 @@ harness = false
 [[bench]]
 name = "change"
 harness = false
+
+[[bench]]
+name = "convert"
+harness = false
