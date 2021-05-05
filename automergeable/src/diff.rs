@@ -94,67 +94,69 @@ fn diff_with_path(
             Value::Primitive(Primitive::Str(old_string)),
         ) => {
             // just set this, we can't address the characters so this may be a thing such as an enum
-            if new_string != old_string {
+            if new_string == old_string {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
-                    Value::Primitive(Primitive::Str(new_string.to_owned())),
+                    Value::Primitive(Primitive::Str(new_string.clone())),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(old_int))) => {
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Int(*new_int)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (
             Value::Primitive(Primitive::Uint(new_int)),
             Value::Primitive(Primitive::Uint(old_int)),
         ) => {
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Uint(*new_int)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(old_int))) =>
         {
             #[allow(clippy::float_cmp)]
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::F64(*new_int)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(old_int))) =>
         {
             #[allow(clippy::float_cmp)]
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::F32(*new_int)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (
             Value::Primitive(Primitive::Counter(new_int)),
             Value::Primitive(Primitive::Counter(old_int)),
         ) => {
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
                     diff
                 } else {
@@ -162,21 +164,19 @@ fn diff_with_path(
                     return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
                 };
                 Ok(vec![LocalChange::increment_by(path, diff)])
-            } else {
-                Ok(Vec::new())
             }
         }
         (
             Value::Primitive(Primitive::Timestamp(new_int)),
             Value::Primitive(Primitive::Timestamp(old_int)),
         ) => {
-            if new_int != old_int {
+            if new_int == old_int {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Timestamp(*new_int)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (
@@ -193,13 +193,13 @@ fn diff_with_path(
             Value::Primitive(Primitive::Boolean(new_bool)),
             Value::Primitive(Primitive::Boolean(old_bool)),
         ) => {
-            if new_bool != old_bool {
+            if new_bool == old_bool {
+                Ok(Vec::new())
+            } else {
                 Ok(vec![LocalChange::set(
                     path,
                     Value::Primitive(Primitive::Boolean(*new_bool)),
                 )])
-            } else {
-                Ok(Vec::new())
             }
         }
         (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => Ok(Vec::new()),

@@ -7,11 +7,11 @@ use syn::{
 
 use crate::utils;
 
-pub(crate) fn to_automerge(input: &DeriveInput) -> TokenStream {
+pub fn to_automerge(input: &DeriveInput) -> TokenStream {
     match &input.data {
-        Data::Struct(DataStruct { fields, .. }) => to_automerge_struct(&input, &fields),
-        Data::Enum(DataEnum { variants, .. }) => to_automerge_enum(&input, &variants),
-        _ => panic!("this derive macro only works on structs with named fields"),
+        Data::Struct(DataStruct { fields, .. }) => to_automerge_struct(input, fields),
+        Data::Enum(DataEnum { variants, .. }) => to_automerge_enum(input, variants),
+        Data::Union(_) => panic!("this derive macro only works on structs with named fields"),
     }
 }
 
@@ -88,15 +88,16 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
 
 fn get_representation_type(
     attrs: &[Attribute],
-    field_name: TokenStream,
+    field_name: &TokenStream,
     crate_path: &TokenStream,
 ) -> TokenStream {
     let mut ty = None;
     for a in attrs {
         match a.parse_meta().unwrap() {
-            Meta::NameValue(_) => {}
+            Meta::NameValue(_) | Meta::Path(_) => {}
             Meta::List(meta) => {
-                if Some("automergeable".to_owned()) == meta.path.get_ident().map(|i| i.to_string())
+                if Some("automergeable".to_owned())
+                    == meta.path.get_ident().map(ToString::to_string)
                 {
                     for m in meta.nested {
                         match m {
@@ -108,13 +109,11 @@ fn get_representation_type(
                                     }
                                 }
                             },
-                            NestedMeta::Lit(Lit::Str(_)) => {}
-                            _ => {}
+                            NestedMeta::Lit(_) => {}
                         }
                     }
                 }
             }
-            Meta::Path(_) => {}
         }
     }
     match ty.map(|s| s.to_lowercase()).as_deref() {
@@ -146,7 +145,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                 } else {
                     quote! {#field_name}
                 };
-                let repr = get_representation_type(&f.attrs, field_name, crate_path);
+                let repr = get_representation_type(&f.attrs, &field_name, crate_path);
                 quote! {
                     fields.insert(#field_name_string.to_owned(), #repr);
                 }
@@ -167,7 +166,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                     let f = Ident::new(&format!("f{}", 0), Span::call_site());
                     quote! {#f}
                 };
-                let repr = get_representation_type(&field.attrs, field_name, crate_path);
+                let repr = get_representation_type(&field.attrs, &field_name, crate_path);
                 quote! {
                     #repr
                 }
@@ -180,7 +179,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                         let f = Ident::new(&format!("f{}", i), Span::call_site());
                         quote! {#f}
                     };
-                    let repr = get_representation_type(&f.attrs, field_name, crate_path);
+                    let repr = get_representation_type(&f.attrs, &field_name, crate_path);
                     quote! {
                         fields.push(#repr);
                     }

@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     convert::TryInto,
     error::Error,
     hash::Hash,
@@ -52,7 +52,7 @@ impl FromAutomerge for () {
 impl FromAutomerge for String {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Str(s)) = value {
-            Ok(s.to_owned())
+            Ok(s.clone())
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
@@ -88,7 +88,7 @@ where
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Sequence(vec) = value {
-            let mut v = Vec::with_capacity(vec.len());
+            let mut v = Self::with_capacity(vec.len());
             for val in vec {
                 v.push(T::from_automerge(val)?)
             }
@@ -108,7 +108,7 @@ pub struct Text(pub Vec<String>);
 impl FromAutomerge for Text {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Text(vec) = value {
-            Ok(Text(vec.clone()))
+            Ok(Self(vec.clone()))
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
@@ -145,7 +145,7 @@ where
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, MapType::Map) = value {
-            let mut m = HashMap::with_capacity(map.len());
+            let mut m = Self::with_capacity(map.len());
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
@@ -170,7 +170,7 @@ where
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
         if let Value::Map(map, MapType::Map) = value {
-            let mut m = BTreeMap::new();
+            let mut m = Self::new();
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
                     m.insert(k, V::from_automerge(v)?);
@@ -206,7 +206,7 @@ impl FromAutomerge for std::time::SystemTime {
     fn from_automerge(value: &automerge::Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Timestamp(t)) = value {
             let duration = std::time::Duration::from_secs((*t).try_into().unwrap());
-            Ok(std::time::SystemTime::UNIX_EPOCH + duration)
+            Ok(Self::UNIX_EPOCH + duration)
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
@@ -259,13 +259,13 @@ as_i64_from_automerge! {
 
 impl FromAutomerge for isize {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        i64::from_automerge(value).map(|i| i as isize)
+        i64::from_automerge(value).map(|i| i as Self)
     }
 }
 
 impl FromAutomerge for i128 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        i64::from_automerge(value).map(|i| i as i128)
+        i64::from_automerge(value).map(|i| i as Self)
     }
 }
 
@@ -299,13 +299,13 @@ as_u64_from_automerge! {
 
 impl FromAutomerge for usize {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        u64::from_automerge(value).map(|u| u as usize)
+        u64::from_automerge(value).map(|u| u as Self)
     }
 }
 
 impl FromAutomerge for u128 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        u64::from_automerge(value).map(|u| u as u128)
+        u64::from_automerge(value).map(|u| u as Self)
     }
 }
 
@@ -338,32 +338,29 @@ impl FromAutomerge for f32 {
 impl FromAutomerge for serde_json::Value {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         let var_name = match value {
-            Value::Map(map, _) => Ok(serde_json::Value::Object(
+            Value::Map(map, _) => Ok(Self::Object(
                 map.iter()
-                    .map(|(k, v)| (k.clone(), serde_json::Value::from_automerge(v).unwrap()))
+                    .map(|(k, v)| (k.clone(), Self::from_automerge(v).unwrap()))
                     .collect(),
             )),
-            Value::Sequence(v) => Ok(serde_json::Value::Array(
+            Value::Sequence(v) => Ok(Self::Array(
                 v.iter()
-                    .map(|i| serde_json::Value::from_automerge(i).unwrap())
+                    .map(|i| Self::from_automerge(i).unwrap())
                     .collect::<Vec<_>>(),
             )),
-            Value::Text(v) => Ok(serde_json::Value::String(v.concat())),
+            Value::Text(v) => Ok(Self::String(v.concat())),
             Value::Primitive(p) => match p {
-                Primitive::Str(s) => Ok(serde_json::Value::String(s.clone())),
-                Primitive::Int(i) => Ok(serde_json::Value::Number(Number::from(*i))),
-                Primitive::Uint(u) => Ok(serde_json::Value::Number(Number::from(*u))),
-                Primitive::F64(f) => Ok(serde_json::Value::Number(Number::from_f64(*f).unwrap())),
-                Primitive::F32(f) => Ok(serde_json::Value::Number(
-                    Number::from_f64((*f).into()).unwrap(),
-                )),
-                Primitive::Counter(i) => Ok(serde_json::Value::Number(Number::from(*i))),
-                Primitive::Timestamp(i) => Ok(serde_json::Value::Number(Number::from(*i))),
-                Primitive::Boolean(b) => Ok(serde_json::Value::Bool(*b)),
+                Primitive::Str(s) => Ok(Self::String(s.clone())),
+                Primitive::Int(i) | Primitive::Counter(i) => Ok(Self::Number(Number::from(*i))),
+                Primitive::Uint(u) => Ok(Self::Number(Number::from(*u))),
+                Primitive::F64(f) => Ok(Self::Number(Number::from_f64(*f).unwrap())),
+                Primitive::F32(f) => Ok(Self::Number(Number::from_f64((*f).into()).unwrap())),
+                Primitive::Timestamp(i) => Ok(Self::Number(Number::from(*i))),
+                Primitive::Boolean(b) => Ok(Self::Bool(*b)),
                 Primitive::Cursor(_) => {
                     panic!("cursor is unsupported")
                 }
-                Primitive::Null => Ok(serde_json::Value::Null),
+                Primitive::Null => Ok(Self::Null),
             },
         };
         var_name
@@ -439,7 +436,7 @@ where
     T: FromAutomerge,
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        T::from_automerge(value).map(Box::new)
+        T::from_automerge(value).map(Self::new)
     }
 }
 
@@ -448,7 +445,7 @@ where
     T: FromAutomerge,
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        T::from_automerge(value).map(|o| Rc::new(o))
+        T::from_automerge(value).map(Self::new)
     }
 }
 
@@ -457,6 +454,6 @@ where
     T: FromAutomerge,
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        T::from_automerge(value).map(|o| Arc::new(o))
+        T::from_automerge(value).map(Self::new)
     }
 }

@@ -7,11 +7,11 @@ use syn::{
 
 use crate::utils;
 
-pub(crate) fn from_automerge(input: &DeriveInput) -> TokenStream {
+pub fn from_automerge(input: &DeriveInput) -> TokenStream {
     match &input.data {
-        Data::Struct(DataStruct { fields, .. }) => from_automerge_struct(&input, &fields),
-        Data::Enum(DataEnum { variants, .. }) => from_automerge_enum(&input, &variants),
-        _ => panic!("this derive macro only works on structs"),
+        Data::Struct(DataStruct { fields, .. }) => from_automerge_struct(input, fields),
+        Data::Enum(DataEnum { variants, .. }) => from_automerge_enum(input, variants),
+        Data::Union(_) => panic!("this derive macro only works on structs"),
     }
 }
 
@@ -92,15 +92,16 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
 fn get_representation_type(
     attrs: &[Attribute],
     field_ty: &Type,
-    value_for_field: TokenStream,
+    value_for_field: &TokenStream,
     crate_path: &TokenStream,
 ) -> TokenStream {
     let mut ty = None;
     for a in attrs {
         match a.parse_meta().unwrap() {
-            Meta::NameValue(_) => {}
+            Meta::NameValue(_) | Meta::Path(_) => {}
             Meta::List(meta) => {
-                if Some("automergeable".to_owned()) == meta.path.get_ident().map(|i| i.to_string())
+                if Some("automergeable".to_owned())
+                    == meta.path.get_ident().map(ToString::to_string)
                 {
                     for m in meta.nested {
                         match m {
@@ -112,13 +113,11 @@ fn get_representation_type(
                                     }
                                 }
                             },
-                            NestedMeta::Lit(Lit::Str(_)) => {}
-                            _ => {}
+                            NestedMeta::Lit(_) => {}
                         }
                     }
                 }
             }
-            Meta::Path(_) => {}
         }
     }
     match ty.map(|s| s.to_lowercase()).as_deref() {
@@ -195,7 +194,8 @@ fn fields_from_automerge(
                 let value_for_field = quote! {
                     hm.get(#field_name_string)
                 };
-                let repr = get_representation_type(&f.attrs, field_ty, value_for_field, crate_path);
+                let repr =
+                    get_representation_type(&f.attrs, field_ty, &value_for_field, crate_path);
                 quote! {
                     #field_name: #repr,
                 }
@@ -230,7 +230,7 @@ fn fields_from_automerge(
                         seq.get(#field_name)
                     };
                     let repr =
-                        get_representation_type(&f.attrs, field_ty, value_for_field, crate_path);
+                        get_representation_type(&f.attrs, field_ty, &value_for_field, crate_path);
                     quote! {
                         #repr,
                     }

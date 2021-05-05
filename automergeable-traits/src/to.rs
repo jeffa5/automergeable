@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     convert::TryInto,
     rc::Rc,
     sync::Arc,
@@ -74,7 +74,7 @@ where
 
 impl ToAutomerge for String {
     fn to_automerge(&self) -> Value {
-        Value::Primitive(Primitive::Str(self.to_owned()))
+        Value::Primitive(Primitive::Str(self.clone()))
     }
 }
 
@@ -107,11 +107,8 @@ where
     T: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
-        if let Some(v) = self {
-            v.to_automerge()
-        } else {
-            Value::Primitive(Primitive::Null)
-        }
+        self.as_ref()
+            .map_or(Value::Primitive(Primitive::Null), |v| v.to_automerge())
     }
 }
 
@@ -119,7 +116,7 @@ where
 impl ToAutomerge for std::time::SystemTime {
     fn to_automerge(&self) -> Value {
         let ts = self
-            .duration_since(std::time::UNIX_EPOCH)
+            .duration_since(Self::UNIX_EPOCH)
             .expect("time went backwards");
         Value::Primitive(Primitive::Timestamp(ts.as_secs().try_into().unwrap()))
     }

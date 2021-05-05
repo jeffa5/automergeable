@@ -1,6 +1,8 @@
 #![warn(missing_docs)]
 #![warn(missing_crate_level_docs)]
 #![warn(missing_doc_code_examples)]
+// #![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
 
 //! Strongly typed automerge documents.
 //!
