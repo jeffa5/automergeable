@@ -34,15 +34,15 @@ where
     }
 }
 
-impl<T> ToAutomerge for HashSet<T>
-where
-    T: ToAutomerge,
-{
-    fn to_automerge(&self) -> Value {
-        let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
-        Value::Sequence(vals)
-    }
-}
+// impl<T> ToAutomerge for HashSet<T>
+// where
+//     T: ToAutomerge,
+// {
+//     fn to_automerge(&self) -> Value {
+//         let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
+//         Value::Sequence(vals)
+//     }
+// }
 
 impl<K, V> ToAutomerge for HashMap<K, V>
 where

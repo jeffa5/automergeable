@@ -118,25 +118,25 @@ impl FromAutomerge for Text {
     }
 }
 
-impl<T> FromAutomerge for HashSet<T>
-where
-    T: FromAutomerge + Clone + Eq + Hash,
-{
-    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Sequence(vec) = value {
-            let mut v = Vec::with_capacity(vec.len());
-            for val in vec {
-                v.push(T::from_automerge(val)?)
-            }
-            Ok(v.iter().cloned().collect::<HashSet<_>>())
-        } else {
-            Err(FromAutomergeError::WrongType {
-                found: value.clone(),
-                expected: "a sequence".to_owned(),
-            })
-        }
-    }
-}
+// impl<T> FromAutomerge for HashSet<T>
+// where
+//     T: FromAutomerge + Clone + Eq + Hash,
+// {
+//     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
+//         if let Value::Sequence(vec) = value {
+//             let mut v = Vec::with_capacity(vec.len());
+//             for val in vec {
+//                 v.push(T::from_automerge(val)?)
+//             }
+//             Ok(v.iter().cloned().collect::<HashSet<_>>())
+//         } else {
+//             Err(FromAutomergeError::WrongType {
+//                 found: value.clone(),
+//                 expected: "a sequence".to_owned(),
+//             })
+//         }
+//     }
+// }
 
 impl<K, V> FromAutomerge for HashMap<K, V>
 where
