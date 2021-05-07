@@ -6,9 +6,9 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "main" }
-automerge-protocol = { git = "https://github.com/jeffa5/automerge-rs", branch = "main" }
-automerge-frontend = { git = "https://github.com/jeffa5/automerge-rs", branch = "main" }
+automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge-frontend = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automergeable-traits = { path = "../automergeable-traits" }
 automergeable-derive = { path = "../automergeable-derive" }
 thiserror = "1.0.24"
