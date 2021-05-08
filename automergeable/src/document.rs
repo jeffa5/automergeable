@@ -1,10 +1,7 @@
-use std::{
-    fmt::{Debug, Display},
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
-};
+use std::fmt::{Debug, Display};
 
 use automerge::{Frontend, Path, Value};
+use automerge_protocol::Patch;
 
 use crate::Automergeable;
 
@@ -28,6 +25,14 @@ pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
     ChangeError(E),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ApplyPatchError {
+    #[error(transparent)]
+    InvalidPatch(#[from] automerge_frontend::InvalidPatch),
+    #[error(transparent)]
+    FromError(#[from] crate::FromAutomergeError),
+}
+
 /// A typed automerge document, wrapping a typical frontend.
 ///
 /// This provides similar functionality to an automerge frontend (including [`Deref`] to one) but with
@@ -41,7 +46,8 @@ where
     T: Automergeable,
 {
     frontend: Frontend,
-    _data: PhantomData<T>,
+    value: T,
+    original: Value,
 }
 
 impl<T> Default for Document<T>
@@ -60,32 +66,50 @@ where
     /// Construct a new document.
     #[cfg(feature = "std")]
     pub fn new() -> Self {
+        let frontend = automerge::Frontend::new();
+        let original = frontend
+            .get_value(&Path::root())
+            .expect("Failed to get root value");
+        let value = T::from_automerge(&original).expect("Failed to load value");
         Self {
-            frontend: automerge::Frontend::new(),
-            _data: PhantomData,
+            frontend,
+            value,
+            original,
         }
     }
 
     /// Construct a new document with a given actor id.
     #[cfg(feature = "std")]
     pub fn new_with_actor_id(actor_id: uuid::Uuid) -> Self {
+        let frontend = automerge::Frontend::new_with_actor_id(actor_id);
+        let original = frontend
+            .get_value(&Path::root())
+            .expect("Failed to get root value");
+        let value = T::from_automerge(&original).expect("Failed to load value");
         Self {
-            frontend: automerge::Frontend::new_with_actor_id(actor_id),
-            _data: PhantomData,
+            frontend,
+            value,
+            original,
         }
     }
 
     /// Construct a new document with a given timestamper function.
     pub fn new_with_timestamper(t: Box<(dyn Fn() -> Option<i64>)>) -> Self {
+        let frontend = automerge::Frontend::new_with_timestamper(t);
+        let original = frontend
+            .get_value(&Path::root())
+            .expect("Failed to get root value");
+        let value = T::from_automerge(&original).expect("Failed to load value");
         Self {
-            frontend: automerge::Frontend::new_with_timestamper(t),
-            _data: PhantomData,
+            frontend,
+            value,
+            original,
         }
     }
 
     /// Retrieve the root value from the frontend and convert it.
-    pub fn get(&self) -> Result<T, crate::FromAutomergeError> {
-        T::from_automerge(&self.get_root())
+    pub fn get(&self) -> &T {
+        &self.value
     }
 
     fn get_root(&self) -> Value {
@@ -103,10 +127,10 @@ where
         E: Debug + Display,
         F: FnOnce(&mut T) -> Result<O, E>,
     {
-        let original = self.get_root();
-        let mut new_t = T::from_automerge(&original)?;
+        let mut new_t = self.value.clone();
         let res = change(&mut new_t).map_err(DocumentChangeError::ChangeError)?;
-        let changes = crate::diff_values(&new_t.to_automerge(), &original)?;
+        let new_original = new_t.to_automerge();
+        let changes = crate::diff_values(&new_original, &self.original)?;
         let ((), change) = self
             .frontend
             .change::<_, _, automerge::InvalidChangeRequest>(message, |doc| {
@@ -115,6 +139,8 @@ where
                 }
                 Ok(())
             })?;
+        self.value = new_t;
+        self.original = new_original;
         Ok((res, change))
     }
 
@@ -142,25 +168,21 @@ where
     {
         self.change_inner(Some(message), change)
     }
-}
 
-impl<T> Deref for Document<T>
-where
-    T: Automergeable,
-{
-    type Target = Frontend;
-
-    fn deref(&self) -> &Self::Target {
-        &self.frontend
+    /// Apply a patch to the frontend, updating the stored value in the process.
+    pub fn apply_patch(&mut self, patch: Patch) -> Result<(), ApplyPatchError> {
+        self.frontend.apply_patch(patch)?;
+        self.refresh_value()?;
+        Ok(())
     }
-}
 
-impl<T> DerefMut for Document<T>
-where
-    T: Automergeable,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.frontend
+    /// Set the internal typed value to that obtained from the frontend.
+    ///
+    /// This is intended to be used in case of interacting with the frontend directly.
+    fn refresh_value(&mut self) -> Result<(), crate::FromAutomergeError> {
+        self.original = self.get_root();
+        self.value = T::from_automerge(&self.original)?;
+        Ok(())
     }
 }
 
