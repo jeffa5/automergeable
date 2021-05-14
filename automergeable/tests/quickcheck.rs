@@ -633,6 +633,51 @@ fn broken_save_load() {
 }
 
 #[test]
+fn broken_save_load_2() {
+    let mut hm1 = HashMap::new();
+    hm1.insert("a".to_owned(), Value::Primitive(Primitive::Null));
+    let mut hm2 = HashMap::new();
+    hm2.insert("".to_owned(), Value::Primitive(Primitive::Null));
+    let values = vec![
+        Value::Map(HashMap::new(), MapType::Map),
+        Value::Map(hm1, MapType::Map),
+        Value::Map(hm2, MapType::Map),
+        Value::Map(HashMap::new(), MapType::Map),
+    ];
+
+    let mut frontend = automerge::Frontend::new();
+    let mut backend_bytes = Vec::new();
+    for val_pair in values.windows(2) {
+        let changes = diff_values(&val_pair[1], &val_pair[0]).unwrap();
+        println!("changes: {:?}", changes);
+        let mut backend = if backend_bytes.is_empty() {
+            automerge::Backend::init()
+        } else {
+            let b = automerge::Backend::load(backend_bytes);
+            if let Ok(b) = b {
+                b
+            } else {
+                println!("error loading: {:?}", b);
+                panic!("failed loading")
+            }
+        };
+
+        let ((), c) = frontend
+            .change::<_, _, InvalidChangeRequest>(None, |d| {
+                for change in &changes {
+                    d.add_change(change.clone())?
+                }
+                Ok(())
+            })
+            .unwrap();
+        if let Some(change) = c {
+            backend.apply_local_change(change).unwrap();
+        }
+        backend_bytes = backend.save().unwrap();
+    }
+}
+
+#[test]
 fn broken_reordering_of_values() {
     // setup
     let mut hm = std::collections::HashMap::new();
@@ -646,6 +691,8 @@ fn broken_reordering_of_values() {
     let (mut frontend, change) =
         automerge::Frontend::new_with_initial_state(Value::Map(hm, automerge::MapType::Map))
             .unwrap();
+
+    println!("change1 {:?}", change);
 
     // get patch and apply
     let (patch, _) = backend.apply_local_change(change).unwrap();
@@ -684,6 +731,7 @@ fn broken_reordering_of_values() {
 
     // now apply the change to the backend and bring the patch back to the frontend
     if let Some(c) = c {
+        println!("change2 {:?}", c);
         let (p, _) = backend.apply_local_change(c).unwrap();
         frontend.apply_patch(p).unwrap();
     }

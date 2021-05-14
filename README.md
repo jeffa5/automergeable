@@ -25,3 +25,7 @@ struct B {
     inner: u64,
 }
 ```
+
+## Fuzzing
+
+Run fuzzing tests from the `automergeable` directory with `cargo fuzz run fuzz_target_1`.
