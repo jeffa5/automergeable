@@ -662,8 +662,8 @@ fn broken_save_load_2() {
             }
         };
 
-        let c = frontend
-            .change::<_, InvalidChangeRequest>(None, |d| {
+        let ((), c) = frontend
+            .change::<_, _, InvalidChangeRequest>(None, |d| {
                 for change in &changes {
                     d.add_change(change.clone())?
                 }
