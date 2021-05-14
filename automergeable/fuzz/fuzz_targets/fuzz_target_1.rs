@@ -48,7 +48,7 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
         }
     }
 
-    let mut doc: automergeable::Document<Val> = automergeable::Document::new();
+    let mut doc = automergeable::Document::<Val>::new();
 
     let mut backend_bytes = Vec::new();
 
