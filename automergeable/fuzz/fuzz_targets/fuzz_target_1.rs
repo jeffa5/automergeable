@@ -31,14 +31,18 @@ impl automergeable::FromAutomerge for Val {
 
 fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
     for val in &values {
+        // ensure the root is always a map
         if let Value::Map(_, MapType::Map) = val {
         } else {
             return;
         }
 
+        // don't work with cursors for now
         if has_cursor(val) {
             return;
         }
+
+        // don't allow empty text
         if has_empty_text(val) {
             return;
         }
