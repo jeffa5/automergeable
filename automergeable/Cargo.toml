@@ -27,6 +27,7 @@ maplit = "1.0.2"
 [features]
 default = ["std"]
 std = []
+derive-arbitrary = ["automerge-protocol/derive-arbitrary", "automerge-frontend/derive-arbitrary"]
 
 [[bench]]
 name = "diff"

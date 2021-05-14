@@ -17,14 +17,14 @@ impl Default for Val {
     }
 }
 
-impl automergeable::traits::ToAutomerge for Val {
+impl automergeable::ToAutomerge for Val {
     fn to_automerge(&self) -> Value {
         self.0.clone()
     }
 }
 
-impl automergeable::traits::FromAutomerge for Val {
-    fn from_automerge(value: &Value) -> Result<Self, automergeable::traits::FromAutomergeError> {
+impl automergeable::FromAutomerge for Val {
+    fn from_automerge(value: &Value) -> Result<Self, automergeable::FromAutomergeError> {
         Ok(Self(value.clone()))
     }
 }
@@ -49,16 +49,16 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
     let mut backend_bytes = Vec::new();
 
     for val in values {
-        let change = doc.change::<_, InvalidChangeRequest>(|old| {
+        let change = doc.change::<_, _, InvalidChangeRequest>(|old| {
             *old = Val(val);
             Ok(())
         });
 
         match change {
             Ok(c) => {
-                if let Some(c) = c {
+                if let ((), Some(c)) = c {
                     let mut backend = if backend_bytes.is_empty() {
-                        Backend::init()
+                        Backend::new()
                     } else {
                         Backend::load(backend_bytes).unwrap()
                     };
