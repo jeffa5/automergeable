@@ -1,7 +1,4 @@
-use std::{
-    error::Error,
-    fmt::{Debug, Display},
-};
+use std::{error::Error, fmt::Debug};
 
 use automerge::{Path, Value};
 use automerge_frontend::MutableDocument;
@@ -11,7 +8,7 @@ use crate::Automergeable;
 
 /// An error type for change operations on documents.
 #[derive(Debug, thiserror::Error)]
-pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
+pub enum DocumentChangeError<E: Error = std::convert::Infallible> {
     /// An invalid change request was created.
     ///
     /// Automerge imposes some limits on what can be changed and how. See the
@@ -134,7 +131,7 @@ where
         change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
-        E: Debug + Display,
+        E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
     {
         let mut new_t = self.value.clone();
@@ -160,7 +157,7 @@ where
         change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
-        E: Debug + Display,
+        E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(None, change)
@@ -173,7 +170,7 @@ where
         change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
-        E: Debug + Display,
+        E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(Some(message), change)
