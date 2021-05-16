@@ -1,7 +1,11 @@
-use std::fmt::{Debug, Display};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+};
 
-use automerge::{Frontend, Path, Value};
-use automerge_protocol::Patch;
+use automerge::{Path, Value};
+use automerge_frontend::MutableDocument;
+use automerge_protocol::{Patch, UncompressedChange};
 
 use crate::Automergeable;
 
@@ -26,11 +30,53 @@ pub enum DocumentChangeError<E: Debug + Display = std::convert::Infallible> {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ApplyPatchError {
-    #[error(transparent)]
-    InvalidPatch(#[from] automerge_frontend::InvalidPatch),
+pub enum ApplyPatchError<E: Error> {
+    #[error("frontend error: {0}")]
+    FrontendError(E),
     #[error(transparent)]
     FromError(#[from] crate::FromAutomergeError),
+}
+
+pub trait Frontend {
+    type Error: Error;
+
+    fn get_value(&self, path: &Path) -> Result<Option<Value>, Self::Error>;
+
+    fn change<C, E>(
+        &mut self,
+        message: Option<String>,
+        closure: C,
+    ) -> Result<Option<UncompressedChange>, E>
+    where
+        C: FnOnce(&mut dyn MutableDocument) -> Result<(), E>,
+        E: Error;
+
+    fn apply_patch(&mut self, patch: Patch) -> Result<(), Self::Error>;
+}
+
+impl Frontend for automerge::Frontend {
+    type Error = automerge_frontend::InvalidPatch;
+
+    fn get_value(&self, path: &Path) -> Result<Option<Value>, Self::Error> {
+        Ok(self.get_value(path))
+    }
+
+    fn change<C, E>(
+        &mut self,
+        message: Option<String>,
+        closure: C,
+    ) -> Result<Option<UncompressedChange>, E>
+    where
+        C: FnOnce(&mut dyn MutableDocument) -> Result<(), E>,
+        E: Error,
+    {
+        let ((), change) = self.change(message, closure)?;
+        Ok(change)
+    }
+
+    fn apply_patch(&mut self, patch: Patch) -> Result<(), Self::Error> {
+        self.apply_patch(patch)
+    }
 }
 
 /// A typed automerge document, wrapping a typical frontend.
@@ -41,64 +87,27 @@ pub enum ApplyPatchError {
 /// For instance from a document we can get the value as a typical Rust struct and perform
 /// automerge change operations on it with automatic diffing behind the scenes.
 #[derive(Debug)]
-pub struct Document<T>
+pub struct Document<T, F>
 where
     T: Automergeable,
+    F: Frontend,
 {
-    frontend: Frontend,
+    frontend: F,
     value: T,
     original: Value,
 }
 
-impl<T> Default for Document<T>
+impl<T, F> Document<T, F>
 where
     T: Automergeable + Clone,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T> Document<T>
-where
-    T: Automergeable + Clone,
+    F: Frontend,
 {
     /// Construct a new document.
-    #[cfg(feature = "std")]
-    pub fn new() -> Self {
-        let frontend = automerge::Frontend::new();
+    pub fn new(frontend: F) -> Self {
         let original = frontend
             .get_value(&Path::root())
-            .expect("Failed to get root value");
-        let value = T::from_automerge(&original).expect("Failed to load value");
-        Self {
-            frontend,
-            value,
-            original,
-        }
-    }
-
-    /// Construct a new document with a given actor id.
-    #[cfg(feature = "std")]
-    pub fn new_with_actor_id(actor_id: uuid::Uuid) -> Self {
-        let frontend = automerge::Frontend::new_with_actor_id(actor_id);
-        let original = frontend
-            .get_value(&Path::root())
-            .expect("Failed to get root value");
-        let value = T::from_automerge(&original).expect("Failed to load value");
-        Self {
-            frontend,
-            value,
-            original,
-        }
-    }
-
-    /// Construct a new document with a given timestamper function.
-    pub fn new_with_timestamper(t: Box<(dyn Fn() -> Option<i64>)>) -> Self {
-        let frontend = automerge::Frontend::new_with_timestamper(t);
-        let original = frontend
-            .get_value(&Path::root())
-            .expect("Failed to get root value");
+            .expect("Failed to get root value")
+            .expect("No root value");
         let value = T::from_automerge(&original).expect("Failed to load value");
         Self {
             frontend,
@@ -112,66 +121,69 @@ where
         &self.value
     }
 
-    fn get_root(&self) -> Value {
-        self.frontend
-            .get_value(&Path::root())
-            .expect("Failed to get root value")
+    fn get_root(&self) -> Result<Value, F::Error> {
+        Ok(self
+            .frontend
+            .get_value(&Path::root())?
+            .expect("Failed to get root value"))
     }
 
-    fn change_inner<F, O, E>(
+    fn change_inner<C, O, E>(
         &mut self,
         message: Option<String>,
-        change: F,
+        change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<O, E>,
+        C: FnOnce(&mut T) -> Result<O, E>,
     {
         let mut new_t = self.value.clone();
         let res = change(&mut new_t).map_err(DocumentChangeError::ChangeError)?;
         let new_original = new_t.to_automerge();
         let changes = crate::diff_values(&new_original, &self.original)?;
-        let ((), change) = self
-            .frontend
-            .change::<_, _, automerge::InvalidChangeRequest>(message, |doc| {
-                for change in changes {
-                    doc.add_change(change)?
-                }
-                Ok(())
-            })?;
+        let change =
+            self.frontend
+                .change::<_, automerge::InvalidChangeRequest>(message, |doc| {
+                    for change in changes {
+                        doc.add_change(change)?
+                    }
+                    Ok(())
+                })?;
         self.value = new_t;
         self.original = new_original;
         Ok((res, change))
     }
 
     /// Perform a change on the frontend.
-    pub fn change<F, O, E>(
+    pub fn change<C, O, E>(
         &mut self,
-        change: F,
+        change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<O, E>,
+        C: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(None, change)
     }
 
     /// Perform a change on the frontend with a message.
-    pub fn change_with_message<F, O, E>(
+    pub fn change_with_message<C, O, E>(
         &mut self,
         message: String,
-        change: F,
+        change: C,
     ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
     where
         E: Debug + Display,
-        F: FnOnce(&mut T) -> Result<O, E>,
+        C: FnOnce(&mut T) -> Result<O, E>,
     {
         self.change_inner(Some(message), change)
     }
 
     /// Apply a patch to the frontend, updating the stored value in the process.
-    pub fn apply_patch(&mut self, patch: Patch) -> Result<(), ApplyPatchError> {
-        self.frontend.apply_patch(patch)?;
+    pub fn apply_patch(&mut self, patch: Patch) -> Result<(), ApplyPatchError<F::Error>> {
+        self.frontend
+            .apply_patch(patch)
+            .map_err(ApplyPatchError::FrontendError)?;
         self.refresh_value()?;
         Ok(())
     }
@@ -179,8 +191,9 @@ where
     /// Set the internal typed value to that obtained from the frontend.
     ///
     /// This is intended to be used in case of interacting with the frontend directly.
-    fn refresh_value(&mut self) -> Result<(), crate::FromAutomergeError> {
-        self.original = self.get_root();
+    fn refresh_value(&mut self) -> Result<(), ApplyPatchError<F::Error>> {
+        // TODO: change this to a new error type
+        self.original = self.get_root().map_err(ApplyPatchError::FrontendError)?;
         self.value = T::from_automerge(&self.original)?;
         Ok(())
     }
@@ -188,6 +201,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use automerge::Frontend;
+
     use super::*;
 
     #[test]
@@ -213,12 +228,10 @@ mod tests {
         struct B {
             inner: u64,
         }
-        #[cfg(feature = "std")]
-        let mut doc = Document::<A>::new();
-        #[cfg(not(feature = "std"))]
-        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
 
-        let mut back = automerge::Backend::init();
+        let mut doc = Document::<A, _>::new(Frontend::new());
+
+        let mut back = automerge::Backend::new();
         let ((), change) = doc
             .change::<_, _, automerge::InvalidChangeRequest>(|_t| Ok(()))
             .unwrap();
@@ -252,12 +265,9 @@ mod tests {
             inner: u64,
         }
 
-        #[cfg(feature = "std")]
-        let mut doc = Document::<A>::new();
-        #[cfg(not(feature = "std"))]
-        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
+        let mut doc = Document::<A, _>::new(Frontend::new());
 
-        let mut back = automerge::Backend::init();
+        let mut back = automerge::Backend::new();
         let ((), change) = doc
             .change::<_, _, automerge::InvalidChangeRequest>(|t| {
                 t.list.push("hi".to_owned());
@@ -294,12 +304,10 @@ mod tests {
         struct B {
             inner: u64,
         }
-        #[cfg(feature = "std")]
-        let mut doc = Document::<A>::new();
-        #[cfg(not(feature = "std"))]
-        let mut doc = Document::<A>::new_with_timestamper(Box::new(|| None));
 
-        let mut back = automerge::Backend::init();
+        let mut doc = Document::<A, _>::new(Frontend::new());
+
+        let mut back = automerge::Backend::new();
         let ((), change) = doc
             .change::<_, _, automerge::InvalidChangeRequest>(|t| {
                 t.list.push("hi".to_owned());

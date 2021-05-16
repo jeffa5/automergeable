@@ -289,7 +289,7 @@ fn applying_primitive_diff_result_to_old_gives_new() {
         } else {
             return TestResult::discard();
         };
-        let mut b = automerge::Backend::init();
+        let mut b = automerge::Backend::new();
         // new with old value
         let (mut f, c) = automerge::Frontend::new_with_initial_state(v2).unwrap();
         let (p, _) = b.apply_local_change(c).unwrap();
@@ -340,7 +340,7 @@ fn applying_value_diff_result_to_old_gives_new() {
         } else {
             return TestResult::discard();
         };
-        let mut b = automerge::Backend::init();
+        let mut b = automerge::Backend::new();
         // new with old value
         let (mut f, c) = automerge::Frontend::new_with_initial_state(v2.0).unwrap();
         let (p, _) = b.apply_local_change(c).unwrap();
@@ -395,7 +395,7 @@ fn broken_reordering_of_values_2() {
     ));
 
     let changes = diff_values(&v1.0, &v2.0).unwrap();
-    let mut b = automerge::Backend::init();
+    let mut b = automerge::Backend::new();
     // new with old value
     let (mut f, c) = automerge::Frontend::new_with_initial_state(v2.0).unwrap();
     let (p, _) = b.apply_local_change(c).unwrap();
@@ -452,7 +452,7 @@ fn save_then_load() {
                     change_history.push(changes.clone());
                     old = Some(val);
                     let mut backend = if backend_bytes.is_empty() {
-                        automerge::Backend::init()
+                        automerge::Backend::new()
                     } else {
                         let b = automerge::Backend::load(backend_bytes);
                         if let Ok(b) = b {
@@ -602,7 +602,7 @@ fn broken_save_load() {
         println!("changes: {:?}", changes);
         old = Some(val);
         let mut backend = if backend_bytes.is_empty() {
-            automerge::Backend::init()
+            automerge::Backend::new()
         } else {
             let b = automerge::Backend::load(backend_bytes);
             if let Ok(b) = b {
@@ -651,7 +651,7 @@ fn broken_save_load_2() {
         let changes = diff_values(&val_pair[1], &val_pair[0]).unwrap();
         println!("changes: {:?}", changes);
         let mut backend = if backend_bytes.is_empty() {
-            automerge::Backend::init()
+            automerge::Backend::new()
         } else {
             let b = automerge::Backend::load(backend_bytes);
             if let Ok(b) = b {
@@ -685,7 +685,7 @@ fn broken_reordering_of_values() {
         "".to_owned(),
         automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
     );
-    let mut backend = automerge::Backend::init();
+    let mut backend = automerge::Backend::new();
 
     // new frontend with initial state
     let (mut frontend, change) =
