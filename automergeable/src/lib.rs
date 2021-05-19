@@ -23,15 +23,15 @@
 //! # use automergeable::Document;
 //! # use maplit::hashmap;
 //! # fn main() -> Result<(), automergeable::DocumentChangeError> {
-//! let mut doc = Document::<HashMap<String, String>>::new();
+//! let mut doc = Document::<HashMap<String, String>, _>::new(automerge::Frontend::new());
 //! let ((), change) = doc.change(|map| {
 //!     map.insert("my_value".to_owned(), "Hey, a nice Rust Map!".to_owned());
 //!     Ok(())
 //! })?;
 //! // apply the change to a backend
 //! assert_eq!(
-//!     doc.get().unwrap().unwrap(),
-//!     hashmap! {"my_value".to_owned() => "Hey, a nice Rust Map!".to_owned()}
+//!     doc.get(),
+//!     &hashmap! {"my_value".to_owned() => "Hey, a nice Rust Map!".to_owned()}
 //! );
 //! # Ok(())
 //! # }
@@ -80,7 +80,7 @@
 //! # use std::collections::HashMap;
 //! # use automergeable::Document;
 //! # fn main() -> Result<(), automergeable::DocumentChangeError> {
-//! let mut doc = Document::<A>::new();
+//! let mut doc = Document::<A, _>::new(automerge::Frontend::new());
 //! let ((), change) = doc.change(|a| {
 //!     a.b += 1;
 //!     a.d = "Hello world!".to_owned();
@@ -88,8 +88,8 @@
 //! })?;
 //! // apply the change to a backend
 //! assert_eq!(
-//!     doc.get().unwrap().unwrap(),
-//!     A {
+//!     doc.get(),
+//!     &A {
 //!         b: 1,
 //!         c: String::new(),
 //!         d: "Hello world!".to_owned(),
