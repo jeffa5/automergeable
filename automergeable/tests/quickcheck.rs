@@ -682,7 +682,7 @@ fn broken_reordering_of_values() {
     // setup
     let mut hm = std::collections::HashMap::new();
     hm.insert(
-        "".to_owned(),
+        "a".to_owned(),
         automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
     );
     let mut backend = automerge::Backend::new();
@@ -702,12 +702,12 @@ fn broken_reordering_of_values() {
     let ((), c) = frontend
         .change::<_, _, automerge::InvalidChangeRequest>(None, |d| {
             d.add_change(automerge::LocalChange::set(
-                automerge::Path::root().key("").index(0),
+                automerge::Path::root().key("a").index(0),
                 automerge::Value::Primitive(automerge::Primitive::Int(0)),
             ))
             .unwrap();
             d.add_change(automerge::LocalChange::insert(
-                automerge::Path::root().key("").index(1),
+                automerge::Path::root().key("a").index(1),
                 automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
             ))
             .unwrap();
@@ -718,7 +718,7 @@ fn broken_reordering_of_values() {
     // setup first expected
     let mut ehm = HashMap::new();
     ehm.insert(
-        "".to_owned(),
+        "a".to_owned(),
         automerge::Value::Sequence(vec![
             automerge::Value::Primitive(automerge::Primitive::Int(0)),
             automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
