@@ -1,5 +1,4 @@
 #![no_main]
-use std::collections::HashMap;
 
 use automergeable::{
     automerge::{Backend, InvalidChangeRequest, MapType, Primitive, Value},
@@ -7,27 +6,7 @@ use automergeable::{
     DocumentChangeError,
 };
 use libfuzzer_sys::fuzz_target;
-
-#[derive(Debug, Clone)]
-struct Val(Value);
-
-impl Default for Val {
-    fn default() -> Self {
-        Val(Value::Map(HashMap::new(), MapType::Map))
-    }
-}
-
-impl automergeable::ToAutomerge for Val {
-    fn to_automerge(&self) -> Value {
-        self.0.clone()
-    }
-}
-
-impl automergeable::FromAutomerge for Val {
-    fn from_automerge(value: &Value) -> Result<Self, automergeable::FromAutomergeError> {
-        Ok(Self(value.clone()))
-    }
-}
+use pretty_assertions::assert_eq;
 
 fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
     for val in &values {
@@ -46,15 +25,20 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
         if has_empty_text(val) {
             return;
         }
+
+        if has_nan(val) {
+            return;
+        }
     }
 
-    let mut doc = automergeable::Document::<Val>::new();
+    let mut doc =
+        automergeable::Document::<Value, _>::new(automergeable::automerge::Frontend::new());
 
     let mut backend_bytes = Vec::new();
 
     for val in values {
         let change = doc.change::<_, _, InvalidChangeRequest>(|old| {
-            *old = Val(val);
+            *old = val.clone();
             Ok(())
         });
 
@@ -66,7 +50,22 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
                     } else {
                         Backend::load(backend_bytes).unwrap()
                     };
-                    let (_, _) = backend.apply_local_change(c).unwrap();
+                    let (patch, _) = backend.apply_local_change(c).unwrap();
+                    assert_eq!(doc.get(), &val);
+                    doc.apply_patch(patch).unwrap();
+
+                    let doc_val = doc.get();
+                    if doc_val != &val {
+                        println!(
+                            "changes: {:?}",
+                            backend
+                                .get_changes(&[])
+                                .iter()
+                                .map(|c| c.decode())
+                                .collect::<Vec<_>>()
+                        );
+                        assert_eq!(doc_val, &val);
+                    }
                     backend_bytes = backend.save().unwrap();
                 }
             }
@@ -102,5 +101,18 @@ fn has_empty_text(v: &Value) -> bool {
         Value::Sequence(v) => v.iter().any(|i| has_empty_text(i)),
         Value::Text(t) => t.iter().any(|i| i.graphemes(true).count() != 1),
         Value::Primitive(_) => false,
+    }
+}
+
+fn has_nan(v: &Value) -> bool {
+    match v {
+        Value::Map(m, _) => m.values().any(|v| has_nan(v)),
+        Value::Sequence(v) => v.iter().any(|i| has_nan(i)),
+        Value::Text(_) => false,
+        Value::Primitive(p) => match p {
+            Primitive::F32(f) => f.is_nan(),
+            Primitive::F64(f) => f.is_nan(),
+            _ => false,
+        },
     }
 }
