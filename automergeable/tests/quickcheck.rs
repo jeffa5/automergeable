@@ -371,14 +371,15 @@ fn applying_value_diff_result_to_old_gives_new() {
             TestResult::passed()
         } else {
             println!("changes {:?}", changes);
-            println!("expected: {:?}, found: {:?}", v1, val);
+            println!("expected: {:?}", v1);
+            println!("found   : {:?}", val);
             TestResult::failed()
         }
     }
 
     QuickCheck::new()
-        .tests(100_000_000)
-        .gen(Gen::new(10))
+        .tests(1_000_000_000)
+        .gen(Gen::new(50))
         .quickcheck(apply_diff as fn(Val, Val) -> TestResult)
 }
 
