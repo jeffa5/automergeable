@@ -21,6 +21,11 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
             return;
         }
 
+        // don't work with cursors for now
+        if has_table(val) {
+            return;
+        }
+
         // don't allow empty text
         if has_empty_text(val) {
             return;
@@ -92,6 +97,14 @@ fn has_cursor(v: &Value) -> bool {
                 false
             }
         }
+    }
+}
+
+fn has_table(v: &Value) -> bool {
+    match v {
+        Value::Map(m, ty) => ty == &MapType::Table || m.values().any(|v| has_table(v)),
+        Value::Sequence(v) => v.iter().any(|i| has_table(i)),
+        Value::Text(_) | Value::Primitive(_) => false,
     }
 }
 
