@@ -10,12 +10,8 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = { version = "0.4" }
-automergeable = { path = "..", features = ["derive-arbitrary"] }
+automergeable = { path = "../automergeable", features = ["derive-arbitrary"] }
 pretty_assertions = "0.7.1"
-
-# Prevent this from interfering with workspaces
-[workspace]
-members = ["."]
 
 [[bin]]
 name = "roundtrip"

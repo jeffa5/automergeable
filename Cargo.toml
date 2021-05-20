@@ -3,4 +3,5 @@ members = [
   "automergeable",
   "automergeable-traits",
   "automergeable-derive",
+  "fuzz",
 ]
