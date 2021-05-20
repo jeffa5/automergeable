@@ -18,9 +18,3 @@ name = "roundtrip"
 path = "src/roundtrip.rs"
 test = false
 doc = false
-
-[[bin]]
-name = "load"
-path = "src/load.rs"
-test = false
-doc = false
