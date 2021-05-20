@@ -66,12 +66,14 @@ fn diff_with_path(
             let mut changes = Vec::new();
             // naive
             for (i, v) in new_vec.iter().enumerate() {
-                if i < old_vec.len() && *v != old_vec[i] {
-                    // changed
-                    changes.push(LocalChange::set(
-                        path.clone().index(i.try_into().unwrap()),
-                        Value::Primitive(Primitive::Str(v.to_string())),
-                    ))
+                if let Some(old_v) = old_vec.get(i) {
+                    if v != old_v {
+                        // changed
+                        changes.push(LocalChange::set(
+                            path.clone().index(i.try_into().unwrap()),
+                            Value::Primitive(Primitive::Str(v.to_string())),
+                        ))
+                    }
                 } else {
                     // new
                     changes.push(LocalChange::insert(
