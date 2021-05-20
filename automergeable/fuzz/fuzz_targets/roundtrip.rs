@@ -31,6 +31,7 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
             return;
         }
 
+        // nan aren't Eq so can't compare them with assert_eq
         if has_nan(val) {
             return;
         }
