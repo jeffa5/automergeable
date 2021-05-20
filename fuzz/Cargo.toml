@@ -15,12 +15,12 @@ pretty_assertions = "0.7.1"
 
 [[bin]]
 name = "roundtrip"
-path = "fuzz_targets/roundtrip.rs"
+path = "src/roundtrip.rs"
 test = false
 doc = false
 
 [[bin]]
 name = "load"
-path = "fuzz_targets/load.rs"
+path = "src/load.rs"
 test = false
 doc = false
