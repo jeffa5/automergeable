@@ -3,6 +3,7 @@ use std::{collections::HashMap, convert::Infallible};
 use automerge::{InvalidChangeRequest, MapType, Path, Primitive, Value};
 use automergeable::diff_values;
 use maplit::hashmap;
+use pretty_assertions::assert_eq;
 use quickcheck::{empty_shrinker, single_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
 
 #[derive(Debug, Clone, PartialEq)]

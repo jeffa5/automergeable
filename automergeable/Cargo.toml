@@ -23,6 +23,7 @@ uuid = { version = "0.8", features = ["wasm-bindgen"] }
 quickcheck = "1.0.3"
 criterion = "0.3.4"
 maplit = "1.0.2"
+pretty_assertions = "0.7.1"
 
 [features]
 default = ["std"]
