@@ -18,3 +18,4 @@ name = "roundtrip"
 path = "src/roundtrip.rs"
 test = false
 doc = false
+bench = false
