@@ -23,7 +23,7 @@ fn to_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics #crate_path::ToAutomerge for #t_name #ty_generics #where_clause {
-            fn to_automerge(&self) -> #crate_path::automerge::Value {
+            fn to_automerge(&self) -> automerge::Value {
                 #fields_to_automerge
             }
         }
@@ -63,13 +63,13 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
                     let mut outer = ::std::collections::HashMap::new();
                     let fields = {#fields_to_automerge};
                     outer.insert(#v_name_string.to_owned(), fields);
-                    #crate_path::automerge::Value::Map(outer, #crate_path::automerge::MapType::Map)
+                    automerge::Value::Map(outer, automerge::MapType::Map)
                 }
             }
         } else {
             quote! {
                 Self::#v_name#fields => {
-                    #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Str(#v_name_string.to_owned()))
+                    automerge::Value::Primitive(automerge::Primitive::Str(#v_name_string.to_owned()))
                 }
             }
         }
@@ -77,7 +77,7 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
     quote! {
         #[automatically_derived]
         impl #impl_generics #crate_path::ToAutomerge for #t_name #ty_generics #where_clause {
-            fn to_automerge(&self) -> #crate_path::automerge::Value {
+            fn to_automerge(&self) -> automerge::Value {
                 match self {
                     #(#variants)*
                 }
@@ -120,14 +120,14 @@ fn get_representation_type(
         Some("text") => {
             quote! {{
                 use #crate_path::unicode_segmentation::UnicodeSegmentation;
-                #crate_path::automerge::Value::Text(#field_name.graphemes(true).map(|s| s.to_owned()).collect::<::std::vec::Vec<_>>())
+                automerge::Value::Text(#field_name.graphemes(true).map(|s| s.to_owned()).collect::<::std::vec::Vec<_>>())
             }}
         }
         Some("counter") => {
-            quote! { #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(#field_name)) }
+            quote! { automerge::Value::Primitive(automerge::Primitive::Counter(#field_name)) }
         }
         Some("timestamp") => {
-            quote! { #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Timestamp(#field_name)) }
+            quote! { automerge::Value::Primitive(automerge::Primitive::Timestamp(#field_name)) }
         }
         _ => quote! { #field_name.to_automerge() },
     }
@@ -153,7 +153,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
             quote! {
                 let mut fields = ::std::collections::HashMap::new();
                 #(#fields)*
-                #crate_path::automerge::Value::Map(fields, #crate_path::automerge::MapType::Map)
+                automerge::Value::Map(fields, automerge::MapType::Map)
             }
         }
         Fields::Unnamed(u) => {
@@ -187,13 +187,13 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                 quote! {
                     let mut fields = Vec::new();
                     #(#fields)*
-                    #crate_path::automerge::Value::Sequence(fields)
+                    automerge::Value::Sequence(fields)
                 }
             }
         }
         Fields::Unit => {
             quote! {
-                #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Null)
+                automerge::Value::Primitive(automerge::Primitive::Null)
             }
         }
     }

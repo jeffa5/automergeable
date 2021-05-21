@@ -1,14 +1,11 @@
 #![no_main]
 
-use automergeable::{
-    automerge::{Backend, InvalidChangeRequest, MapType, Primitive, Value},
-    unicode_segmentation::UnicodeSegmentation,
-    DocumentChangeError,
-};
+use automerge::{Backend, InvalidChangeRequest, MapType, Primitive, Value};
+use automergeable::{unicode_segmentation::UnicodeSegmentation, DocumentChangeError};
 use libfuzzer_sys::fuzz_target;
 use pretty_assertions::assert_eq;
 
-fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
+fuzz_target!(|values: Vec<automerge::Value>| {
     for val in &values {
         // ensure the root is always a map
         if let Value::Map(_, MapType::Map) = val {
@@ -37,8 +34,7 @@ fuzz_target!(|values: Vec<automergeable::automerge::Value>| {
         }
     }
 
-    let mut doc =
-        automergeable::Document::<Value, _>::new(automergeable::automerge::Frontend::new());
+    let mut doc = automergeable::Document::<Value, _>::new(automerge::Frontend::new());
 
     let mut backend_bytes = Vec::new();
 

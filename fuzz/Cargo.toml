@@ -10,6 +10,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = { version = "0.4" }
+automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
 automergeable = { path = "../automergeable", features = ["derive-arbitrary"] }
 pretty_assertions = "0.7.1"
 

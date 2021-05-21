@@ -1,4 +1,4 @@
-use automergeable::{self, automerge, Automergeable};
+use automergeable::{self, Automergeable};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[wasm_bindgen_test]

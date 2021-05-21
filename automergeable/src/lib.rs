@@ -104,11 +104,6 @@
 mod diff;
 mod document;
 
-/// Convenience re-exports for maintaining the same automerge versions
-#[doc(hidden)]
-pub use automerge;
-#[doc(hidden)]
-pub use automerge_protocol;
 #[doc(hidden)]
 pub use automergeable_traits::Text;
 pub use automergeable_traits::{Automergeable, FromAutomerge, FromAutomergeError, ToAutomerge};

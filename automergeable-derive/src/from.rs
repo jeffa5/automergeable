@@ -23,7 +23,7 @@ fn from_automerge_struct(input: &DeriveInput, fields: &Fields) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics #crate_path::FromAutomerge for #t_name #ty_generics #where_clause {
-            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
+            fn from_automerge(value: &automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
                 #fields_from_automerge
             }
         }
@@ -54,8 +54,8 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
     quote! {
         #[automatically_derived]
         impl #impl_generics #crate_path::FromAutomerge for #t_name #ty_generics #where_clause {
-            fn from_automerge(value: &#crate_path::automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
-                if let #crate_path::automerge::Value::Map(hm, #crate_path::automerge::MapType::Map) = value {
+            fn from_automerge(value: &automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
+                if let automerge::Value::Map(hm, automerge::MapType::Map) = value {
                     if hm.len() != 1 {
                         Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
@@ -70,7 +70,7 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
                             })
                         }
                     }
-                } else if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Str(s)) = value {
+                } else if let automerge::Value::Primitive(automerge::Primitive::Str(s)) = value {
                     match s.as_str() {
                         #(#unit_variant_match)*
                         _ => Err(#crate_path::FromAutomergeError::WrongType {
@@ -133,7 +133,7 @@ fn get_representation_type(
         Some("counter") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Counter(i)) = value {
+                    if let automerge::Value::Primitive(automerge::Primitive::Counter(i)) = value {
                         *i
                     } else {
                         return Err(#crate_path::FromAutomergeError::WrongType {
@@ -149,7 +149,7 @@ fn get_representation_type(
         Some("timestamp") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Timestamp(i)) = value {
+                    if let automerge::Value::Primitive(automerge::Primitive::Timestamp(i)) = value {
                         *i
                     } else {
                         return Err(#crate_path::FromAutomergeError::WrongType {
@@ -201,7 +201,7 @@ fn fields_from_automerge(
                 }
             });
             quote! {
-                if let #crate_path::automerge::Value::Map(hm, #crate_path::automerge::MapType::Map) = value {
+                if let automerge::Value::Map(hm, automerge::MapType::Map) = value {
                     Ok(#ty_name {
                         #(#fields)*
                     })
@@ -236,7 +236,7 @@ fn fields_from_automerge(
                     }
                 });
                 quote! {
-                    if let #crate_path::automerge::Value::Sequence(seq) = value {
+                    if let automerge::Value::Sequence(seq) = value {
                         Ok(#ty_name(
                             #(#fields)*
                         ))
@@ -251,7 +251,7 @@ fn fields_from_automerge(
         }
         Fields::Unit => {
             quote! {
-                if let #crate_path::automerge::Value::Primitive(#crate_path::automerge::Primitive::Null) = value {
+                if let automerge::Value::Primitive(automerge::Primitive::Null) = value {
                     Ok(#ty_name)
                 } else {
                     Err(#crate_path::FromAutomergeError::WrongType {
