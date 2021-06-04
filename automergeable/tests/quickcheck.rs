@@ -12,16 +12,17 @@ struct Prim(Primitive);
 impl Arbitrary for Prim {
     fn arbitrary(g: &mut quickcheck::Gen) -> Self {
         let prims = [
-            0, // Str(String),
-            1, // Int(i64),
-            2, // Uint(u64),
-            3, // F64(f64),
-            4, // F32(f32),
-            5, // Counter(i64),
-            6, // Timestamp(i64),
-            7, // Boolean(bool),
-            8, // Cursor(Cursor),
-            9, // Null
+            0,  // Str(String),
+            1,  // Int(i64),
+            2,  // Uint(u64),
+            3,  // F64(f64),
+            4,  // F32(f32),
+            5,  // Counter(i64),
+            6,  // Timestamp(i64),
+            7,  // Boolean(bool),
+            8,  // Cursor(Cursor),
+            9,  // Bytes(Vec<u8>),
+            10, // Null
         ];
         let prim = g.choose(&prims).unwrap();
         let p = match prim {
@@ -34,6 +35,7 @@ impl Arbitrary for Prim {
             6 => Primitive::Timestamp(i64::arbitrary(g)),
             7 => Primitive::Boolean(bool::arbitrary(g)),
             8 => Primitive::Null, // TODO: convert this case to use an arbitrary cursor
+            9 => Primitive::Bytes(Vec::arbitrary(g)),
             _ => Primitive::Null,
         };
         Self(p)
@@ -41,6 +43,13 @@ impl Arbitrary for Prim {
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
         match &self.0 {
+            Primitive::Bytes(b) => {
+                if b.is_empty() {
+                    Box::new(single_shrinker(Prim(Primitive::Null)))
+                } else {
+                    Box::new(b.shrink().map(Primitive::Bytes).map(Prim))
+                }
+            }
             Primitive::Str(s) => {
                 if s.is_empty() {
                     Box::new(single_shrinker(Prim(Primitive::Null)))
@@ -228,13 +237,9 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
 
 #[test]
 fn equal_primitives_give_no_diff() {
-    fn no_diff(p1: Prim, p2: Prim) -> TestResult {
-        if p1 != p2 {
-            return TestResult::discard();
-        }
-        let v1 = Value::Primitive(p1.0);
-        let v2 = Value::Primitive(p2.0);
-        let changes = diff_values(&v1, &v2);
+    fn no_diff(prim: Prim) -> TestResult {
+        let v1 = Value::Primitive(prim.0);
+        let changes = diff_values(&v1, &v1);
         if let Ok(changes) = changes {
             if changes.is_empty() {
                 TestResult::passed()
@@ -248,16 +253,13 @@ fn equal_primitives_give_no_diff() {
     }
     QuickCheck::new()
         .tests(100_000_000)
-        .quickcheck(no_diff as fn(Prim, Prim) -> TestResult)
+        .quickcheck(no_diff as fn(Prim) -> TestResult)
 }
 
 #[test]
 fn equal_values_give_no_diff() {
-    fn no_diff(v1: Val, v2: Val) -> TestResult {
-        if v1 != v2 {
-            return TestResult::discard();
-        }
-        let changes = diff_values(&v1.0, &v2.0);
+    fn no_diff(val: Val) -> TestResult {
+        let changes = diff_values(&val.0, &val.0);
         if let Ok(changes) = changes {
             if changes.is_empty() {
                 TestResult::passed()
@@ -272,7 +274,7 @@ fn equal_values_give_no_diff() {
     QuickCheck::new()
         .tests(100_000_000)
         .gen(Gen::new(20))
-        .quickcheck(no_diff as fn(Val, Val) -> TestResult)
+        .quickcheck(no_diff as fn(Val) -> TestResult)
 }
 
 #[test]

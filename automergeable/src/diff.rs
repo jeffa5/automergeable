@@ -105,6 +105,16 @@ fn diff_with_path(
                 )])
             }
         }
+        (Value::Primitive(Primitive::Bytes(new)), Value::Primitive(Primitive::Bytes(old))) => {
+            if new == old {
+                Ok(Vec::new())
+            } else {
+                Ok(vec![LocalChange::set(
+                    path,
+                    Value::Primitive(Primitive::Bytes(new.clone())),
+                )])
+            }
+        }
         (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(old_int))) => {
             if new_int == old_int {
                 Ok(Vec::new())

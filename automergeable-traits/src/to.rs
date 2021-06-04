@@ -219,6 +219,7 @@ nonzero_to_automerge! {
 }
 
 impl ToAutomerge for serde_json::Value {
+    // TODO: need to convert back to text and bytes somehow
     fn to_automerge(&self) -> Value {
         match self {
             serde_json::Value::Null => automerge::Value::Primitive(Primitive::Null),

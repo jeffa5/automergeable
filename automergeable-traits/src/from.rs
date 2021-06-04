@@ -350,6 +350,9 @@ impl FromAutomerge for serde_json::Value {
             )),
             Value::Text(v) => Ok(Self::String(v.concat())),
             Value::Primitive(p) => match p {
+                Primitive::Bytes(b) => Ok(Self::Array(
+                    b.iter().map(|b| Self::Number(Number::from(*b))).collect(),
+                )),
                 Primitive::Str(s) => Ok(Self::String(s.clone())),
                 Primitive::Int(i) | Primitive::Counter(i) => Ok(Self::Number(Number::from(*i))),
                 Primitive::Uint(u) => Ok(Self::Number(Number::from(*u))),
