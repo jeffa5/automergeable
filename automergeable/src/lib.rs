@@ -107,7 +107,7 @@ mod document;
 #[doc(hidden)]
 pub use automergeable_traits::Text;
 pub use automergeable_traits::{Automergeable, FromAutomerge, FromAutomergeError, ToAutomerge};
-pub use diff::diff_values;
+pub use diff::{diff_values, diff_with_path};
 pub use document::{Document, DocumentChangeError};
 
 /// Derive macro magic
