@@ -9,7 +9,8 @@ pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, Invalid
     diff_with_path(new, old, Path::root())
 }
 
-fn diff_with_path(
+/// Calculate the [`LocalChange`]s between the two values that start from the given path.
+pub fn diff_with_path(
     new: &Value,
     old: &Value,
     path: Path,
