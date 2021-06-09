@@ -6,226 +6,253 @@ use automerge::{InvalidChangeRequest, LocalChange, Path, Primitive, Value};
 ///
 /// Recursively works from the root.
 pub fn diff_values(new: &Value, old: &Value) -> Result<Vec<LocalChange>, InvalidChangeRequest> {
-    diff_with_path(new, old, Path::root())
+    diff_with_path(Some(new), Some(old), Path::root())
 }
 
 /// Calculate the [`LocalChange`]s between the two values that start from the given path.
 pub fn diff_with_path(
-    new: &Value,
-    old: &Value,
+    new: Option<&Value>,
+    old: Option<&Value>,
     path: Path,
 ) -> Result<Vec<LocalChange>, InvalidChangeRequest> {
     match (new, old) {
-        (Value::Map(new_map, mt1), Value::Map(old_map, mt2)) if mt1 == mt2 => {
-            let mut changes = Vec::new();
-            for (k, v) in new_map {
-                if let Some(old_v) = old_map.get(k) {
-                    // changed
-                    changes.append(&mut diff_with_path(v, old_v, path.clone().key(k))?)
-                } else {
-                    // new
-                    changes.push(LocalChange::set(path.clone().key(k), v.clone()))
+        (None, None) => Ok(Vec::new()),
+        (Some(new), None) => Ok(vec![LocalChange::set(path, new.clone())]),
+        (None, Some(_)) => Ok(vec![LocalChange::delete(path)]),
+        (Some(new), Some(old)) => {
+            match (new, old) {
+                (Value::Map(new_map, mt1), Value::Map(old_map, mt2)) if mt1 == mt2 => {
+                    let mut changes = Vec::new();
+                    for (k, v) in new_map {
+                        if let Some(old_v) = old_map.get(k) {
+                            // changed
+                            changes.append(&mut diff_with_path(
+                                Some(v),
+                                Some(old_v),
+                                path.clone().key(k),
+                            )?)
+                        } else {
+                            // new
+                            changes.push(LocalChange::set(path.clone().key(k), v.clone()))
+                        }
+                    }
+                    for k in old_map.keys() {
+                        if !new_map.contains_key(k) {
+                            // removed
+                            changes.push(LocalChange::delete(path.clone().key(k)))
+                        }
+                    }
+                    Ok(changes)
                 }
-            }
-            for k in old_map.keys() {
-                if !new_map.contains_key(k) {
-                    // removed
-                    changes.push(LocalChange::delete(path.clone().key(k)))
-                }
-            }
-            Ok(changes)
-        }
-        (Value::Sequence(new_vec), Value::Sequence(old_vec)) => {
-            let mut changes = Vec::new();
-            // naive
-            for (i, v) in new_vec.iter().enumerate() {
-                if let Some(old_v) = old_vec.get(i) {
-                    // changed
-                    changes.append(&mut diff_with_path(
-                        v,
-                        old_v,
-                        path.clone().index(i.try_into().unwrap()),
-                    )?)
-                } else {
-                    // new
-                    changes.push(LocalChange::insert(
-                        path.clone().index(i.try_into().unwrap()),
-                        v.clone(),
-                    ))
-                }
-            }
-            // reverse so delete from the end
-            for i in (new_vec.len()..old_vec.len()).rev() {
-                // removed
-                changes.push(LocalChange::delete(
-                    path.clone().index(i.try_into().unwrap()),
-                ))
-            }
-            Ok(changes)
-        }
-        (Value::Text(new_vec), Value::Text(old_vec)) => {
-            let mut changes = Vec::new();
-            // naive
-            for (i, v) in new_vec.iter().enumerate() {
-                if let Some(old_v) = old_vec.get(i) {
-                    if v != old_v {
-                        // changed
-                        changes.push(LocalChange::set(
+                (Value::Sequence(new_vec), Value::Sequence(old_vec)) => {
+                    let mut changes = Vec::new();
+                    // naive
+                    for (i, v) in new_vec.iter().enumerate() {
+                        if let Some(old_v) = old_vec.get(i) {
+                            // changed
+                            changes.append(&mut diff_with_path(
+                                Some(v),
+                                Some(old_v),
+                                path.clone().index(i.try_into().unwrap()),
+                            )?)
+                        } else {
+                            // new
+                            changes.push(LocalChange::insert(
+                                path.clone().index(i.try_into().unwrap()),
+                                v.clone(),
+                            ))
+                        }
+                    }
+                    // reverse so delete from the end
+                    for i in (new_vec.len()..old_vec.len()).rev() {
+                        // removed
+                        changes.push(LocalChange::delete(
                             path.clone().index(i.try_into().unwrap()),
-                            Value::Primitive(Primitive::Str(v.to_string())),
                         ))
                     }
-                } else {
-                    // new
-                    changes.push(LocalChange::insert(
-                        path.clone().index(i.try_into().unwrap()),
-                        Value::Primitive(Primitive::Str(v.to_string())),
-                    ))
+                    Ok(changes)
                 }
-            }
-            // reverse so delete from the end
-            for i in (new_vec.len()..old_vec.len()).rev() {
-                // removed
-                changes.push(LocalChange::delete(
-                    path.clone().index(i.try_into().unwrap()),
-                ))
-            }
-            Ok(changes)
-        }
-        (
-            Value::Primitive(Primitive::Str(new_string)),
-            Value::Primitive(Primitive::Str(old_string)),
-        ) => {
-            // just set this, we can't address the characters so this may be a thing such as an enum
-            if new_string == old_string {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
+                (Value::Text(new_vec), Value::Text(old_vec)) => {
+                    let mut changes = Vec::new();
+                    // naive
+                    for (i, v) in new_vec.iter().enumerate() {
+                        if let Some(old_v) = old_vec.get(i) {
+                            if v != old_v {
+                                // changed
+                                changes.push(LocalChange::set(
+                                    path.clone().index(i.try_into().unwrap()),
+                                    Value::Primitive(Primitive::Str(v.to_string())),
+                                ))
+                            }
+                        } else {
+                            // new
+                            changes.push(LocalChange::insert(
+                                path.clone().index(i.try_into().unwrap()),
+                                Value::Primitive(Primitive::Str(v.to_string())),
+                            ))
+                        }
+                    }
+                    // reverse so delete from the end
+                    for i in (new_vec.len()..old_vec.len()).rev() {
+                        // removed
+                        changes.push(LocalChange::delete(
+                            path.clone().index(i.try_into().unwrap()),
+                        ))
+                    }
+                    Ok(changes)
+                }
+                (
+                    Value::Primitive(Primitive::Str(new_string)),
+                    Value::Primitive(Primitive::Str(old_string)),
+                ) => {
+                    // just set this, we can't address the characters so this may be a thing such as an enum
+                    if new_string == old_string {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Str(new_string.clone())),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Bytes(new)),
+                    Value::Primitive(Primitive::Bytes(old)),
+                ) => {
+                    if new == old {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Bytes(new.clone())),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Int(new_int)),
+                    Value::Primitive(Primitive::Int(old_int)),
+                ) => {
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Int(*new_int)),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Uint(new_int)),
+                    Value::Primitive(Primitive::Uint(old_int)),
+                ) => {
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Uint(*new_int)),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::F64(new_int)),
+                    Value::Primitive(Primitive::F64(old_int)),
+                ) =>
+                {
+                    #[allow(clippy::float_cmp)]
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::F64(*new_int)),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::F32(new_int)),
+                    Value::Primitive(Primitive::F32(old_int)),
+                ) =>
+                {
+                    #[allow(clippy::float_cmp)]
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::F32(*new_int)),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Counter(new_int)),
+                    Value::Primitive(Primitive::Counter(old_int)),
+                ) => {
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
+                            diff
+                        } else {
+                            // TODO: perhaps change this behavior or change error type
+                            return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
+                        };
+                        Ok(vec![LocalChange::increment_by(path, diff)])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Timestamp(new_int)),
+                    Value::Primitive(Primitive::Timestamp(old_int)),
+                ) => {
+                    if new_int == old_int {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Timestamp(*new_int)),
+                        )])
+                    }
+                }
+                (
+                    Value::Primitive(Primitive::Cursor(new_cursor)),
+                    Value::Primitive(Primitive::Cursor(_old_cursor)),
+                ) => {
+                    // naive
+                    Ok(vec![LocalChange::set(
+                        path,
+                        Value::Primitive(Primitive::Cursor(new_cursor.clone())),
+                    )])
+                }
+                (
+                    Value::Primitive(Primitive::Boolean(new_bool)),
+                    Value::Primitive(Primitive::Boolean(old_bool)),
+                ) => {
+                    if new_bool == old_bool {
+                        Ok(Vec::new())
+                    } else {
+                        Ok(vec![LocalChange::set(
+                            path,
+                            Value::Primitive(Primitive::Boolean(*new_bool)),
+                        )])
+                    }
+                }
+                (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => {
+                    Ok(Vec::new())
+                }
+                // handle mismatch combinations
+                (_, Value::Primitive(Primitive::Counter(_))) => {
+                    Err(InvalidChangeRequest::CannotOverwriteCounter { path })
+                }
+                (Value::Primitive(Primitive::Null), _) => Ok(vec![LocalChange::set(
                     path,
-                    Value::Primitive(Primitive::Str(new_string.clone())),
-                )])
+                    Value::Primitive(Primitive::Null),
+                )]),
+                (v, Value::Primitive(Primitive::Null)) => {
+                    Ok(vec![LocalChange::set(path, v.clone())])
+                }
+                (n, _) => Ok(vec![LocalChange::set(path, n.clone())]),
             }
         }
-        (Value::Primitive(Primitive::Bytes(new)), Value::Primitive(Primitive::Bytes(old))) => {
-            if new == old {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::Bytes(new.clone())),
-                )])
-            }
-        }
-        (Value::Primitive(Primitive::Int(new_int)), Value::Primitive(Primitive::Int(old_int))) => {
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::Int(*new_int)),
-                )])
-            }
-        }
-        (
-            Value::Primitive(Primitive::Uint(new_int)),
-            Value::Primitive(Primitive::Uint(old_int)),
-        ) => {
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::Uint(*new_int)),
-                )])
-            }
-        }
-        (Value::Primitive(Primitive::F64(new_int)), Value::Primitive(Primitive::F64(old_int))) =>
-        {
-            #[allow(clippy::float_cmp)]
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::F64(*new_int)),
-                )])
-            }
-        }
-        (Value::Primitive(Primitive::F32(new_int)), Value::Primitive(Primitive::F32(old_int))) =>
-        {
-            #[allow(clippy::float_cmp)]
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::F32(*new_int)),
-                )])
-            }
-        }
-        (
-            Value::Primitive(Primitive::Counter(new_int)),
-            Value::Primitive(Primitive::Counter(old_int)),
-        ) => {
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                let diff = if let Some(diff) = new_int.checked_sub(*old_int) {
-                    diff
-                } else {
-                    // TODO: perhaps change this behavior or change error type
-                    return Err(InvalidChangeRequest::CannotOverwriteCounter { path });
-                };
-                Ok(vec![LocalChange::increment_by(path, diff)])
-            }
-        }
-        (
-            Value::Primitive(Primitive::Timestamp(new_int)),
-            Value::Primitive(Primitive::Timestamp(old_int)),
-        ) => {
-            if new_int == old_int {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::Timestamp(*new_int)),
-                )])
-            }
-        }
-        (
-            Value::Primitive(Primitive::Cursor(new_cursor)),
-            Value::Primitive(Primitive::Cursor(_old_cursor)),
-        ) => {
-            // naive
-            Ok(vec![LocalChange::set(
-                path,
-                Value::Primitive(Primitive::Cursor(new_cursor.clone())),
-            )])
-        }
-        (
-            Value::Primitive(Primitive::Boolean(new_bool)),
-            Value::Primitive(Primitive::Boolean(old_bool)),
-        ) => {
-            if new_bool == old_bool {
-                Ok(Vec::new())
-            } else {
-                Ok(vec![LocalChange::set(
-                    path,
-                    Value::Primitive(Primitive::Boolean(*new_bool)),
-                )])
-            }
-        }
-        (Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Null)) => Ok(Vec::new()),
-        // handle mismatch combinations
-        (_, Value::Primitive(Primitive::Counter(_))) => {
-            Err(InvalidChangeRequest::CannotOverwriteCounter { path })
-        }
-        (Value::Primitive(Primitive::Null), _) => Ok(vec![LocalChange::set(
-            path,
-            Value::Primitive(Primitive::Null),
-        )]),
-        (v, Value::Primitive(Primitive::Null)) => Ok(vec![LocalChange::set(path, v.clone())]),
-        (n, _) => Ok(vec![LocalChange::set(path, n.clone())]),
     }
 }
 
