@@ -21,7 +21,30 @@ pub fn diff_with_path(
         (None, Some(_)) => Ok(vec![LocalChange::delete(path)]),
         (Some(new), Some(old)) => {
             match (new, old) {
-                (Value::Map(new_map, mt1), Value::Map(old_map, mt2)) if mt1 == mt2 => {
+                (Value::Map(new_map), Value::Map(old_map)) => {
+                    let mut changes = Vec::new();
+                    for (k, v) in new_map {
+                        if let Some(old_v) = old_map.get(k) {
+                            // changed
+                            changes.append(&mut diff_with_path(
+                                Some(v),
+                                Some(old_v),
+                                path.clone().key(k),
+                            )?)
+                        } else {
+                            // new
+                            changes.push(LocalChange::set(path.clone().key(k), v.clone()))
+                        }
+                    }
+                    for k in old_map.keys() {
+                        if !new_map.contains_key(k) {
+                            // removed
+                            changes.push(LocalChange::delete(path.clone().key(k)))
+                        }
+                    }
+                    Ok(changes)
+                }
+                (Value::Table(new_map), Value::Table(old_map)) => {
                     let mut changes = Vec::new();
                     for (k, v) in new_map {
                         if let Some(old_v) = old_map.get(k) {
@@ -260,7 +283,6 @@ pub fn diff_with_path(
 mod tests {
     use std::collections::HashMap;
 
-    use automerge::MapType;
     use insta::assert_debug_snapshot;
 
     use super::*;
@@ -270,7 +292,7 @@ mod tests {
         let mut old_map = HashMap::new();
         let mut new_map = HashMap::new();
 
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), ), &Value::Map(old_map.clone(), )), @r###"
         Ok(
             [],
         )
@@ -280,7 +302,7 @@ mod tests {
             "abc".to_owned(),
             Primitive::Str("some val".to_owned()).into(),
         );
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), ), &Value::Map(old_map.clone(), )), @r###"
         Ok(
             [
                 LocalChange {
@@ -308,7 +330,7 @@ mod tests {
             "abc".to_owned(),
             Primitive::Str("some newer val".to_owned()).into(),
         );
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), MapType::Map), &Value::Map(old_map.clone(), MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), ), &Value::Map(old_map.clone(), )), @r###"
         Ok(
             [
                 LocalChange {
@@ -333,7 +355,7 @@ mod tests {
 
         old_map = new_map.clone();
         new_map.remove("abc");
-        assert_debug_snapshot!(diff_values(&Value::Map(new_map, MapType::Map), &Value::Map(old_map, MapType::Map)), @r###"
+        assert_debug_snapshot!(diff_values(&Value::Map(new_map, ), &Value::Map(old_map, )), @r###"
         Ok(
             [
                 LocalChange {
@@ -516,7 +538,7 @@ mod tests {
         let old = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
         hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
-        let new = Value::Map(hm, MapType::Map);
+        let new = Value::Map(hm);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
         Ok(
@@ -548,7 +570,7 @@ mod tests {
         let new = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
         hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
-        let old = Value::Map(hm, MapType::Map);
+        let old = Value::Map(hm);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
         Ok(

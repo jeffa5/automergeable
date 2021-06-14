@@ -1,6 +1,6 @@
 use std::{collections::HashMap, convert::Infallible};
 
-use automerge::{InvalidChangeRequest, MapType, Path, Primitive, Value};
+use automerge::{InvalidChangeRequest, Path, Primitive, Value};
 use automergeable::diff_values;
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
@@ -113,19 +113,6 @@ impl Arbitrary for Prim {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct MapTy(MapType);
-
-impl Arbitrary for MapTy {
-    fn arbitrary(g: &mut quickcheck::Gen) -> Self {
-        if *g.choose(&[0, 1]).unwrap() == 0 {
-            MapTy(MapType::Map)
-        } else {
-            MapTy(MapType::Table)
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
 struct Val(Value);
 
 impl Default for Val {
@@ -142,7 +129,7 @@ impl Arbitrary for Val {
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
         match &self.0 {
-            Value::Map(m, mt) => {
+            Value::Map(m) | Value::Table(m) => {
                 if m.is_empty() {
                     single_shrinker(Val(Value::Primitive(Primitive::Null)))
                 } else {
@@ -150,7 +137,6 @@ impl Arbitrary for Val {
                         .iter()
                         .map(|(k, v)| (k.clone(), Val(v.clone())))
                         .collect::<HashMap<_, _>>();
-                    let mt = *mt;
                     Box::new(
                         m.shrink()
                             .map(move |m| {
@@ -158,7 +144,7 @@ impl Arbitrary for Val {
                                     .into_iter()
                                     .map(|(k, v)| (k, v.0))
                                     .collect::<HashMap<_, _>>();
-                                Value::Map(m, mt)
+                                Value::Map(m)
                             })
                             .map(Val),
                     )
@@ -214,8 +200,7 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
                 .into_iter()
                 .map(|(k, ())| (k, arbitrary_value(g, smaller_depth).0))
                 .collect::<HashMap<_, _>>();
-            let map_type = MapTy::arbitrary(g);
-            Value::Map(map, map_type.0)
+            Value::Map(map)
         }
         1 => {
             let smaller_depth = depth / 2;
@@ -282,10 +267,10 @@ fn applying_primitive_diff_result_to_old_gives_new() {
     fn apply_diff(p1: Prim, p2: Prim) -> TestResult {
         let mut h1 = HashMap::new();
         h1.insert("k".to_owned(), Value::Primitive(p1.0));
-        let v1 = Value::Map(h1, MapType::Map);
+        let v1 = Value::Map(h1);
         let mut h2 = HashMap::new();
         h2.insert("k".to_owned(), Value::Primitive(p2.0));
-        let v2 = Value::Map(h2, MapType::Map);
+        let v2 = Value::Map(h2);
         let changes = diff_values(&v1, &v2);
         let changes = if let Ok(changes) = changes {
             changes
@@ -329,11 +314,11 @@ fn applying_primitive_diff_result_to_old_gives_new() {
 #[test]
 fn applying_value_diff_result_to_old_gives_new() {
     fn apply_diff(v1: Val, v2: Val) -> TestResult {
-        if let Val(Value::Map(_, MapType::Map)) = v1 {
+        if let Val(Value::Map(_)) = v1 {
         } else {
             return TestResult::discard();
         }
-        if let Val(Value::Map(_, MapType::Map)) = v2 {
+        if let Val(Value::Map(_)) = v2 {
         } else {
             return TestResult::discard();
         }
@@ -390,12 +375,10 @@ fn applying_value_diff_result_to_old_gives_new() {
 fn broken_reordering_of_values_2() {
     let v1 = Val(Value::Map(
         hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
-        MapType::Map,
     ));
 
     let v2 = Val(Value::Map(
         hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Null)])},
-        MapType::Map,
     ));
 
     let changes = diff_values(&v1.0, &v2.0).unwrap();
@@ -433,7 +416,7 @@ fn broken_reordering_of_values_2() {
 fn save_then_load() {
     fn apply_diff(vals: Vec<Val>) -> TestResult {
         for val in &vals {
-            if let Val(Value::Map(_, MapType::Map)) = val {
+            if let Val(Value::Map(_)) = val {
             } else {
                 return TestResult::discard();
             }
@@ -585,19 +568,13 @@ fn broken_save_load() {
     );
     m.insert(
         "\u{1}".to_owned(),
-        Value::Map(
-            {
-                let mut m = HashMap::new();
-                m.insert("".to_owned(), Value::Primitive(Primitive::F64(0.0)));
-                m
-            },
-            MapType::Table,
-        ),
+        Value::Table({
+            let mut m = HashMap::new();
+            m.insert("".to_owned(), Value::Primitive(Primitive::F64(0.0)));
+            m
+        }),
     );
-    let vals = vec![
-        Val(Value::Map(m, MapType::Map)),
-        Val(Value::Map(HashMap::new(), MapType::Map)),
-    ];
+    let vals = vec![Val(Value::Map(m)), Val(Value::Map(HashMap::new()))];
 
     let mut backend_bytes = Vec::new();
     let mut old: Option<Val> = None;
@@ -643,10 +620,10 @@ fn broken_save_load_2() {
     let mut hm2 = HashMap::new();
     hm2.insert("".to_owned(), Value::Primitive(Primitive::Null));
     let values = vec![
-        Value::Map(HashMap::new(), MapType::Map),
-        Value::Map(hm1, MapType::Map),
-        Value::Map(hm2, MapType::Map),
-        Value::Map(HashMap::new(), MapType::Map),
+        Value::Map(HashMap::new()),
+        Value::Map(hm1),
+        Value::Map(hm2),
+        Value::Map(HashMap::new()),
     ];
 
     let mut frontend = automerge::Frontend::new();
@@ -693,8 +670,7 @@ fn broken_reordering_of_values() {
 
     // new frontend with initial state
     let (mut frontend, change) =
-        automerge::Frontend::new_with_initial_state(Value::Map(hm, automerge::MapType::Map))
-            .unwrap();
+        automerge::Frontend::new_with_initial_state(Value::Map(hm)).unwrap();
 
     println!("change1 {:?}", change);
 
@@ -728,7 +704,7 @@ fn broken_reordering_of_values() {
             automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
         ]),
     );
-    let expected = automerge::Value::Map(ehm.clone(), automerge::MapType::Map);
+    let expected = automerge::Value::Map(ehm.clone());
 
     // ok, sequence has int then bool
     assert_eq!(expected, frontend.get_value(&Path::root()).unwrap());
@@ -741,7 +717,7 @@ fn broken_reordering_of_values() {
     }
     let v = frontend.get_value(&Path::root()).unwrap();
 
-    let expected = automerge::Value::Map(ehm, automerge::MapType::Map);
+    let expected = automerge::Value::Map(ehm);
     // not ok! sequence has bool then int
     assert_eq!(expected, v);
 }

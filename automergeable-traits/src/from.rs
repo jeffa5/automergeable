@@ -8,7 +8,7 @@ use std::{
     sync::Arc,
 };
 
-use automerge::{MapType, Primitive, Value};
+use automerge::{Primitive, Value};
 use serde_json::Number;
 
 /// Require a method to convert to a value from an automerge value.
@@ -144,7 +144,7 @@ where
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Map(map, MapType::Map) = value {
+        if let Value::Map(map) = value {
             let mut m = Self::with_capacity(map.len());
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
@@ -169,7 +169,7 @@ where
     V: FromAutomerge,
 {
     fn from_automerge(value: &automerge::Value) -> std::result::Result<Self, FromAutomergeError> {
-        if let Value::Map(map, MapType::Map) = value {
+        if let Value::Map(map) = value {
             let mut m = Self::new();
             for (k, v) in map {
                 if let Ok(k) = K::from_str(k) {
@@ -338,7 +338,12 @@ impl FromAutomerge for f32 {
 impl FromAutomerge for serde_json::Value {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         let var_name = match value {
-            Value::Map(map, _) => Ok(Self::Object(
+            Value::Map(map) => Ok(Self::Object(
+                map.iter()
+                    .map(|(k, v)| (k.clone(), Self::from_automerge(v).unwrap()))
+                    .collect(),
+            )),
+            Value::Table(map) => Ok(Self::Object(
                 map.iter()
                     .map(|(k, v)| (k.clone(), Self::from_automerge(v).unwrap()))
                     .collect(),

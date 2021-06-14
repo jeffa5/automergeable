@@ -1,6 +1,6 @@
 #![no_main]
 
-use automerge::{Backend, InvalidChangeRequest, MapType, Primitive, Value};
+use automerge::{Backend, InvalidChangeRequest, Primitive, Value};
 use automergeable::{unicode_segmentation::UnicodeSegmentation, DocumentChangeError};
 use libfuzzer_sys::fuzz_target;
 use pretty_assertions::assert_eq;
@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 fuzz_target!(|values: Vec<automerge::Value>| {
     for val in &values {
         // ensure the root is always a map
-        if let Value::Map(_, MapType::Map) = val {
+        if let Value::Map(_) = val {
         } else {
             return;
         }
@@ -84,22 +84,19 @@ fuzz_target!(|values: Vec<automerge::Value>| {
 
 fn has_cursor(v: &Value) -> bool {
     match v {
-        Value::Map(m, _) => m.values().any(|v| has_cursor(v)),
+        Value::Map(m) | Value::Table(m) => m.values().any(|v| has_cursor(v)),
         Value::Sequence(v) => v.iter().any(|i| has_cursor(i)),
         Value::Text(_) => false,
         Value::Primitive(p) => {
-            if let Primitive::Cursor(_) = p {
-                true
-            } else {
-                false
-            }
+            matches!(p, Primitive::Cursor(_))
         }
     }
 }
 
 fn has_table(v: &Value) -> bool {
     match v {
-        Value::Map(m, ty) => ty == &MapType::Table || m.values().any(|v| has_table(v)),
+        Value::Map(m) => m.values().any(|v| has_table(v)),
+        Value::Table(_) => true,
         Value::Sequence(v) => v.iter().any(|i| has_table(i)),
         Value::Text(_) | Value::Primitive(_) => false,
     }
@@ -107,7 +104,7 @@ fn has_table(v: &Value) -> bool {
 
 fn has_empty_text(v: &Value) -> bool {
     match v {
-        Value::Map(m, _) => m.values().any(|v| has_empty_text(v)),
+        Value::Map(m) | Value::Table(m) => m.values().any(|v| has_empty_text(v)),
         Value::Sequence(v) => v.iter().any(|i| has_empty_text(i)),
         Value::Text(t) => t.iter().any(|i| i.graphemes(true).count() != 1),
         Value::Primitive(_) => false,
@@ -116,7 +113,7 @@ fn has_empty_text(v: &Value) -> bool {
 
 fn has_nan(v: &Value) -> bool {
     match v {
-        Value::Map(m, _) => m.values().any(|v| has_nan(v)),
+        Value::Map(m) | Value::Table(m) => m.values().any(|v| has_nan(v)),
         Value::Sequence(v) => v.iter().any(|i| has_nan(i)),
         Value::Text(_) => false,
         Value::Primitive(p) => match p {

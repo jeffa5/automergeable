@@ -55,7 +55,7 @@ fn from_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma
         #[automatically_derived]
         impl #impl_generics #crate_path::FromAutomerge for #t_name #ty_generics #where_clause {
             fn from_automerge(value: &automerge::Value) -> ::std::result::Result<Self, #crate_path::FromAutomergeError> {
-                if let automerge::Value::Map(hm, automerge::MapType::Map) = value {
+                if let automerge::Value::Map(hm) = value {
                     if hm.len() != 1 {
                         Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
@@ -201,7 +201,7 @@ fn fields_from_automerge(
                 }
             });
             quote! {
-                if let automerge::Value::Map(hm, automerge::MapType::Map) = value {
+                if let automerge::Value::Map(hm) = value {
                     Ok(#ty_name {
                         #(#fields)*
                     })

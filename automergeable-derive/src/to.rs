@@ -63,7 +63,7 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
                     let mut outer = ::std::collections::HashMap::new();
                     let fields = {#fields_to_automerge};
                     outer.insert(#v_name_string.to_owned(), fields);
-                    automerge::Value::Map(outer, automerge::MapType::Map)
+                    automerge::Value::Map(outer)
                 }
             }
         } else {
@@ -153,7 +153,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
             quote! {
                 let mut fields = ::std::collections::HashMap::new();
                 #(#fields)*
-                automerge::Value::Map(fields, automerge::MapType::Map)
+                automerge::Value::Map(fields)
             }
         }
         Fields::Unnamed(u) => {

@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use automerge::{MapType, Primitive, Value};
+use automerge::{Primitive, Value};
 
 /// Require a method to convert the current value into an automerge value.
 pub trait ToAutomerge {
@@ -54,7 +54,7 @@ where
         for (k, v) in self {
             hm.insert(k.to_string(), v.to_automerge());
         }
-        Value::Map(hm, MapType::Map)
+        Value::Map(hm)
     }
 }
 
@@ -68,7 +68,7 @@ where
         for (k, v) in self {
             hm.insert(k.to_string(), v.to_automerge());
         }
-        Value::Map(hm, MapType::Map)
+        Value::Map(hm)
     }
 }
 
@@ -241,7 +241,6 @@ impl ToAutomerge for serde_json::Value {
                 m.iter()
                     .map(|(k, v)| (k.clone(), v.to_automerge()))
                     .collect::<HashMap<_, _>>(),
-                MapType::Map,
             ),
         }
     }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use automerge::{MapType, Primitive, Value};
+use automerge::{Primitive, Value};
 use automergeable::{Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 use maplit::hashmap;
@@ -435,10 +435,7 @@ fn struct_1() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {"a".to_owned() => Value::Primitive(Primitive::Uint(1))},
-            MapType::Map
-        ),
+        Value::Map(hashmap! {"a".to_owned() => Value::Primitive(Primitive::Uint(1))},),
         Single { a: 1 }.to_automerge()
     );
 }
@@ -452,13 +449,10 @@ fn struct_2() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {
-                "a".to_owned() => Value::Primitive(Primitive::Uint(1)),
-                "b".to_owned() => Value::Primitive(Primitive::Str(String::new()))
-            },
-            MapType::Map
-        ),
+        Value::Map(hashmap! {
+            "a".to_owned() => Value::Primitive(Primitive::Uint(1)),
+            "b".to_owned() => Value::Primitive(Primitive::Str(String::new()))
+        },),
         Double {
             a: 1,
             b: String::new()
@@ -478,38 +472,29 @@ fn enum_multi() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {
-                "W".to_owned() => Value::Map(hashmap!{
-                    "a".to_owned() => Value::Primitive(Primitive::Int(0)),
-                    "b".to_owned() => Value::Primitive(Primitive::Int(1)),
-                },MapType::Map),
-            },
-            MapType::Map
-        ),
+        Value::Map(hashmap! {
+            "W".to_owned() => Value::Map(hashmap!{
+                "a".to_owned() => Value::Primitive(Primitive::Int(0)),
+                "b".to_owned() => Value::Primitive(Primitive::Int(1)),
+            },),
+        },),
         E::W { a: 0, b: 1 }.to_automerge()
     );
 
     assert_eq!(
-        Value::Map(
-            hashmap! {
-                "X".to_owned() => Value::Sequence(vec![
-                    Value::Primitive(Primitive::Int(0)),
-                    Value::Primitive(Primitive::Int(1)),
-                ]),
-            },
-            MapType::Map
-        ),
+        Value::Map(hashmap! {
+            "X".to_owned() => Value::Sequence(vec![
+                Value::Primitive(Primitive::Int(0)),
+                Value::Primitive(Primitive::Int(1)),
+            ]),
+        },),
         E::X(0, 1).to_automerge()
     );
 
     assert_eq!(
-        Value::Map(
-            hashmap! {
-                "Y".to_owned() => Value::Primitive(Primitive::Int(0)),
-            },
-            MapType::Map
-        ),
+        Value::Map(hashmap! {
+            "Y".to_owned() => Value::Primitive(Primitive::Int(0)),
+        },),
         E::Y(0).to_automerge()
     );
 
@@ -550,10 +535,7 @@ fn single_generics() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0))},
-            MapType::Map
-        ),
+        Value::Map(hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0))},),
         A { inner: 0u32 }.to_automerge()
     );
 
@@ -563,10 +545,7 @@ fn single_generics() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},
-            MapType::Map
-        ),
+        Value::Map(hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},),
         B::C(0u32).to_automerge()
     )
 }
@@ -583,7 +562,6 @@ fn multi_generics() {
         Value::Map(
             hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0)),
             "outer".to_owned() => Value::Primitive(Primitive::Str(String::new()))},
-            MapType::Map
         ),
         A {
             inner: 0u32,
@@ -599,17 +577,11 @@ fn multi_generics() {
     }
 
     assert_eq!(
-        Value::Map(
-            hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},
-            MapType::Map
-        ),
+        Value::Map(hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},),
         B::<u32, String>::C(0u32).to_automerge()
     );
     assert_eq!(
-        Value::Map(
-            hashmap! {"D".to_owned() => Value::Primitive(Primitive::Str(String::new()))},
-            MapType::Map
-        ),
+        Value::Map(hashmap! {"D".to_owned() => Value::Primitive(Primitive::Str(String::new()))},),
         B::<u32, String>::D(String::new()).to_automerge()
     );
 }
