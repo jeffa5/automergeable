@@ -2,7 +2,7 @@ use std::{error::Error, fmt::Debug};
 
 use automerge::{Path, Value};
 use automerge_frontend::MutableDocument;
-use automerge_protocol::{Patch, UncompressedChange};
+use automerge_protocol::Patch;
 
 use crate::Automergeable;
 
@@ -43,7 +43,7 @@ pub trait Frontend {
         &mut self,
         message: Option<String>,
         closure: C,
-    ) -> Result<Option<UncompressedChange>, E>
+    ) -> Result<Option<automerge_protocol::Change>, E>
     where
         C: FnOnce(&mut dyn MutableDocument) -> Result<(), E>,
         E: Error;
@@ -62,7 +62,7 @@ impl Frontend for automerge::Frontend {
         &mut self,
         message: Option<String>,
         closure: C,
-    ) -> Result<Option<UncompressedChange>, E>
+    ) -> Result<Option<automerge_protocol::Change>, E>
     where
         C: FnOnce(&mut dyn MutableDocument) -> Result<(), E>,
         E: Error,
@@ -129,7 +129,7 @@ where
         &mut self,
         message: Option<String>,
         change: C,
-    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::Change>), DocumentChangeError<E>>
     where
         E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
@@ -155,7 +155,7 @@ where
     pub fn change<C, O, E>(
         &mut self,
         change: C,
-    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::Change>), DocumentChangeError<E>>
     where
         E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
@@ -168,7 +168,7 @@ where
         &mut self,
         message: String,
         change: C,
-    ) -> Result<(O, Option<automerge_protocol::UncompressedChange>), DocumentChangeError<E>>
+    ) -> Result<(O, Option<automerge_protocol::Change>), DocumentChangeError<E>>
     where
         E: Error,
         C: FnOnce(&mut T) -> Result<O, E>,
