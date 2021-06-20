@@ -47,13 +47,13 @@ where
 
 impl<K, V> ToAutomerge for HashMap<K, V>
 where
-    K: AsRef<str>,
+    K: ToString,
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
         let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
-            hm.insert(SmolStr::new(k), v.to_automerge());
+            hm.insert(k.to_string().into(), v.to_automerge());
         }
         Value::Map(hm)
     }
@@ -61,13 +61,13 @@ where
 
 impl<K, V> ToAutomerge for BTreeMap<K, V>
 where
-    K: AsRef<str>,
+    K: ToString,
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
         let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
-            hm.insert(SmolStr::new(k), v.to_automerge());
+            hm.insert(k.to_string().into(), v.to_automerge());
         }
         Value::Map(hm)
     }
