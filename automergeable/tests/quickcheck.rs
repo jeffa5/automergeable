@@ -5,6 +5,7 @@ use automergeable::diff_values;
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
 use quickcheck::{empty_shrinker, single_shrinker, Arbitrary, Gen, QuickCheck, TestResult};
+use smol_str::SmolStr;
 
 #[derive(Debug, Clone, PartialEq)]
 struct Prim(Primitive);
@@ -26,7 +27,7 @@ impl Arbitrary for Prim {
         ];
         let prim = g.choose(&prims).unwrap();
         let p = match prim {
-            0 => Primitive::Str(String::arbitrary(g)),
+            0 => Primitive::Str(SmolStr::new(String::arbitrary(g))),
             1 => Primitive::Int(i64::arbitrary(g)),
             2 => Primitive::Uint(u64::arbitrary(g)),
             3 => Primitive::F64(i32::arbitrary(g) as f64), /* avoid having NaN in as it breaks the equality */
@@ -54,7 +55,12 @@ impl Arbitrary for Prim {
                 if s.is_empty() {
                     Box::new(single_shrinker(Prim(Primitive::Null)))
                 } else {
-                    Box::new(s.shrink().map(Primitive::Str).map(Prim))
+                    Box::new(
+                        s.to_string()
+                            .shrink()
+                            .map(|s| Primitive::Str(SmolStr::new(s)))
+                            .map(Prim),
+                    )
                 }
             }
             Primitive::Int(i) => {
@@ -135,14 +141,14 @@ impl Arbitrary for Val {
                 } else {
                     let m = m
                         .iter()
-                        .map(|(k, v)| (k.clone(), Val(v.clone())))
+                        .map(|(k, v)| (k.to_string(), Val(v.clone())))
                         .collect::<HashMap<_, _>>();
                     Box::new(
                         m.shrink()
                             .map(move |m| {
                                 let m = m
                                     .into_iter()
-                                    .map(|(k, v)| (k, v.0))
+                                    .map(|(k, v)| (k.into(), v.0))
                                     .collect::<HashMap<_, _>>();
                                 Value::Map(m)
                             })
@@ -165,7 +171,14 @@ impl Arbitrary for Val {
                     )
                 }
             }
-            Value::Text(v) => Box::new(v.shrink().map(Value::Text).map(Val)),
+            Value::Text(v) => {
+                let v = v.iter().map(|v| v.to_string()).collect::<Vec<_>>();
+                Box::new(
+                    v.shrink()
+                        .map(|v| Value::Text(v.into_iter().map(|s| s.into()).collect()))
+                        .map(Val),
+                )
+            }
             Value::Primitive(p) => Box::new(
                 Prim(p.clone())
                     .shrink()
@@ -198,7 +211,7 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
             let map = HashMap::<String, ()>::arbitrary(g);
             let map = map
                 .into_iter()
-                .map(|(k, ())| (k, arbitrary_value(g, smaller_depth).0))
+                .map(|(k, ())| (k.into(), arbitrary_value(g, smaller_depth).0))
                 .collect::<HashMap<_, _>>();
             Value::Map(map)
         }
@@ -266,10 +279,10 @@ fn equal_values_give_no_diff() {
 fn applying_primitive_diff_result_to_old_gives_new() {
     fn apply_diff(p1: Prim, p2: Prim) -> TestResult {
         let mut h1 = HashMap::new();
-        h1.insert("k".to_owned(), Value::Primitive(p1.0));
+        h1.insert("k".into(), Value::Primitive(p1.0));
         let v1 = Value::Map(h1);
         let mut h2 = HashMap::new();
-        h2.insert("k".to_owned(), Value::Primitive(p2.0));
+        h2.insert("k".into(), Value::Primitive(p2.0));
         let v2 = Value::Map(h2);
         let changes = diff_values(&v1, &v2);
         let changes = if let Ok(changes) = changes {
@@ -374,11 +387,11 @@ fn applying_value_diff_result_to_old_gives_new() {
 #[test]
 fn broken_reordering_of_values_2() {
     let v1 = Val(Value::Map(
-        hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
+        hashmap! {"".into()=> Value::Sequence(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
     ));
 
     let v2 = Val(Value::Map(
-        hashmap! {"".to_owned()=> Value::Sequence(vec![ Value::Primitive(Primitive::Null)])},
+        hashmap! {"".into()=> Value::Sequence(vec![ Value::Primitive(Primitive::Null)])},
     ));
 
     let changes = diff_values(&v1.0, &v2.0).unwrap();
@@ -483,11 +496,11 @@ fn save_then_load() {
 fn broken_save_load() {
     let mut m = HashMap::new();
     m.insert(
-        "\u{0}\u{0}".to_owned(),
+        "\u{0}\u{0}".into(),
         Value::Sequence(vec![
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Counter(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Boolean(false)),
             Value::Primitive(Primitive::Timestamp(0)),
             Value::Primitive(Primitive::Int(0)),
@@ -505,20 +518,20 @@ fn broken_save_load() {
         ]),
     );
     m.insert(
-        "\u{2}".to_owned(),
+        "\u{2}".into(),
         Value::Sequence(vec![
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Uint(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Counter(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
         ]),
     );
     m.insert(
-        "\u{0}".to_owned(),
+        "\u{0}".into(),
         Value::Sequence(vec![
             Value::Primitive(Primitive::Counter(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Timestamp(0)),
             Value::Primitive(Primitive::Int(0)),
@@ -531,7 +544,7 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Uint(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Timestamp(0)),
             Value::Primitive(Primitive::Timestamp(0)),
@@ -539,11 +552,11 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::F32(0.0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
         ]),
     );
     m.insert(
-        "".to_owned(),
+        "".into(),
         Value::Sequence(vec![
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Uint(0)),
@@ -554,7 +567,7 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::F64(0.0)),
             Value::Primitive(Primitive::Timestamp(0)),
-            Value::Primitive(Primitive::Str("".to_owned())),
+            Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Boolean(false)),
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Int(0)),
@@ -567,10 +580,10 @@ fn broken_save_load() {
         ]),
     );
     m.insert(
-        "\u{1}".to_owned(),
+        "\u{1}".into(),
         Value::Table({
             let mut m = HashMap::new();
-            m.insert("".to_owned(), Value::Primitive(Primitive::F64(0.0)));
+            m.insert("".into(), Value::Primitive(Primitive::F64(0.0)));
             m
         }),
     );
@@ -616,9 +629,9 @@ fn broken_save_load() {
 #[test]
 fn broken_save_load_2() {
     let mut hm1 = HashMap::new();
-    hm1.insert("a".to_owned(), Value::Primitive(Primitive::Null));
+    hm1.insert("a".into(), Value::Primitive(Primitive::Null));
     let mut hm2 = HashMap::new();
-    hm2.insert("".to_owned(), Value::Primitive(Primitive::Null));
+    hm2.insert("".into(), Value::Primitive(Primitive::Null));
     let values = vec![
         Value::Map(HashMap::new()),
         Value::Map(hm1),
@@ -663,7 +676,7 @@ fn broken_reordering_of_values() {
     // setup
     let mut hm = std::collections::HashMap::new();
     hm.insert(
-        "a".to_owned(),
+        "a".into(),
         automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
     );
     let mut backend = automerge::Backend::new();
@@ -698,7 +711,7 @@ fn broken_reordering_of_values() {
     // setup first expected
     let mut ehm = HashMap::new();
     ehm.insert(
-        "a".to_owned(),
+        "a".into(),
         automerge::Value::Sequence(vec![
             automerge::Value::Primitive(automerge::Primitive::Int(0)),
             automerge::Value::Primitive(automerge::Primitive::Boolean(false)),

@@ -5,6 +5,7 @@ use automergeable::{Automergeable, ToAutomerge};
 use insta::{assert_json_snapshot, Settings};
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
+use smol_str::SmolStr;
 
 #[test]
 fn to_automerge() {
@@ -30,72 +31,54 @@ fn to_automerge() {
         b: B { inner: 2 },
     };
 
-    a.others.insert("a".to_owned(), "b".to_owned());
+    a.others.insert("a".into(), "b".into());
     let mut settings = Settings::new();
     settings.set_sort_maps(true);
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-        [
           {
-            "b": [
-              {
-                "inner": {
-                  "Uint": 2
-                }
-              },
-              "map"
-            ],
+            "b": {
+              "inner": {
+                "Uint": 2
+              }
+            },
             "list": [],
             "nah": "Null",
-            "others": [
-              {
-                "a": {
-                  "Str": "b"
-                }
-              },
-              "map"
-            ],
+            "others": {
+              "a": {
+                "Str": "b"
+              }
+            },
             "yep": {
               "Int": -234
             }
-          },
-          "map"
-        ]
+          }
         "###)
     });
 
-    a.others.insert("c".to_owned(), "c".to_owned());
+    a.others.insert("c".into(), "c".into());
     a.yep = None;
     a.b.inner += 1;
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-        [
-          {
-            "b": [
-              {
-                "inner": {
-                  "Uint": 3
-                }
-              },
-              "map"
-            ],
-            "list": [],
-            "nah": "Null",
-            "others": [
-              {
-                "a": {
-                  "Str": "b"
-                },
-                "c": {
-                  "Str": "c"
-                }
-              },
-              "map"
-            ],
-            "yep": "Null"
+        {
+          "b": {
+            "inner": {
+              "Uint": 3
+            }
           },
-          "map"
-        ]
+          "list": [],
+          "nah": "Null",
+          "others": {
+            "a": {
+              "Str": "b"
+            },
+            "c": {
+              "Str": "c"
+            }
+          },
+          "yep": "Null"
+        }
         "###)
     });
 }
@@ -153,7 +136,7 @@ fn to_automerge_attribute() {
         a_counter: 0,
         a_timestamp: 0,
         b: B { inner: 2 },
-        tup: Tuple("a tuple".to_owned(), vec!['h', 'i']),
+        tup: Tuple("a tuple".into(), vec!['h', 'i']),
         en: En::default(),
         u: Unit,
     };
@@ -162,219 +145,183 @@ fn to_automerge_attribute() {
     settings.set_sort_maps(true);
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-        [
-          {
-            "a_counter": {
-              "Counter": 0
-            },
-            "a_timestamp": {
-              "Timestamp": 0
-            },
-            "b": [
-              {
-                "inner": {
-                  "Uint": 2
-                }
-              },
-              "map"
-            ],
-            "en": {
-              "Str": "Part2"
-            },
-            "list": [],
-            "nah": "Null",
-            "others": [
-              {},
-              "map"
-            ],
-            "some_text": [],
-            "tup": [
-              [
-                "a",
-                " ",
-                "t",
-                "u",
-                "p",
-                "l",
-                "e"
-              ],
-              [
-                {
-                  "Str": "h"
-                },
-                {
-                  "Str": "i"
-                }
-              ]
-            ],
-            "u": "Null",
-            "yep": {
-              "Int": -234
+        {
+          "a_counter": {
+            "Counter": 0
+          },
+          "a_timestamp": {
+            "Timestamp": 0
+          },
+          "b": {
+            "inner": {
+              "Uint": 2
             }
           },
-          "map"
-        ]
+          "en": {
+            "Str": "Part2"
+          },
+          "list": [],
+          "nah": "Null",
+          "others": {},
+          "some_text": [],
+          "tup": [
+            [
+              "a",
+              " ",
+              "t",
+              "u",
+              "p",
+              "l",
+              "e"
+            ],
+            [
+              {
+                "Str": "h"
+              },
+              {
+                "Str": "i"
+              }
+            ]
+          ],
+          "u": "Null",
+          "yep": {
+            "Int": -234
+          }
+        }
         "###)
     });
 
-    a.others.insert("a".to_owned(), "b".to_owned());
+    a.others.insert("a".into(), "b".into());
     a.some_text.push_str("hi");
     a.en = En::Part1(String::new(), 42);
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-        [
-          {
-            "a_counter": {
-              "Counter": 0
-            },
-            "a_timestamp": {
-              "Timestamp": 0
-            },
-            "b": [
-              {
-                "inner": {
-                  "Uint": 2
-                }
-              },
-              "map"
-            ],
-            "en": [
-              {
-                "Part1": [
-                  [],
-                  {
-                    "Int": 42
-                  }
-                ]
-              },
-              "map"
-            ],
-            "list": [],
-            "nah": "Null",
-            "others": [
-              {
-                "a": {
-                  "Str": "b"
-                }
-              },
-              "map"
-            ],
-            "some_text": [
-              "h",
-              "i"
-            ],
-            "tup": [
-              [
-                "a",
-                " ",
-                "t",
-                "u",
-                "p",
-                "l",
-                "e"
-              ],
-              [
-                {
-                  "Str": "h"
-                },
-                {
-                  "Str": "i"
-                }
-              ]
-            ],
-            "u": "Null",
-            "yep": {
-              "Int": -234
+        {
+          "a_counter": {
+            "Counter": 0
+          },
+          "a_timestamp": {
+            "Timestamp": 0
+          },
+          "b": {
+            "inner": {
+              "Uint": 2
             }
           },
-          "map"
-        ]
+          "en": {
+            "Part1": [
+              [],
+              {
+                "Int": 42
+              }
+            ]
+          },
+          "list": [],
+          "nah": "Null",
+          "others": {
+            "a": {
+              "Str": "b"
+            }
+          },
+          "some_text": [
+            "h",
+            "i"
+          ],
+          "tup": [
+            [
+              "a",
+              " ",
+              "t",
+              "u",
+              "p",
+              "l",
+              "e"
+            ],
+            [
+              {
+                "Str": "h"
+              },
+              {
+                "Str": "i"
+              }
+            ]
+          ],
+          "u": "Null",
+          "yep": {
+            "Int": -234
+          }
+        }
         "###)
     });
 
-    a.others.insert("c".to_owned(), "c".to_owned());
+    a.others.insert("c".into(), "c".into());
     a.some_text.push_str(" world");
     a.yep = None;
     a.b.inner += 1;
     a.en = En::Part3 { a: String::new() };
     settings.bind(|| {
         assert_json_snapshot!(a.to_automerge(), @r###"
-        [
-          {
-            "a_counter": {
-              "Counter": 0
-            },
-            "a_timestamp": {
-              "Timestamp": 0
-            },
-            "b": [
-              {
-                "inner": {
-                  "Uint": 3
-                }
-              },
-              "map"
-            ],
-            "en": [
-              {
-                "Part3": [
-                  {
-                    "a": {
-                      "Str": ""
-                    }
-                  },
-                  "map"
-                ]
-              },
-              "map"
-            ],
-            "list": [],
-            "nah": "Null",
-            "others": [
-              {
-                "a": {
-                  "Str": "b"
-                },
-                "c": {
-                  "Str": "c"
-                }
-              },
-              "map"
-            ],
-            "some_text": [
-              "h",
-              "i",
-              " ",
-              "w",
-              "o",
-              "r",
-              "l",
-              "d"
-            ],
-            "tup": [
-              [
-                "a",
-                " ",
-                "t",
-                "u",
-                "p",
-                "l",
-                "e"
-              ],
-              [
-                {
-                  "Str": "h"
-                },
-                {
-                  "Str": "i"
-                }
-              ]
-            ],
-            "u": "Null",
-            "yep": "Null"
+        {
+          "a_counter": {
+            "Counter": 0
           },
-          "map"
-        ]
+          "a_timestamp": {
+            "Timestamp": 0
+          },
+          "b": {
+            "inner": {
+              "Uint": 3
+            }
+          },
+          "en": {
+            "Part3": {
+              "a": {
+                "Str": ""
+              }
+            }
+          },
+          "list": [],
+          "nah": "Null",
+          "others": {
+            "a": {
+              "Str": "b"
+            },
+            "c": {
+              "Str": "c"
+            }
+          },
+          "some_text": [
+            "h",
+            "i",
+            " ",
+            "w",
+            "o",
+            "r",
+            "l",
+            "d"
+          ],
+          "tup": [
+            [
+              "a",
+              " ",
+              "t",
+              "u",
+              "p",
+              "l",
+              "e"
+            ],
+            [
+              {
+                "Str": "h"
+              },
+              {
+                "Str": "i"
+              }
+            ]
+          ],
+          "u": "Null",
+          "yep": "Null"
+        }
         "###)
     });
 }
@@ -421,7 +368,7 @@ fn tuple_struct_3() {
         Value::Sequence(vec![
             Value::Primitive(Primitive::Uint(1)),
             Value::Primitive(Primitive::Int(-2)),
-            Value::Primitive(Primitive::Str(String::new()))
+            Value::Primitive(Primitive::Str(SmolStr::default()))
         ]),
         Triple(1, -2, String::new()).to_automerge()
     );
@@ -435,7 +382,7 @@ fn struct_1() {
     }
 
     assert_eq!(
-        Value::Map(hashmap! {"a".to_owned() => Value::Primitive(Primitive::Uint(1))},),
+        Value::Map(hashmap! {"a".into() => Value::Primitive(Primitive::Uint(1))},),
         Single { a: 1 }.to_automerge()
     );
 }
@@ -450,8 +397,8 @@ fn struct_2() {
 
     assert_eq!(
         Value::Map(hashmap! {
-            "a".to_owned() => Value::Primitive(Primitive::Uint(1)),
-            "b".to_owned() => Value::Primitive(Primitive::Str(String::new()))
+            "a".into() => Value::Primitive(Primitive::Uint(1)),
+            "b".into() => Value::Primitive(Primitive::Str(SmolStr::default()))
         },),
         Double {
             a: 1,
@@ -473,9 +420,9 @@ fn enum_multi() {
 
     assert_eq!(
         Value::Map(hashmap! {
-            "W".to_owned() => Value::Map(hashmap!{
-                "a".to_owned() => Value::Primitive(Primitive::Int(0)),
-                "b".to_owned() => Value::Primitive(Primitive::Int(1)),
+            "W".into() => Value::Map(hashmap!{
+                "a".into() => Value::Primitive(Primitive::Int(0)),
+                "b".into() => Value::Primitive(Primitive::Int(1)),
             },),
         },),
         E::W { a: 0, b: 1 }.to_automerge()
@@ -483,7 +430,7 @@ fn enum_multi() {
 
     assert_eq!(
         Value::Map(hashmap! {
-            "X".to_owned() => Value::Sequence(vec![
+            "X".into() => Value::Sequence(vec![
                 Value::Primitive(Primitive::Int(0)),
                 Value::Primitive(Primitive::Int(1)),
             ]),
@@ -493,13 +440,13 @@ fn enum_multi() {
 
     assert_eq!(
         Value::Map(hashmap! {
-            "Y".to_owned() => Value::Primitive(Primitive::Int(0)),
+            "Y".into() => Value::Primitive(Primitive::Int(0)),
         },),
         E::Y(0).to_automerge()
     );
 
     assert_eq!(
-        Value::Primitive(Primitive::Str("Z".to_owned())),
+        Value::Primitive(Primitive::Str("Z".into())),
         E::Z.to_automerge()
     );
 }
@@ -514,15 +461,15 @@ fn enum_names() {
     }
 
     assert_eq!(
-        Value::Primitive(Primitive::Str("A".to_owned())),
+        Value::Primitive(Primitive::Str("A".into())),
         Names::A.to_automerge()
     );
     assert_eq!(
-        Value::Primitive(Primitive::Str("B".to_owned())),
+        Value::Primitive(Primitive::Str("B".into())),
         Names::B.to_automerge()
     );
     assert_eq!(
-        Value::Primitive(Primitive::Str("C".to_owned())),
+        Value::Primitive(Primitive::Str("C".into())),
         Names::C.to_automerge()
     );
 }
@@ -535,7 +482,7 @@ fn single_generics() {
     }
 
     assert_eq!(
-        Value::Map(hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0))},),
+        Value::Map(hashmap! {"inner".into() => Value::Primitive(Primitive::Uint(0))},),
         A { inner: 0u32 }.to_automerge()
     );
 
@@ -545,7 +492,7 @@ fn single_generics() {
     }
 
     assert_eq!(
-        Value::Map(hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},),
+        Value::Map(hashmap! {"C".into() => Value::Primitive(Primitive::Uint(0))},),
         B::C(0u32).to_automerge()
     )
 }
@@ -560,8 +507,8 @@ fn multi_generics() {
 
     assert_eq!(
         Value::Map(
-            hashmap! {"inner".to_owned() => Value::Primitive(Primitive::Uint(0)),
-            "outer".to_owned() => Value::Primitive(Primitive::Str(String::new()))},
+            hashmap! {"inner".into() => Value::Primitive(Primitive::Uint(0)),
+            "outer".into() => Value::Primitive(Primitive::Str(SmolStr::default()))},
         ),
         A {
             inner: 0u32,
@@ -577,11 +524,11 @@ fn multi_generics() {
     }
 
     assert_eq!(
-        Value::Map(hashmap! {"C".to_owned() => Value::Primitive(Primitive::Uint(0))},),
+        Value::Map(hashmap! {"C".into() => Value::Primitive(Primitive::Uint(0))},),
         B::<u32, String>::C(0u32).to_automerge()
     );
     assert_eq!(
-        Value::Map(hashmap! {"D".to_owned() => Value::Primitive(Primitive::Str(String::new()))},),
+        Value::Map(hashmap! {"D".into() => Value::Primitive(Primitive::Str(SmolStr::default()))},),
         B::<u32, String>::D(String::new()).to_automerge()
     );
 }

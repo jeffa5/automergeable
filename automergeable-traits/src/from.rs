@@ -10,6 +10,7 @@ use std::{
 
 use automerge::{Primitive, Value};
 use serde_json::Number;
+use smol_str::SmolStr;
 
 /// Require a method to convert to a value from an automerge value.
 pub trait FromAutomerge: Sized {
@@ -52,7 +53,7 @@ impl FromAutomerge for () {
 impl FromAutomerge for String {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         if let Value::Primitive(Primitive::Str(s)) = value {
-            Ok(s.clone())
+            Ok(s.to_string())
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
@@ -103,7 +104,7 @@ where
 }
 
 /// A new-type struct for working with the automerge Text value type.
-pub struct Text(pub Vec<String>);
+pub struct Text(pub Vec<SmolStr>);
 
 impl FromAutomerge for Text {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
@@ -340,12 +341,12 @@ impl FromAutomerge for serde_json::Value {
         let var_name = match value {
             Value::Map(map) => Ok(Self::Object(
                 map.iter()
-                    .map(|(k, v)| (k.clone(), Self::from_automerge(v).unwrap()))
+                    .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))
                     .collect(),
             )),
             Value::Table(map) => Ok(Self::Object(
                 map.iter()
-                    .map(|(k, v)| (k.clone(), Self::from_automerge(v).unwrap()))
+                    .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))
                     .collect(),
             )),
             Value::Sequence(v) => Ok(Self::Array(
@@ -358,7 +359,7 @@ impl FromAutomerge for serde_json::Value {
                 Primitive::Bytes(b) => Ok(Self::Array(
                     b.iter().map(|b| Self::Number(Number::from(*b))).collect(),
                 )),
-                Primitive::Str(s) => Ok(Self::String(s.clone())),
+                Primitive::Str(s) => Ok(Self::String(s.to_string())),
                 Primitive::Int(i) | Primitive::Counter(i) => Ok(Self::Number(Number::from(*i))),
                 Primitive::Uint(u) => Ok(Self::Number(Number::from(*u))),
                 Primitive::F64(f) => Ok(Self::Number(Number::from_f64(*f).unwrap())),

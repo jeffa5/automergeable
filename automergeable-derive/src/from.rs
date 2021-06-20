@@ -124,7 +124,7 @@ fn get_representation_type(
         Some("text") => {
             quote! {
                 if let Some(value) = #value_for_field {
-                    <#crate_path::Text>::from_automerge(value)?.0.into_iter().collect()
+                    <#crate_path::Text>::from_automerge(value)?.0.into_iter().map(|s|s.to_string()).collect()
                 } else {
                     <#field_ty>::default()
                 }

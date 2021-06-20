@@ -6,6 +6,7 @@ use std::{
 };
 
 use automerge::{Primitive, Value};
+use smol_str::SmolStr;
 
 /// Require a method to convert the current value into an automerge value.
 pub trait ToAutomerge {
@@ -46,13 +47,13 @@ where
 
 impl<K, V> ToAutomerge for HashMap<K, V>
 where
-    K: ToString,
+    K: AsRef<str>,
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
         let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
-            hm.insert(k.to_string(), v.to_automerge());
+            hm.insert(SmolStr::new(k), v.to_automerge());
         }
         Value::Map(hm)
     }
@@ -60,13 +61,13 @@ where
 
 impl<K, V> ToAutomerge for BTreeMap<K, V>
 where
-    K: ToString,
+    K: AsRef<str>,
     V: ToAutomerge,
 {
     fn to_automerge(&self) -> Value {
         let mut hm = HashMap::with_capacity(self.len());
         for (k, v) in self {
-            hm.insert(k.to_string(), v.to_automerge());
+            hm.insert(SmolStr::new(k), v.to_automerge());
         }
         Value::Map(hm)
     }
@@ -74,13 +75,13 @@ where
 
 impl ToAutomerge for String {
     fn to_automerge(&self) -> Value {
-        Value::Primitive(Primitive::Str(self.clone()))
+        Value::Primitive(Primitive::Str(SmolStr::new(self)))
     }
 }
 
 impl ToAutomerge for char {
     fn to_automerge(&self) -> Value {
-        Value::Primitive(Primitive::Str(self.to_string()))
+        Value::Primitive(Primitive::Str(SmolStr::new(self.to_string())))
     }
 }
 
@@ -233,13 +234,13 @@ impl ToAutomerge for serde_json::Value {
                     Value::Primitive(Primitive::Uint(n.as_u64().unwrap()))
                 }
             }
-            serde_json::Value::String(s) => Value::Primitive(Primitive::Str(s.clone())),
+            serde_json::Value::String(s) => Value::Primitive(Primitive::Str(SmolStr::new(s))),
             serde_json::Value::Array(a) => {
                 Value::Sequence(a.iter().map(|i| i.to_automerge()).collect::<Vec<_>>())
             }
             serde_json::Value::Object(m) => Value::Map(
                 m.iter()
-                    .map(|(k, v)| (k.clone(), v.to_automerge()))
+                    .map(|(k, v)| (SmolStr::new(k), v.to_automerge()))
                     .collect::<HashMap<_, _>>(),
             ),
         }

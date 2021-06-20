@@ -21,3 +21,4 @@ serde = "1.0.123"
 automergeable = { path = "../automergeable" }
 pretty_assertions = "0.7.1"
 maplit = "1.0.2"
+smol_str = "0.1.17"

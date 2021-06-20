@@ -29,17 +29,17 @@ pub fn diff_with_path(
                             changes.append(&mut diff_with_path(
                                 Some(v),
                                 Some(old_v),
-                                path.clone().key(k),
+                                path.clone().key(k.clone()),
                             )?)
                         } else {
                             // new
-                            changes.push(LocalChange::set(path.clone().key(k), v.clone()))
+                            changes.push(LocalChange::set(path.clone().key(k.clone()), v.clone()))
                         }
                     }
                     for k in old_map.keys() {
                         if !new_map.contains_key(k) {
                             // removed
-                            changes.push(LocalChange::delete(path.clone().key(k)))
+                            changes.push(LocalChange::delete(path.clone().key(k.clone())))
                         }
                     }
                     Ok(changes)
@@ -52,17 +52,17 @@ pub fn diff_with_path(
                             changes.append(&mut diff_with_path(
                                 Some(v),
                                 Some(old_v),
-                                path.clone().key(k),
+                                path.clone().key(k.clone()),
                             )?)
                         } else {
                             // new
-                            changes.push(LocalChange::set(path.clone().key(k), v.clone()))
+                            changes.push(LocalChange::set(path.clone().key(k.clone()), v.clone()))
                         }
                     }
                     for k in old_map.keys() {
                         if !new_map.contains_key(k) {
                             // removed
-                            changes.push(LocalChange::delete(path.clone().key(k)))
+                            changes.push(LocalChange::delete(path.clone().key(k.clone())))
                         }
                     }
                     Ok(changes)
@@ -104,14 +104,14 @@ pub fn diff_with_path(
                                 // changed
                                 changes.push(LocalChange::set(
                                     path.clone().index(i.try_into().unwrap()),
-                                    Value::Primitive(Primitive::Str(v.to_string())),
+                                    Value::Primitive(Primitive::Str(v.clone())),
                                 ))
                             }
                         } else {
                             // new
                             changes.push(LocalChange::insert(
                                 path.clone().index(i.try_into().unwrap()),
-                                Value::Primitive(Primitive::Str(v.to_string())),
+                                Value::Primitive(Primitive::Str(v.clone())),
                             ))
                         }
                     }
@@ -298,10 +298,7 @@ mod tests {
         )
         "###);
 
-        new_map.insert(
-            "abc".to_owned(),
-            Primitive::Str("some val".to_owned()).into(),
-        );
+        new_map.insert("abc".into(), Primitive::Str("some val".into()).into());
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), ), &Value::Map(old_map.clone(), )), @r###"
         Ok(
             [
@@ -326,10 +323,7 @@ mod tests {
         "###);
 
         old_map = new_map.clone();
-        new_map.insert(
-            "abc".to_owned(),
-            Primitive::Str("some newer val".to_owned()).into(),
-        );
+        new_map.insert("abc".into(), Primitive::Str("some newer val".into()).into());
         assert_debug_snapshot!(diff_values(&Value::Map(new_map.clone(), ), &Value::Map(old_map.clone(), )), @r###"
         Ok(
             [
@@ -384,7 +378,7 @@ mod tests {
         )
         "###);
 
-        new_vec.push(Primitive::Str("some val".to_owned()).into());
+        new_vec.push(Primitive::Str("some val".into()).into());
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
         Ok(
             [
@@ -409,7 +403,7 @@ mod tests {
         "###);
 
         old_vec = new_vec.clone();
-        new_vec[0] = Primitive::Str("some newer val".to_owned()).into();
+        new_vec[0] = Primitive::Str("some newer val".into()).into();
         assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
         Ok(
             [
@@ -464,7 +458,7 @@ mod tests {
         )
         "###);
 
-        new_text.push("a".to_owned());
+        new_text.push("a".into());
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone()), &Value::Text(old_text.clone())), @r###"
         Ok(
             [
@@ -489,7 +483,7 @@ mod tests {
         "###);
 
         old_text = new_text.clone();
-        new_text[0] = "b".to_owned();
+        new_text[0] = "b".into();
         assert_debug_snapshot!(diff_values(&Value::Text(new_text.clone() ), &Value::Text(old_text.clone() )), @r###"
         Ok(
             [
@@ -537,7 +531,7 @@ mod tests {
     fn new_and_empty() {
         let old = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
-        hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
+        hm.insert("a".into(), Value::Primitive(Primitive::Uint(2)));
         let new = Value::Map(hm);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"
@@ -556,7 +550,6 @@ mod tests {
                                     ),
                                 ),
                             },
-                            Map,
                         ),
                     ),
                 },
@@ -569,7 +562,7 @@ mod tests {
     fn empty_and_new() {
         let new = Value::Primitive(Primitive::Null);
         let mut hm = HashMap::new();
-        hm.insert("a".to_owned(), Value::Primitive(Primitive::Uint(2)));
+        hm.insert("a".into(), Value::Primitive(Primitive::Uint(2)));
         let old = Value::Map(hm);
 
         assert_debug_snapshot!(diff_values(&new , &old), @r###"

@@ -62,14 +62,14 @@ fn to_automerge_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>)
                 Self::#v_name#fields => {
                     let mut outer = ::std::collections::HashMap::new();
                     let fields = {#fields_to_automerge};
-                    outer.insert(#v_name_string.to_owned(), fields);
+                    outer.insert(#v_name_string.into(), fields);
                     automerge::Value::Map(outer)
                 }
             }
         } else {
             quote! {
                 Self::#v_name#fields => {
-                    automerge::Value::Primitive(automerge::Primitive::Str(#v_name_string.to_owned()))
+                    automerge::Value::Primitive(automerge::Primitive::Str(#v_name_string.into()))
                 }
             }
         }
@@ -120,7 +120,7 @@ fn get_representation_type(
         Some("text") => {
             quote! {{
                 use #crate_path::unicode_segmentation::UnicodeSegmentation;
-                automerge::Value::Text(#field_name.graphemes(true).map(|s| s.to_owned()).collect::<::std::vec::Vec<_>>())
+                automerge::Value::Text(#field_name.graphemes(true).map(|s| s.into()).collect::<::std::vec::Vec<_>>())
             }}
         }
         Some("counter") => {
@@ -147,7 +147,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                 };
                 let repr = get_representation_type(&f.attrs, &field_name, crate_path);
                 quote! {
-                    fields.insert(#field_name_string.to_owned(), #repr);
+                    fields.insert(#field_name_string.into(), #repr);
                 }
             });
             quote! {

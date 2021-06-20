@@ -41,6 +41,7 @@
               cargo-insta
               cargo-release
               cargo-fuzz
+              cargo-flamegraph
               crate2nix
               rust-analyzer
 
