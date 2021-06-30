@@ -117,7 +117,6 @@ fn has_nan(v: &Value) -> bool {
         Value::Sequence(v) => v.iter().any(|i| has_nan(i)),
         Value::Text(_) => false,
         Value::Primitive(p) => match p {
-            Primitive::F32(f) => f.is_nan(),
             Primitive::F64(f) => f.is_nan(),
             _ => false,
         },

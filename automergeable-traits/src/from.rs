@@ -323,19 +323,6 @@ impl FromAutomerge for f64 {
     }
 }
 
-impl FromAutomerge for f32 {
-    fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Primitive(Primitive::F32(f)) = value {
-            Ok(*f)
-        } else {
-            Err(FromAutomergeError::WrongType {
-                found: value.clone(),
-                expected: "a primitive f32".to_owned(),
-            })
-        }
-    }
-}
-
 impl FromAutomerge for serde_json::Value {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
         let var_name = match value {
@@ -363,7 +350,6 @@ impl FromAutomerge for serde_json::Value {
                 Primitive::Int(i) | Primitive::Counter(i) => Ok(Self::Number(Number::from(*i))),
                 Primitive::Uint(u) => Ok(Self::Number(Number::from(*u))),
                 Primitive::F64(f) => Ok(Self::Number(Number::from_f64(*f).unwrap())),
-                Primitive::F32(f) => Ok(Self::Number(Number::from_f64((*f).into()).unwrap())),
                 Primitive::Timestamp(i) => Ok(Self::Number(Number::from(*i))),
                 Primitive::Boolean(b) => Ok(Self::Bool(*b)),
                 Primitive::Cursor(_) => {

@@ -91,12 +91,6 @@ impl ToAutomerge for f64 {
     }
 }
 
-impl ToAutomerge for f32 {
-    fn to_automerge(&self) -> Value {
-        Value::Primitive(Primitive::F32(*self))
-    }
-}
-
 impl ToAutomerge for bool {
     fn to_automerge(&self) -> Value {
         Value::Primitive(Primitive::Boolean(*self))

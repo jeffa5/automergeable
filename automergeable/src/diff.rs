@@ -193,21 +193,6 @@ pub fn diff_with_path(
                     }
                 }
                 (
-                    Value::Primitive(Primitive::F32(new_int)),
-                    Value::Primitive(Primitive::F32(old_int)),
-                ) =>
-                {
-                    #[allow(clippy::float_cmp)]
-                    if new_int == old_int {
-                        Ok(Vec::new())
-                    } else {
-                        Ok(vec![LocalChange::set(
-                            path,
-                            Value::Primitive(Primitive::F32(*new_int)),
-                        )])
-                    }
-                }
-                (
                     Value::Primitive(Primitive::Counter(new_int)),
                     Value::Primitive(Primitive::Counter(old_int)),
                 ) => {

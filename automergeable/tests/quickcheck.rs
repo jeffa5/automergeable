@@ -13,17 +13,16 @@ struct Prim(Primitive);
 impl Arbitrary for Prim {
     fn arbitrary(g: &mut quickcheck::Gen) -> Self {
         let prims = [
-            0,  // Str(String),
-            1,  // Int(i64),
-            2,  // Uint(u64),
-            3,  // F64(f64),
-            4,  // F32(f32),
-            5,  // Counter(i64),
-            6,  // Timestamp(i64),
-            7,  // Boolean(bool),
-            8,  // Cursor(Cursor),
-            9,  // Bytes(Vec<u8>),
-            10, // Null
+            0, // Str(String),
+            1, // Int(i64),
+            2, // Uint(u64),
+            3, // F64(f64),
+            4, // Counter(i64),
+            5, // Timestamp(i64),
+            6, // Boolean(bool),
+            7, // Cursor(Cursor),
+            8, // Bytes(Vec<u8>),
+            9, // Null
         ];
         let prim = g.choose(&prims).unwrap();
         let p = match prim {
@@ -31,12 +30,11 @@ impl Arbitrary for Prim {
             1 => Primitive::Int(i64::arbitrary(g)),
             2 => Primitive::Uint(u64::arbitrary(g)),
             3 => Primitive::F64(i32::arbitrary(g) as f64), /* avoid having NaN in as it breaks the equality */
-            4 => Primitive::F32(i32::arbitrary(g) as f32), /* avoid having NaN in as it breaks the equality */
-            5 => Primitive::Counter(i64::arbitrary(g)),
-            6 => Primitive::Timestamp(i64::arbitrary(g)),
-            7 => Primitive::Boolean(bool::arbitrary(g)),
-            8 => Primitive::Null, // TODO: convert this case to use an arbitrary cursor
-            9 => Primitive::Bytes(Vec::arbitrary(g)),
+            4 => Primitive::Counter(i64::arbitrary(g)),
+            5 => Primitive::Timestamp(i64::arbitrary(g)),
+            6 => Primitive::Boolean(bool::arbitrary(g)),
+            7 => Primitive::Null, // TODO: convert this case to use an arbitrary cursor
+            8 => Primitive::Bytes(Vec::arbitrary(g)),
             _ => Primitive::Null,
         };
         Self(p)
@@ -82,13 +80,6 @@ impl Arbitrary for Prim {
                     Box::new(single_shrinker(Prim(Primitive::Null)))
                 } else {
                     Box::new(f.shrink().map(Primitive::F64).map(Prim))
-                }
-            }
-            Primitive::F32(f) => {
-                if *f == 0. {
-                    Box::new(single_shrinker(Prim(Primitive::Null)))
-                } else {
-                    Box::new(f.shrink().map(Primitive::F32).map(Prim))
                 }
             }
             Primitive::Counter(c) => {
@@ -538,7 +529,7 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Null),
-            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Uint(0)),
@@ -551,7 +542,7 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Uint(0)),
-            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
             Value::Primitive(Primitive::Str("".into())),
         ]),
     );
@@ -562,7 +553,7 @@ fn broken_save_load() {
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Int(0)),
             Value::Primitive(Primitive::Null),
-            Value::Primitive(Primitive::F32(0.0)),
+            Value::Primitive(Primitive::F64(0.0)),
             Value::Primitive(Primitive::F64(0.0)),
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::F64(0.0)),
