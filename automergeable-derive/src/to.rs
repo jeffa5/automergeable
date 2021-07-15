@@ -187,7 +187,7 @@ fn fields_to_automerge(fields: &Fields, is_struct: bool, crate_path: &TokenStrea
                 quote! {
                     let mut fields = Vec::new();
                     #(#fields)*
-                    automerge::Value::Sequence(fields)
+                    automerge::Value::List(fields)
                 }
             }
         }

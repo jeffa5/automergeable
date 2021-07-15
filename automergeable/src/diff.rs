@@ -67,7 +67,7 @@ pub fn diff_with_path(
                     }
                     Ok(changes)
                 }
-                (Value::Sequence(new_vec), Value::Sequence(old_vec)) => {
+                (Value::List(new_vec), Value::List(old_vec)) => {
                     let mut changes = Vec::new();
                     // naive
                     for (i, v) in new_vec.iter().enumerate() {
@@ -357,14 +357,14 @@ mod tests {
         let mut old_vec = Vec::new();
         let mut new_vec = Vec::new();
 
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::List(new_vec.clone() ), &Value::List(old_vec.clone() )), @r###"
         Ok(
             [],
         )
         "###);
 
         new_vec.push(Primitive::Str("some val".into()).into());
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone()), &Value::Sequence(old_vec.clone())), @r###"
+        assert_debug_snapshot!(diff_values(&Value::List(new_vec.clone()), &Value::List(old_vec.clone())), @r###"
         Ok(
             [
                 LocalChange {
@@ -389,7 +389,7 @@ mod tests {
 
         old_vec = new_vec.clone();
         new_vec[0] = Primitive::Str("some newer val".into()).into();
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec.clone() ), &Value::Sequence(old_vec.clone() )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::List(new_vec.clone() ), &Value::List(old_vec.clone() )), @r###"
         Ok(
             [
                 LocalChange {
@@ -414,7 +414,7 @@ mod tests {
 
         old_vec = new_vec.clone();
         new_vec.pop();
-        assert_debug_snapshot!(diff_values(&Value::Sequence(new_vec), &Value::Sequence(old_vec )), @r###"
+        assert_debug_snapshot!(diff_values(&Value::List(new_vec), &Value::List(old_vec )), @r###"
         Ok(
             [
                 LocalChange {

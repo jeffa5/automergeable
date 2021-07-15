@@ -31,7 +31,7 @@ where
 {
     fn to_automerge(&self) -> Value {
         let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
-        Value::Sequence(vals)
+        Value::List(vals)
     }
 }
 
@@ -41,7 +41,7 @@ where
 // {
 //     fn to_automerge(&self) -> Value {
 //         let vals = self.iter().map(|v| v.to_automerge()).collect::<Vec<_>>();
-//         Value::Sequence(vals)
+//         Value::List(vals)
 //     }
 // }
 
@@ -230,7 +230,7 @@ impl ToAutomerge for serde_json::Value {
             }
             serde_json::Value::String(s) => Value::Primitive(Primitive::Str(SmolStr::new(s))),
             serde_json::Value::Array(a) => {
-                Value::Sequence(a.iter().map(|i| i.to_automerge()).collect::<Vec<_>>())
+                Value::List(a.iter().map(|i| i.to_automerge()).collect::<Vec<_>>())
             }
             serde_json::Value::Object(m) => Value::Map(
                 m.iter()

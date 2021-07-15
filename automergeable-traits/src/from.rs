@@ -88,7 +88,7 @@ where
     T: FromAutomerge,
 {
     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-        if let Value::Sequence(vec) = value {
+        if let Value::List(vec) = value {
             let mut v = Self::with_capacity(vec.len());
             for val in vec {
                 v.push(T::from_automerge(val)?)
@@ -97,7 +97,7 @@ where
         } else {
             Err(FromAutomergeError::WrongType {
                 found: value.clone(),
-                expected: "a sequence".to_owned(),
+                expected: "a list".to_owned(),
             })
         }
     }
@@ -124,7 +124,7 @@ impl FromAutomerge for Text {
 //     T: FromAutomerge + Clone + Eq + Hash,
 // {
 //     fn from_automerge(value: &Value) -> Result<Self, FromAutomergeError> {
-//         if let Value::Sequence(vec) = value {
+//         if let Value::List(vec) = value {
 //             let mut v = Vec::with_capacity(vec.len());
 //             for val in vec {
 //                 v.push(T::from_automerge(val)?)
@@ -133,7 +133,7 @@ impl FromAutomerge for Text {
 //         } else {
 //             Err(FromAutomergeError::WrongType {
 //                 found: value.clone(),
-//                 expected: "a sequence".to_owned(),
+//                 expected: "a list".to_owned(),
 //             })
 //         }
 //     }
@@ -336,7 +336,7 @@ impl FromAutomerge for serde_json::Value {
                     .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))
                     .collect(),
             )),
-            Value::Sequence(v) => Ok(Self::Array(
+            Value::List(v) => Ok(Self::Array(
                 v.iter()
                     .map(|i| Self::from_automerge(i).unwrap())
                     .collect::<Vec<_>>(),

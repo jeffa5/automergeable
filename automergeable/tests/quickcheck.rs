@@ -147,7 +147,7 @@ impl Arbitrary for Val {
                     )
                 }
             }
-            Value::Sequence(v) => {
+            Value::List(v) => {
                 if v.is_empty() {
                     single_shrinker(Val(Value::Primitive(Primitive::Null)))
                 } else {
@@ -156,7 +156,7 @@ impl Arbitrary for Val {
                         v.shrink()
                             .map(|v| {
                                 let v = v.into_iter().map(|i| i.0).collect::<Vec<_>>();
-                                Value::Sequence(v)
+                                Value::List(v)
                             })
                             .map(Val),
                     )
@@ -190,7 +190,7 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
     } else {
         &[
             0, // Map(HashMap<String, Value, RandomState>, MapType),
-            1, // Sequence(Vec<Value, Global>),
+            1, // List(Vec<Value, Global>),
             2, // Text(Vec<char, Global>),
             3, // Primitive(Primitive),
         ][..]
@@ -213,7 +213,7 @@ fn arbitrary_value(g: &mut Gen, depth: usize) -> Val {
                 .into_iter()
                 .map(|()| arbitrary_value(g, smaller_depth).0)
                 .collect::<Vec<_>>();
-            Value::Sequence(vec)
+            Value::List(vec)
         }
         // 2 => {
         //     let vec = Vec::<char>::arbitrary(g);
@@ -378,11 +378,11 @@ fn applying_value_diff_result_to_old_gives_new() {
 #[test]
 fn broken_reordering_of_values_2() {
     let v1 = Val(Value::Map(
-        hashmap! {"".into()=> Value::Sequence(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
+        hashmap! {"".into()=> Value::List(vec![ Value::Primitive(Primitive::Uint(0)), Value::Primitive(Primitive::Null)])},
     ));
 
     let v2 = Val(Value::Map(
-        hashmap! {"".into()=> Value::Sequence(vec![ Value::Primitive(Primitive::Null)])},
+        hashmap! {"".into()=> Value::List(vec![ Value::Primitive(Primitive::Null)])},
     ));
 
     let changes = diff_values(&v1.0, &v2.0).unwrap();
@@ -488,7 +488,7 @@ fn broken_save_load() {
     let mut m = HashMap::new();
     m.insert(
         "\u{0}\u{0}".into(),
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Str("".into())),
@@ -510,7 +510,7 @@ fn broken_save_load() {
     );
     m.insert(
         "\u{2}".into(),
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Str("".into())),
@@ -520,7 +520,7 @@ fn broken_save_load() {
     );
     m.insert(
         "\u{0}".into(),
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Counter(0)),
             Value::Primitive(Primitive::Str("".into())),
             Value::Primitive(Primitive::Uint(0)),
@@ -548,7 +548,7 @@ fn broken_save_load() {
     );
     m.insert(
         "".into(),
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Null),
             Value::Primitive(Primitive::Uint(0)),
             Value::Primitive(Primitive::Int(0)),
@@ -668,7 +668,7 @@ fn broken_reordering_of_values() {
     let mut hm = std::collections::HashMap::new();
     hm.insert(
         "a".into(),
-        automerge::Value::Sequence(vec![automerge::Value::Primitive(Primitive::Null)]),
+        automerge::Value::List(vec![automerge::Value::Primitive(Primitive::Null)]),
     );
     let mut backend = automerge::Backend::new();
 
@@ -682,7 +682,7 @@ fn broken_reordering_of_values() {
     let (patch, _) = backend.apply_local_change(change).unwrap();
     frontend.apply_patch(patch).unwrap();
 
-    // change first value and insert into the sequence
+    // change first value and insert into the list
     let ((), c) = frontend
         .change::<_, _, automerge::InvalidChangeRequest>(None, |d| {
             d.add_change(automerge::LocalChange::set(
@@ -703,14 +703,14 @@ fn broken_reordering_of_values() {
     let mut ehm = HashMap::new();
     ehm.insert(
         "a".into(),
-        automerge::Value::Sequence(vec![
+        automerge::Value::List(vec![
             automerge::Value::Primitive(automerge::Primitive::Int(0)),
             automerge::Value::Primitive(automerge::Primitive::Boolean(false)),
         ]),
     );
     let expected = automerge::Value::Map(ehm.clone());
 
-    // ok, sequence has int then bool
+    // ok, list has int then bool
     assert_eq!(expected, frontend.get_value(&Path::root()).unwrap());
 
     // now apply the change to the backend and bring the patch back to the frontend
@@ -722,6 +722,49 @@ fn broken_reordering_of_values() {
     let v = frontend.get_value(&Path::root()).unwrap();
 
     let expected = automerge::Value::Map(ehm);
-    // not ok! sequence has bool then int
+    // not ok! list has bool then int
     assert_eq!(expected, v);
+}
+
+#[test]
+fn brokenx() {
+    let new = Value::Map(
+        hashmap! {"".into() => Value::List(vec![Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Counter(0))])},
+    );
+    let old = Value::Map(
+        hashmap! {"".into() => Value::List(vec![Value::Primitive(Primitive::Null), Value::Primitive(Primitive::Counter(1))])},
+    );
+
+    let changes = diff_values(&new, &old).unwrap();
+    let mut b = automerge::Backend::new();
+    // new with old value
+    let (mut f, c) = automerge::Frontend::new_with_initial_state(old).unwrap();
+    let (p, _) = b.apply_local_change(c).unwrap();
+    f.apply_patch(p).unwrap();
+
+    // apply changes to reach new value
+    let c = f.change::<_, _, InvalidChangeRequest>(None, |d| {
+        for change in &changes {
+            d.add_change(change.clone())?
+        }
+        Ok(())
+    });
+    if let Ok(((), c)) = c {
+        if let Some(c) = c {
+            let (p, _) = b.apply_local_change(c).unwrap();
+            if let Err(e) = f.apply_patch(p) {
+                panic!("{:?} {:?}", changes, e);
+            }
+        }
+    } else {
+        panic!("changes {:?} {:?}", changes, c);
+    }
+
+    let val = f.get_value(&Path::root()).unwrap();
+    if val != new {
+        println!("changes {:?}", changes);
+        println!("expected: {:?}", new);
+        println!("found   : {:?}", val);
+        panic!("failed")
+    }
 }

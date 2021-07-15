@@ -236,14 +236,14 @@ fn fields_from_automerge(
                     }
                 });
                 quote! {
-                    if let automerge::Value::Sequence(seq) = value {
+                    if let automerge::Value::List(seq) = value {
                         Ok(#ty_name(
                             #(#fields)*
                         ))
                     } else {
                         Err(#crate_path::FromAutomergeError::WrongType {
                             found: value.clone(),
-                            expected: "a sequence".to_owned(),
+                            expected: "a list".to_owned(),
                         })
                     }
                 }

@@ -351,7 +351,7 @@ fn tuple_struct_2() {
     struct Double(u64, i64);
 
     assert_eq!(
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Uint(1)),
             Value::Primitive(Primitive::Int(-2))
         ]),
@@ -365,7 +365,7 @@ fn tuple_struct_3() {
     struct Triple(u64, i64, String);
 
     assert_eq!(
-        Value::Sequence(vec![
+        Value::List(vec![
             Value::Primitive(Primitive::Uint(1)),
             Value::Primitive(Primitive::Int(-2)),
             Value::Primitive(Primitive::Str(SmolStr::default()))
@@ -430,7 +430,7 @@ fn enum_multi() {
 
     assert_eq!(
         Value::Map(hashmap! {
-            "X".into() => Value::Sequence(vec![
+            "X".into() => Value::List(vec![
                 Value::Primitive(Primitive::Int(0)),
                 Value::Primitive(Primitive::Int(1)),
             ]),
