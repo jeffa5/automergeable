@@ -34,7 +34,7 @@ fuzz_target!(|values: Vec<automerge::Value>| {
         }
     }
 
-    let mut doc = automergeable::Document::<Value, _>::new(automerge::Frontend::new());
+    let mut doc = automergeable::Document::<Value, _>::new(automerge::Frontend::default());
 
     let mut backend_bytes = Vec::new();
 
@@ -85,6 +85,7 @@ fuzz_target!(|values: Vec<automerge::Value>| {
 fn has_cursor(v: &Value) -> bool {
     match v {
         Value::Map(m) | Value::Table(m) => m.values().any(|v| has_cursor(v)),
+        Value::SortedMap(m) => m.values().any(|v| has_cursor(v)),
         Value::List(v) => v.iter().any(|i| has_cursor(i)),
         Value::Text(_) => false,
         Value::Primitive(p) => {
@@ -96,6 +97,7 @@ fn has_cursor(v: &Value) -> bool {
 fn has_table(v: &Value) -> bool {
     match v {
         Value::Map(m) => m.values().any(|v| has_table(v)),
+        Value::SortedMap(m) => m.values().any(|v| has_table(v)),
         Value::Table(_) => true,
         Value::List(v) => v.iter().any(|i| has_table(i)),
         Value::Text(_) | Value::Primitive(_) => false,
@@ -105,6 +107,7 @@ fn has_table(v: &Value) -> bool {
 fn has_empty_text(v: &Value) -> bool {
     match v {
         Value::Map(m) | Value::Table(m) => m.values().any(|v| has_empty_text(v)),
+        Value::SortedMap(m) => m.values().any(|v| has_empty_text(v)),
         Value::List(v) => v.iter().any(|i| has_empty_text(i)),
         Value::Text(t) => t.iter().any(|i| i.graphemes(true).count() != 1),
         Value::Primitive(_) => false,
@@ -114,6 +117,7 @@ fn has_empty_text(v: &Value) -> bool {
 fn has_nan(v: &Value) -> bool {
     match v {
         Value::Map(m) | Value::Table(m) => m.values().any(|v| has_nan(v)),
+        Value::SortedMap(m) => m.values().any(|v| has_nan(v)),
         Value::List(v) => v.iter().any(|i| has_nan(i)),
         Value::Text(_) => false,
         Value::Primitive(p) => match p {

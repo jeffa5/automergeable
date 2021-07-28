@@ -1,6 +1,6 @@
 use std::{collections::HashMap, convert::Infallible};
 
-use automerge::{InvalidChangeRequest, Path, Primitive, Value};
+use automerge::{FrontendOptions, InvalidChangeRequest, Path, Primitive, Value};
 use automergeable::diff_values;
 use maplit::hashmap;
 use pretty_assertions::assert_eq;
@@ -127,6 +127,27 @@ impl Arbitrary for Val {
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
         match &self.0 {
             Value::Map(m) | Value::Table(m) => {
+                if m.is_empty() {
+                    single_shrinker(Val(Value::Primitive(Primitive::Null)))
+                } else {
+                    let m = m
+                        .iter()
+                        .map(|(k, v)| (k.to_string(), Val(v.clone())))
+                        .collect::<HashMap<_, _>>();
+                    Box::new(
+                        m.shrink()
+                            .map(move |m| {
+                                let m = m
+                                    .into_iter()
+                                    .map(|(k, v)| (k.into(), v.0))
+                                    .collect::<HashMap<_, _>>();
+                                Value::Map(m)
+                            })
+                            .map(Val),
+                    )
+                }
+            }
+            Value::SortedMap(m) => {
                 if m.is_empty() {
                     single_shrinker(Val(Value::Primitive(Primitive::Null)))
                 } else {
@@ -283,7 +304,8 @@ fn applying_primitive_diff_result_to_old_gives_new() {
         };
         let mut b = automerge::Backend::new();
         // new with old value
-        let (mut f, c) = automerge::Frontend::new_with_initial_state(v2).unwrap();
+        let (mut f, c) =
+            automerge::Frontend::new_with_initial_state(v2, FrontendOptions::default()).unwrap();
         let (p, _) = b.apply_local_change(c).unwrap();
         f.apply_patch(p).unwrap();
 
@@ -334,7 +356,8 @@ fn applying_value_diff_result_to_old_gives_new() {
         };
         let mut b = automerge::Backend::new();
         // new with old value
-        let (mut f, c) = automerge::Frontend::new_with_initial_state(v2.0).unwrap();
+        let (mut f, c) =
+            automerge::Frontend::new_with_initial_state(v2.0, FrontendOptions::default()).unwrap();
         let (p, _) = b.apply_local_change(c).unwrap();
         f.apply_patch(p).unwrap();
 
@@ -388,7 +411,8 @@ fn broken_reordering_of_values_2() {
     let changes = diff_values(&v1.0, &v2.0).unwrap();
     let mut b = automerge::Backend::new();
     // new with old value
-    let (mut f, c) = automerge::Frontend::new_with_initial_state(v2.0).unwrap();
+    let (mut f, c) =
+        automerge::Frontend::new_with_initial_state(v2.0, FrontendOptions::default()).unwrap();
     let (p, _) = b.apply_local_change(c).unwrap();
     f.apply_patch(p).unwrap();
 
@@ -455,7 +479,7 @@ fn save_then_load() {
                         }
                     };
 
-                    let mut frontend = automerge::Frontend::new();
+                    let mut frontend = automerge::Frontend::default();
                     let patch = backend.get_patch().unwrap();
                     frontend.apply_patch(patch).unwrap();
 
@@ -598,7 +622,7 @@ fn broken_save_load() {
             }
         };
 
-        let mut frontend = automerge::Frontend::new();
+        let mut frontend = automerge::Frontend::default();
         let patch = backend.get_patch().unwrap();
         frontend.apply_patch(patch).unwrap();
 
@@ -630,7 +654,7 @@ fn broken_save_load_2() {
         Value::Map(HashMap::new()),
     ];
 
-    let mut frontend = automerge::Frontend::new();
+    let mut frontend = automerge::Frontend::default();
     let mut backend_bytes = Vec::new();
     for val_pair in values.windows(2) {
         let changes = diff_values(&val_pair[1], &val_pair[0]).unwrap();
@@ -674,7 +698,8 @@ fn broken_reordering_of_values() {
 
     // new frontend with initial state
     let (mut frontend, change) =
-        automerge::Frontend::new_with_initial_state(Value::Map(hm)).unwrap();
+        automerge::Frontend::new_with_initial_state(Value::Map(hm), FrontendOptions::default())
+            .unwrap();
 
     println!("change1 {:?}", change);
 
@@ -738,7 +763,8 @@ fn brokenx() {
     let changes = diff_values(&new, &old).unwrap();
     let mut b = automerge::Backend::new();
     // new with old value
-    let (mut f, c) = automerge::Frontend::new_with_initial_state(old).unwrap();
+    let (mut f, c) =
+        automerge::Frontend::new_with_initial_state(old, FrontendOptions::default()).unwrap();
     let (p, _) = b.apply_local_change(c).unwrap();
     f.apply_patch(p).unwrap();
 

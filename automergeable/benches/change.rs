@@ -34,7 +34,7 @@ fn bench_changes_single(c: &mut Criterion) {
     for &i in &[100, 1000, 10000] {
         c.bench_function(&format!("change with {} entries, single change", i), |b| {
             b.iter_batched(
-                || Document::<HashMap<String, String>, Frontend>::new(Frontend::new()),
+                || Document::<HashMap<String, String>, Frontend>::new(Frontend::default()),
                 |doc| bench_single(doc, i),
                 criterion::BatchSize::SmallInput,
             )
@@ -46,7 +46,7 @@ fn bench_changes_many(c: &mut Criterion) {
     for &i in &[100, 1000, 10000] {
         c.bench_function(&format!("change with {} entries, many changes", i), |b| {
             b.iter_batched(
-                || Document::<HashMap<String, String>, Frontend>::new(Frontend::new()),
+                || Document::<HashMap<String, String>, Frontend>::new(Frontend::default()),
                 |doc| bench_many(doc, i),
                 criterion::BatchSize::SmallInput,
             )

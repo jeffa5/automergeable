@@ -226,7 +226,7 @@ mod tests {
             inner: u64,
         }
 
-        let mut doc = Document::<A, _>::new(Frontend::new());
+        let mut doc = Document::<A, _>::new(Frontend::default());
 
         let mut back = automerge::Backend::new();
         let ((), change) = doc
@@ -262,7 +262,7 @@ mod tests {
             inner: u64,
         }
 
-        let mut doc = Document::<A, _>::new(Frontend::new());
+        let mut doc = Document::<A, _>::new(Frontend::default());
 
         let mut back = automerge::Backend::new();
         let ((), change) = doc
@@ -302,7 +302,7 @@ mod tests {
             inner: u64,
         }
 
-        let mut doc = Document::<A, _>::new(Frontend::new());
+        let mut doc = Document::<A, _>::new(Frontend::default());
 
         let mut back = automerge::Backend::new();
         let ((), change) = doc

@@ -331,6 +331,11 @@ impl FromAutomerge for serde_json::Value {
                     .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))
                     .collect(),
             )),
+            Value::SortedMap(map) => Ok(Self::Object(
+                map.iter()
+                    .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))
+                    .collect(),
+            )),
             Value::Table(map) => Ok(Self::Object(
                 map.iter()
                     .map(|(k, v)| (k.to_string(), Self::from_automerge(v).unwrap()))

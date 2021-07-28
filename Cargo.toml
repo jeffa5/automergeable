@@ -5,3 +5,9 @@ members = [
   "automergeable-derive",
   "fuzz",
 ]
+
+[patch."https://github.com/automerge/automerge-rs"]
+automerge = { git = "https://github.com//automerge/automerge-rs", branch = "frontend-sorted-map" }
+automerge-protocol = { git = "https://github.com//automerge/automerge-rs", branch = "frontend-sorted-map" }
+automerge-backend = { git = "https://github.com//automerge/automerge-rs", branch = "frontend-sorted-map" }
+automerge-frontend = { git = "https://github.com//automerge/automerge-rs", branch = "frontend-sorted-map" }
