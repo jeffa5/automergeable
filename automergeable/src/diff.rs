@@ -44,6 +44,29 @@ pub fn diff_with_path(
                     }
                     Ok(changes)
                 }
+                (Value::SortedMap(new_map), Value::SortedMap(old_map)) => {
+                    let mut changes = Vec::new();
+                    for (k, v) in new_map {
+                        if let Some(old_v) = old_map.get(k) {
+                            // changed
+                            changes.append(&mut diff_with_path(
+                                Some(v),
+                                Some(old_v),
+                                path.clone().key(k.clone()),
+                            )?)
+                        } else {
+                            // new
+                            changes.push(LocalChange::set(path.clone().key(k.clone()), v.clone()))
+                        }
+                    }
+                    for k in old_map.keys() {
+                        if !new_map.contains_key(k) {
+                            // removed
+                            changes.push(LocalChange::delete(path.clone().key(k.clone())))
+                        }
+                    }
+                    Ok(changes)
+                }
                 (Value::Table(new_map), Value::Table(old_map)) => {
                     let mut changes = Vec::new();
                     for (k, v) in new_map {
