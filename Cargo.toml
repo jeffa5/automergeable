@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "automergeable",
+  "automergeable-view",
   "automergeable-traits",
   "automergeable-derive",
   "fuzz",
