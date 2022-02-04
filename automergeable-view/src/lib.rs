@@ -48,6 +48,7 @@ impl ViewableDoc for Automerge {
     }
 }
 
+/// A view over a document, providing a lightweight way to traverse it.
 #[derive(Debug, PartialEq)]
 pub enum View<'a, 'h> {
     Map(MapView<'a, 'h>),
@@ -57,6 +58,7 @@ pub enum View<'a, 'h> {
 }
 
 impl<'a, 'h> View<'a, 'h> {
+    /// Get the view of the object at `prop`.
     pub fn get<P: Into<Prop>>(&self, prop: P) -> Option<View<'a, 'h>> {
         match (prop.into(), self) {
             (Prop::Map(key), View::Map(map)) => map.get(key),
@@ -71,6 +73,7 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    /// Get the length of this object.
     pub fn len(&self) -> usize {
         match self {
             View::Map(map) => map.len(),
@@ -80,10 +83,12 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    /// Check if this object is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Try and extract a map from this view.
     pub fn map(&mut self) -> Option<&mut MapView<'a, 'h>> {
         if let View::Map(map) = self {
             Some(map)
@@ -92,6 +97,7 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    /// Try and extract a list from this view.
     pub fn list(&self) -> Option<ListView<'a, 'h>> {
         if let View::List(list) = self {
             Some(list.clone())
@@ -100,6 +106,7 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    /// Try and extract text from this view.
     pub fn text(&self) -> Option<TextView<'a, 'h>> {
         if let View::Text(text) = self {
             Some(text.clone())
@@ -108,6 +115,7 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    /// Try and extract a scalar value from this view.
     pub fn scalar(&self) -> Option<ScalarValue> {
         if let View::Scalar(scalar) = self {
             Some(scalar.clone())
@@ -117,6 +125,7 @@ impl<'a, 'h> View<'a, 'h> {
     }
 }
 
+/// A mutable view over the document, allowing editing.
 #[derive(Debug, PartialEq)]
 pub enum MutableView<'a> {
     Map(MutableMapView<'a>),
@@ -126,6 +135,8 @@ pub enum MutableView<'a> {
 }
 
 impl<'a> MutableView<'a> {
+    /// Convert this `MutableView` into a normal `View`, removing the ability to mutate the
+    /// underlying document.
     pub fn into_immutable(self) -> View<'a, 'static> {
         match self {
             MutableView::Map(map) => View::Map(map.into_immutable()),
@@ -135,6 +146,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Get the view of the object at `prop`.
     pub fn get<P: Into<Prop>>(&self, prop: P) -> Option<View> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get(key),
@@ -149,6 +161,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Get the mutable view of the object at `prop`.
     pub fn get_mut<P: Into<Prop>>(&mut self, prop: P) -> Option<MutableView> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get_mut(key),
@@ -163,6 +176,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Insert the given value at the `prop`.
     pub fn insert<P: Into<Prop>, V: Into<Value>>(&mut self, prop: P, value: V) {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
@@ -175,6 +189,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Overwrite the `prop`'s current value with `value`.
     pub fn set<P: Into<Prop>, V: Into<Value>>(&mut self, prop: P, value: V) {
         match (prop.into(), self) {
             // map's insert does the same as a set would
@@ -188,6 +203,8 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Remove the value at `prop` if it exists. Returns a historical view of the old value if it
+    /// exists.
     pub fn remove<P: Into<Prop>>(&mut self, prop: P) -> Option<View> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.remove(key),
@@ -202,6 +219,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Get the length of this object.
     pub fn len(&self) -> usize {
         match self {
             MutableView::Map(map) => map.len(),
@@ -211,10 +229,12 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Check if this object is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Try and extract a map from this view.
     pub fn map(&self) -> Option<MapView> {
         if let MutableView::Map(map) = self {
             Some(MapView {
@@ -227,6 +247,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract a mutable map from this view.
     pub fn map_mut(&mut self) -> Option<&mut MutableMapView<'a>> {
         if let MutableView::Map(map) = self {
             Some(map)
@@ -235,6 +256,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract a list from this view.
     pub fn list(&self) -> Option<ListView> {
         if let MutableView::List(list) = self {
             Some(ListView {
@@ -247,6 +269,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract a mutable list from this view.
     pub fn list_mut(&mut self) -> Option<&mut MutableListView<'a>> {
         if let MutableView::List(list) = self {
             Some(list)
@@ -255,6 +278,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract text from this view.
     pub fn text(&self) -> Option<TextView> {
         if let MutableView::Text(text) = self {
             Some(TextView {
@@ -267,6 +291,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract mutable text from this view.
     pub fn text_mut(&mut self) -> Option<&mut MutableTextView<'a>> {
         if let MutableView::Text(text) = self {
             Some(text)
@@ -275,6 +300,7 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    /// Try and extract a scalar value from this view.
     pub fn scalar(&self) -> Option<ScalarValue> {
         if let MutableView::Scalar(scalar) = self {
             Some(scalar.clone())

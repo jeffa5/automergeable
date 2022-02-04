@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use automerge::{Automerge, ChangeHash, ObjId, ScalarValue, Value};
 use smol_str::SmolStr;
 
+/// A view over some text in the document.
 #[derive(Debug, Clone)]
 pub struct TextView<'a, 'h> {
     pub(crate) obj: ObjId,
@@ -42,6 +43,7 @@ impl<'a, 'h> TextView<'a, 'h> {
     }
 }
 
+/// A mutable view over some text in the document.
 #[derive(Debug)]
 pub struct MutableTextView<'a> {
     pub(crate) obj: ObjId,

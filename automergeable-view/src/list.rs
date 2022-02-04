@@ -5,6 +5,7 @@ use automerge::{Automerge, ChangeHash, ObjId, ObjType, Value};
 use super::{MapView, MutableMapView, MutableView, View};
 use crate::{MutableTextView, TextView};
 
+/// A view over a list in the document.
 #[derive(Debug, Clone)]
 pub struct ListView<'a, 'h> {
     pub(crate) obj: ObjId,
@@ -59,6 +60,7 @@ impl<'a, 'h> ListView<'a, 'h> {
     }
 }
 
+/// A mutable view over a list in the document.
 #[derive(Debug)]
 pub struct MutableListView<'a> {
     pub(crate) obj: ObjId,
@@ -163,10 +165,12 @@ impl<'a> MutableListView<'a> {
         }
     }
 
+    /// Insert a new value into the list.
     pub fn insert<V: Into<Value>>(&mut self, index: usize, value: V) {
         self.doc.insert(&self.obj, index, value).unwrap();
     }
 
+    /// Overwrite an existing item in the list.
     pub fn set<V: Into<Value>>(&mut self, index: usize, value: V) {
         self.doc.set(&self.obj, index, value).unwrap();
     }

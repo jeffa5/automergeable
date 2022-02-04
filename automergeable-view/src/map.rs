@@ -5,6 +5,7 @@ use automerge::{Automerge, ChangeHash, ObjId, ObjType, Value};
 use super::{list::MutableListView, ListView, MutableView, View};
 use crate::{MutableTextView, TextView};
 
+/// A view over a map in this document.
 #[derive(Debug)]
 pub struct MapView<'a, 'h> {
     pub(crate) obj: ObjId,
@@ -35,6 +36,7 @@ impl<'a, 'h> MapView<'a, 'h> {
         self.len() == 0
     }
 
+    /// Get the value at the given key in this map.
     pub fn get<S: Into<String>>(&self, key: S) -> Option<View<'a, 'h>> {
         match self.doc.value_at(&self.obj, key.into(), &self.heads) {
             Ok(Some((value, id))) => match value {
@@ -60,18 +62,22 @@ impl<'a, 'h> MapView<'a, 'h> {
         }
     }
 
+    /// Check if this map contains a key.
     pub fn contains_key<S: Into<String>>(&self, key: S) -> bool {
         self.get(key).is_some()
     }
 
+    /// Get the keys in this map, returned in sorted order.
     pub fn keys(&self) -> impl Iterator<Item = String> {
         self.doc.keys_at(&self.obj, &self.heads).into_iter()
     }
 
+    /// Get the values in this map, returned in sorted order of their keys.
     pub fn values(&self) -> impl Iterator<Item = View> {
         self.keys().map(move |key| self.get(key).unwrap())
     }
 
+    /// Get both the keys and values in this map.
     pub fn iter(&self) -> impl Iterator<Item = (String, View)> {
         self.keys().map(move |key| {
             let v = self.get(&key).unwrap();
