@@ -161,6 +161,19 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    pub fn set<P: Into<Prop>, V: Into<Value>>(&mut self, prop: P, value: V) {
+        match (prop.into(), self) {
+            // map's insert does the same as a set would
+            (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
+            (Prop::Seq(index), MutableView::List(list)) => list.set(index, value),
+            (Prop::Seq(index), MutableView::Text(text)) => text.set(index, value),
+            (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
+            | (Prop::Seq(_), MutableView::Map(_))
+            | (_, MutableView::Scalar(_)) => {}
+        }
+    }
+
     pub fn remove<P: Into<Prop>>(&mut self, prop: P) -> Option<View> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.remove(key),
