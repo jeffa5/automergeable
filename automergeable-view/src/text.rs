@@ -108,6 +108,10 @@ impl<'a> MutableTextView<'a> {
         self.doc.insert(&self.obj, index, value).unwrap();
     }
 
+    pub fn set<V: Into<Value>>(&mut self, index: usize, value: V) {
+        self.doc.set(&self.obj, index, value).unwrap();
+    }
+
     pub fn remove(&mut self, index: usize) -> Option<SmolStr> {
         let heads = self.doc.get_heads();
         if self.get(index).is_some() {
