@@ -116,7 +116,7 @@ impl<'a> MutableListView<'a> {
         }
     }
 
-    pub fn get_at(&self, index: usize, heads: Vec<ChangeHash>) -> Option<View> {
+    fn get_at(&self, index: usize, heads: Vec<ChangeHash>) -> Option<View> {
         match self.doc.value_at(&self.obj, index, &heads) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(View::Map(MapView {

@@ -1,10 +1,7 @@
 use std::borrow::Cow;
 
-use automerge::{Automerge, ChangeHash, ObjId, ObjType, ScalarValue, Value};
+use automerge::{Automerge, ChangeHash, ObjId, ScalarValue, Value};
 use smol_str::SmolStr;
-
-use super::{MapView, MutableMapView, MutableView, View};
-use crate::{ListView, MutableListView};
 
 #[derive(Debug, Clone)]
 pub struct TextView<'a, 'h> {
@@ -77,73 +74,31 @@ impl<'a> MutableTextView<'a> {
         self.len() == 0
     }
 
-    pub fn get(&self, index: usize) -> Option<View> {
+    pub fn get(&self, index: usize) -> Option<SmolStr> {
         match self.doc.value(&self.obj, index) {
-            Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(View::Map(MapView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Borrowed(&[]),
-                })),
-                Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(View::List(ListView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Borrowed(&[]),
-                })),
-                Value::Object(ObjType::Text) => Some(View::Text(TextView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Borrowed(&[]),
-                })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+            Ok(Some((value, _))) => match value {
+                Value::Scalar(ScalarValue::Str(s)) => Some(s),
+                Value::Object(_) | Value::Scalar(_) => None,
             },
             Ok(None) | Err(_) => None,
         }
     }
 
-    pub fn get_at(&self, index: usize, heads: Vec<ChangeHash>) -> Option<View> {
+    fn get_at(&self, index: usize, heads: Vec<ChangeHash>) -> Option<SmolStr> {
         match self.doc.value_at(&self.obj, index, &heads) {
-            Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(View::Map(MapView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Owned(heads),
-                })),
-                Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(View::List(ListView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Owned(heads),
-                })),
-                Value::Object(ObjType::Text) => Some(View::Text(TextView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: Cow::Owned(heads),
-                })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+            Ok(Some((value, _))) => match value {
+                Value::Scalar(ScalarValue::Str(s)) => Some(s),
+                Value::Object(_) | Value::Scalar(_) => None,
             },
             Ok(None) | Err(_) => None,
         }
     }
 
-    pub fn get_mut(&mut self, index: usize) -> Option<MutableView> {
+    pub fn get_mut(&mut self, index: usize) -> Option<SmolStr> {
         match self.doc.value(&self.obj, index) {
-            Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(MutableView::Map(MutableMapView {
-                    obj: id,
-                    doc: self.doc,
-                })),
-                Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(MutableView::List(MutableListView {
-                    obj: id,
-                    doc: self.doc,
-                })),
-                Value::Object(ObjType::Text) => Some(MutableView::Text(MutableTextView {
-                    obj: id,
-                    doc: self.doc,
-                })),
-                Value::Scalar(s) => Some(MutableView::Scalar(s)),
+            Ok(Some((value, _))) => match value {
+                Value::Scalar(ScalarValue::Str(s)) => Some(s),
+                Value::Object(_) | Value::Scalar(_) => None,
             },
             Ok(None) | Err(_) => None,
         }
@@ -153,7 +108,7 @@ impl<'a> MutableTextView<'a> {
         self.doc.insert(&self.obj, index, value).unwrap();
     }
 
-    pub fn remove(&mut self, index: usize) -> Option<View> {
+    pub fn remove(&mut self, index: usize) -> Option<SmolStr> {
         let heads = self.doc.get_heads();
         if self.get(index).is_some() {
             self.doc.del(&self.obj, index).unwrap();
@@ -163,7 +118,7 @@ impl<'a> MutableTextView<'a> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = View> {
+    pub fn iter(&self) -> impl Iterator<Item = SmolStr> + '_ {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }

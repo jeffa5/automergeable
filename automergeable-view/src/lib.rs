@@ -125,7 +125,9 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get(key),
             (Prop::Seq(index), MutableView::List(l)) => l.get(index),
-            (Prop::Seq(index), MutableView::Text(t)) => t.get(index),
+            (Prop::Seq(index), MutableView::Text(t)) => {
+                t.get(index).map(|s| View::Scalar(ScalarValue::Str(s)))
+            }
             (Prop::Seq(_), MutableView::Map(_))
             | (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
@@ -137,7 +139,9 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get_mut(key),
             (Prop::Seq(index), MutableView::List(l)) => l.get_mut(index),
-            (Prop::Seq(index), MutableView::Text(t)) => t.get_mut(index),
+            (Prop::Seq(index), MutableView::Text(t)) => t
+                .get_mut(index)
+                .map(|s| MutableView::Scalar(ScalarValue::Str(s))),
             (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
@@ -161,7 +165,9 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.remove(key),
             (Prop::Seq(index), MutableView::List(list)) => list.remove(index),
-            (Prop::Seq(index), MutableView::Text(text)) => text.remove(index),
+            (Prop::Seq(index), MutableView::Text(text)) => text
+                .remove(index)
+                .map(|s| View::Scalar(ScalarValue::Str(s))),
             (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
