@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use automerge::{Automerge, Prop, ScalarValue, Value, ROOT};
+use automerge::{Automerge, ChangeHash, Prop, ScalarValue, Value, ROOT};
 
 mod list;
 mod map;
@@ -10,9 +10,15 @@ pub use list::{ListView, MutableListView};
 pub use map::{MapView, MutableMapView};
 pub use text::{MutableTextView, TextView};
 
+/// A document that can be viewed, both immutably and mutably.
 pub trait ViewableDoc {
+    /// Create a new view over this document.
     fn view(&mut self) -> MapView;
 
+    /// Create a new view over this document at historical point `heads`.
+    fn view_at<'a, 'h>(&'a mut self, heads: &'h [ChangeHash]) -> MapView<'a, 'h>;
+
+    /// Create a new mutable view over this document.
     fn view_mut(&mut self) -> MutableMapView;
 }
 
@@ -23,6 +29,14 @@ impl ViewableDoc for Automerge {
             obj: ROOT,
             doc: self,
             heads: Cow::Owned(heads),
+        }
+    }
+
+    fn view_at<'a>(&mut self, heads: &'a [ChangeHash]) -> MapView<'_, 'a> {
+        MapView {
+            obj: ROOT,
+            doc: self,
+            heads: Cow::Borrowed(heads),
         }
     }
 
