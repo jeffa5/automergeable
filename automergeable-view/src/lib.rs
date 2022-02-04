@@ -1,14 +1,14 @@
 use std::borrow::Cow;
 
-#[cfg(test)]
-use automerge::ObjId;
 use automerge::{Automerge, Prop, ScalarValue, Value, ROOT};
 
 mod list;
 mod map;
+mod text;
 
 pub use list::{ListView, MutableListView};
 pub use map::{MapView, MutableMapView};
+pub use text::{MutableTextView, TextView};
 
 pub trait ViewableDoc {
     fn view(&mut self) -> MapView;
@@ -38,6 +38,7 @@ impl ViewableDoc for Automerge {
 pub enum View<'a, 'h> {
     Map(MapView<'a, 'h>),
     List(ListView<'a, 'h>),
+    Text(TextView<'a, 'h>),
     Scalar(ScalarValue),
 }
 
@@ -46,9 +47,13 @@ impl<'a, 'h> View<'a, 'h> {
         match (prop.into(), self) {
             (Prop::Map(key), View::Map(map)) => map.get(key),
             (Prop::Seq(index), View::List(l)) => l.get(index),
-            (Prop::Seq(_), View::Map(_)) | (Prop::Map(_), View::List(_)) | (_, View::Scalar(_)) => {
-                None
+            (Prop::Seq(index), View::Text(t)) => {
+                t.get(index).map(|s| View::Scalar(ScalarValue::Str(s)))
             }
+            (Prop::Seq(_), View::Map(_))
+            | (Prop::Map(_), View::List(_))
+            | (Prop::Map(_), View::Text(_))
+            | (_, View::Scalar(_)) => None,
         }
     }
 
@@ -56,6 +61,7 @@ impl<'a, 'h> View<'a, 'h> {
         match self {
             View::Map(map) => map.len(),
             View::List(list) => list.len(),
+            View::Text(text) => text.len(),
             View::Scalar(_) => 0,
         }
     }
@@ -80,6 +86,14 @@ impl<'a, 'h> View<'a, 'h> {
         }
     }
 
+    pub fn text(&self) -> Option<TextView<'a, 'h>> {
+        if let View::Text(text) = self {
+            Some(text.clone())
+        } else {
+            None
+        }
+    }
+
     pub fn scalar(&self) -> Option<ScalarValue> {
         if let View::Scalar(scalar) = self {
             Some(scalar.clone())
@@ -93,6 +107,7 @@ impl<'a, 'h> View<'a, 'h> {
 pub enum MutableView<'a> {
     Map(MutableMapView<'a>),
     List(MutableListView<'a>),
+    Text(MutableTextView<'a>),
     Scalar(ScalarValue),
 }
 
@@ -101,6 +116,7 @@ impl<'a> MutableView<'a> {
         match self {
             MutableView::Map(map) => View::Map(map.into_immutable()),
             MutableView::List(list) => View::List(list.into_immutable()),
+            MutableView::Text(text) => View::Text(text.into_immutable()),
             MutableView::Scalar(scalar) => View::Scalar(scalar),
         }
     }
@@ -109,8 +125,10 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get(key),
             (Prop::Seq(index), MutableView::List(l)) => l.get(index),
+            (Prop::Seq(index), MutableView::Text(t)) => t.get(index),
             (Prop::Seq(_), MutableView::Map(_))
             | (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
             | (_, MutableView::Scalar(_)) => None,
         }
     }
@@ -119,7 +137,9 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.get_mut(key),
             (Prop::Seq(index), MutableView::List(l)) => l.get_mut(index),
+            (Prop::Seq(index), MutableView::Text(t)) => t.get_mut(index),
             (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
             | (_, MutableView::Scalar(_)) => None,
         }
@@ -129,19 +149,23 @@ impl<'a> MutableView<'a> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
             (Prop::Seq(index), MutableView::List(list)) => list.insert(index, value),
+            (Prop::Seq(index), MutableView::Text(text)) => text.insert(index, value),
             (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
             | (_, MutableView::Scalar(_)) => {}
         }
     }
 
-    pub fn remove<P: Into<Prop>>(&mut self, prop: P) -> bool {
+    pub fn remove<P: Into<Prop>>(&mut self, prop: P) -> Option<View> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.remove(key),
             (Prop::Seq(index), MutableView::List(list)) => list.remove(index),
+            (Prop::Seq(index), MutableView::Text(text)) => text.remove(index),
             (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
-            | (_, MutableView::Scalar(_)) => false,
+            | (_, MutableView::Scalar(_)) => None,
         }
     }
 
@@ -149,6 +173,7 @@ impl<'a> MutableView<'a> {
         match self {
             MutableView::Map(map) => map.len(),
             MutableView::List(list) => list.len(),
+            MutableView::Text(text) => text.len(),
             MutableView::Scalar(_) => 0,
         }
     }
@@ -189,6 +214,34 @@ impl<'a> MutableView<'a> {
         }
     }
 
+    pub fn list_mut(&mut self) -> Option<&mut MutableListView<'a>> {
+        if let MutableView::List(list) = self {
+            Some(list)
+        } else {
+            None
+        }
+    }
+
+    pub fn text(&self) -> Option<TextView> {
+        if let MutableView::Text(text) = self {
+            Some(TextView {
+                obj: text.obj.clone(),
+                doc: text.doc,
+                heads: Cow::Borrowed(&[]),
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn text_mut(&mut self) -> Option<&mut MutableTextView<'a>> {
+        if let MutableView::Text(text) = self {
+            Some(text)
+        } else {
+            None
+        }
+    }
+
     pub fn scalar(&self) -> Option<ScalarValue> {
         if let MutableView::Scalar(scalar) = self {
             Some(scalar.clone())
@@ -212,6 +265,7 @@ impl From<i32> for View<'static, 'static> {
 
 #[cfg(test)]
 fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
+    use automerge::ObjId;
     use serde_json::Map;
     fn add_map(map: Map<String, serde_json::Value>, doc: &mut Automerge, obj: ObjId) {
         for (k, v) in map.into_iter() {

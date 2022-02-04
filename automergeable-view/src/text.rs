@@ -1,18 +1,19 @@
 use std::borrow::Cow;
 
-use automerge::{Automerge, ChangeHash, ObjId, ObjType, Value};
+use automerge::{Automerge, ChangeHash, ObjId, ObjType, ScalarValue, Value};
+use smol_str::SmolStr;
 
 use super::{MapView, MutableMapView, MutableView, View};
-use crate::{MutableTextView, TextView};
+use crate::{ListView, MutableListView};
 
 #[derive(Debug, Clone)]
-pub struct ListView<'a, 'h> {
+pub struct TextView<'a, 'h> {
     pub(crate) obj: ObjId,
     pub(crate) doc: &'a Automerge,
     pub(crate) heads: Cow<'h, [ChangeHash]>,
 }
 
-impl<'a, 'h> PartialEq for ListView<'a, 'h> {
+impl<'a, 'h> PartialEq for TextView<'a, 'h> {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj
             && self.len() == other.len()
@@ -20,7 +21,7 @@ impl<'a, 'h> PartialEq for ListView<'a, 'h> {
     }
 }
 
-impl<'a, 'h> ListView<'a, 'h> {
+impl<'a, 'h> TextView<'a, 'h> {
     pub fn len(&self) -> usize {
         self.doc.length(&self.obj)
     }
@@ -29,43 +30,28 @@ impl<'a, 'h> ListView<'a, 'h> {
         self.len() == 0
     }
 
-    pub fn get(&self, index: usize) -> Option<View<'a, 'h>> {
+    pub fn get(&self, index: usize) -> Option<SmolStr> {
         match self.doc.value(&self.obj, index) {
-            Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(View::Map(MapView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: self.heads.clone(),
-                })),
-                Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(View::List(ListView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: self.heads.clone(),
-                })),
-                Value::Object(ObjType::Text) => Some(View::Text(TextView {
-                    obj: id,
-                    doc: self.doc,
-                    heads: self.heads.clone(),
-                })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+            Ok(Some((value, _))) => match value {
+                Value::Scalar(ScalarValue::Str(s)) => Some(s),
+                Value::Object(_) | Value::Scalar(_) => None,
             },
             Ok(None) | Err(_) => None,
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = View> {
+    pub fn iter(&self) -> impl Iterator<Item = SmolStr> + '_ {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }
 
 #[derive(Debug)]
-pub struct MutableListView<'a> {
+pub struct MutableTextView<'a> {
     pub(crate) obj: ObjId,
     pub(crate) doc: &'a mut Automerge,
 }
 
-impl<'a> PartialEq for MutableListView<'a> {
+impl<'a> PartialEq for MutableTextView<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj
             && self.len() == other.len()
@@ -73,10 +59,10 @@ impl<'a> PartialEq for MutableListView<'a> {
     }
 }
 
-impl<'a> MutableListView<'a> {
-    pub fn into_immutable(self) -> ListView<'a, 'static> {
+impl<'a> MutableTextView<'a> {
+    pub fn into_immutable(self) -> TextView<'a, 'static> {
         let heads = self.doc.get_heads();
-        ListView {
+        TextView {
             obj: self.obj,
             doc: self.doc,
             heads: Cow::Owned(heads),
@@ -184,29 +170,27 @@ impl<'a> MutableListView<'a> {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-
     use super::*;
-    use crate::{automerge_doc, ScalarValue, ViewableDoc};
+    use crate::ViewableDoc;
 
     #[test]
-    fn test_list() {
-        let mut doc = automerge_doc(json!({
-            "a": [1, 2],
-        }))
-        .unwrap();
+    fn test_text() {
+        let mut doc = Automerge::new();
+        doc.view_mut().insert("a", Value::text());
+        doc.view_mut().get_mut("a").unwrap().insert(0, "b");
+        doc.view_mut().get_mut("a").unwrap().insert(1, "c");
 
-        let list = doc.view().get("a").unwrap().list().unwrap();
+        let text = doc.view().get("a").unwrap().text().unwrap();
 
-        assert_eq!(list.get(0), Some(View::Scalar(ScalarValue::Uint(1))));
+        assert_eq!(text.get(0), Some("b".into()));
 
-        assert_eq!(list.len(), 2);
+        assert_eq!(text.len(), 2);
 
-        assert!(!list.is_empty());
+        assert!(!text.is_empty());
 
         assert_eq!(
-            list.iter().collect::<Vec<_>>(),
-            vec![1u64.into(), 2u64.into()]
+            text.iter().collect::<Vec<_>>(),
+            vec!["b".to_string(), "c".to_string()]
         );
     }
 }

@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use automerge::{Automerge, ChangeHash, ObjId, ObjType, Value};
 
 use super::{list::MutableListView, ListView, MutableView, View};
+use crate::{MutableTextView, TextView};
 
 #[derive(Debug)]
 pub struct MapView<'a, 'h> {
@@ -48,7 +49,11 @@ impl<'a, 'h> MapView<'a, 'h> {
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Object(ObjType::Text) => todo!(),
+                Value::Object(ObjType::Text) => Some(View::Text(TextView {
+                    obj: id,
+                    doc: self.doc,
+                    heads: self.heads.clone(),
+                })),
                 Value::Scalar(s) => Some(View::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
@@ -128,7 +133,36 @@ impl<'a> MutableMapView<'a> {
                     doc: self.doc,
                     heads: Cow::Borrowed(&[]),
                 })),
-                Value::Object(ObjType::Text) => todo!(),
+                Value::Object(ObjType::Text) => Some(View::Text(TextView {
+                    obj: id,
+                    doc: self.doc,
+                    heads: Cow::Borrowed(&[]),
+                })),
+                Value::Scalar(s) => Some(View::Scalar(s)),
+            },
+            Ok(None) | Err(_) => None,
+        }
+    }
+
+    fn get_at<S: Into<String>>(&self, key: S, heads: Vec<ChangeHash>) -> Option<View> {
+        match self.doc.value_at(&self.obj, key.into(), &heads) {
+            Ok(Some((value, id))) => match value {
+                Value::Object(ObjType::Map) => Some(View::Map(MapView {
+                    obj: id,
+                    doc: self.doc,
+                    heads: Cow::Owned(heads),
+                })),
+                Value::Object(ObjType::Table) => todo!(),
+                Value::Object(ObjType::List) => Some(View::List(ListView {
+                    obj: id,
+                    doc: self.doc,
+                    heads: Cow::Owned(heads),
+                })),
+                Value::Object(ObjType::Text) => Some(View::Text(TextView {
+                    obj: id,
+                    doc: self.doc,
+                    heads: Cow::Owned(heads),
+                })),
                 Value::Scalar(s) => Some(View::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
@@ -147,7 +181,10 @@ impl<'a> MutableMapView<'a> {
                     obj: id,
                     doc: self.doc,
                 })),
-                Value::Object(ObjType::Text) => todo!(),
+                Value::Object(ObjType::Text) => Some(MutableView::Text(MutableTextView {
+                    obj: id,
+                    doc: self.doc,
+                })),
                 Value::Scalar(s) => Some(MutableView::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
@@ -158,13 +195,19 @@ impl<'a> MutableMapView<'a> {
         self.doc.set(&self.obj, key.into(), value).unwrap();
     }
 
-    // TODO: change this to return the valueref that was removed, using the old heads, once
-    // valueref can work in the past
-    pub fn remove<S: Into<String>>(&mut self, key: S) -> bool {
+    /// Remove a value from this map, returning a view of the removed value.
+    pub fn remove<S: Into<String>>(&mut self, key: S) -> Option<View> {
+        let heads = self.doc.get_heads();
         let key = key.into();
-        let exists = self.get(key.clone()).is_some();
-        self.doc.del(&self.obj, key).unwrap();
-        exists
+        if self.get(key.clone()).is_some() {
+            self.doc.del(&self.obj, key.clone()).unwrap();
+            Some(
+                self.get_at(key, heads)
+                    .expect("Deleted value isn't in the history"),
+            )
+        } else {
+            None
+        }
     }
 
     pub fn contains_key<S: Into<String>>(&self, key: S) -> bool {
@@ -280,8 +323,8 @@ mod tests {
         assert_eq!(root.len(), 3);
         assert!(root.contains_key("c"));
 
-        assert!(root.remove("a"));
-        assert!(!root.remove("a"));
+        assert!(root.remove("a").is_some());
+        assert!(root.remove("a").is_none());
         assert_eq!(root.len(), 2);
 
         let imm = root.into_immutable();
