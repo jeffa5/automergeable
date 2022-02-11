@@ -17,6 +17,8 @@ impl<'a, 'h> PartialEq for MapView<'a, 'h> {
     fn eq(&self, other: &Self) -> bool {
         if self.obj == other.obj && self.len() == other.len() {
             let mut our_keys = self.iter().collect::<Vec<_>>();
+            // TODO: our the keys guaranteed to be in sorted order? If so, we can skip the extra
+            // sorting
             our_keys.sort_by_key(|(key, _)| key.clone());
             let mut other_keys = other.iter().collect::<Vec<_>>();
             other_keys.sort_by_key(|(key, _)| key.clone());
