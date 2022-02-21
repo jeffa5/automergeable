@@ -1,8 +1,8 @@
-mod historic;
+mod historical;
 mod immutable;
 mod mutable;
 
-pub use historic::HistoricTextView;
+pub use historical::HistoricalTextView;
 pub use immutable::TextView;
 pub use mutable::MutableTextView;
 

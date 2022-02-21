@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use automerge::{Automerge, ChangeHash, ROOT};
 
-use crate::{HistoricMapView, MapView};
+use crate::{HistoricalMapView, MapView};
 
 /// A document that can be viewed, both immutably and mutably.
 pub trait ViewableDoc<V> {
@@ -10,7 +10,7 @@ pub trait ViewableDoc<V> {
     fn view(&self) -> MapView<'_, V>;
 
     /// Create a new view over this document at historical point `heads`.
-    fn view_at<'a, 'h>(&'a self, heads: &'h [ChangeHash]) -> HistoricMapView<'a, 'h, V>;
+    fn view_at<'a, 'h>(&'a self, heads: &'h [ChangeHash]) -> HistoricalMapView<'a, 'h, V>;
 }
 
 impl ViewableDoc<Automerge> for Automerge {
@@ -21,8 +21,8 @@ impl ViewableDoc<Automerge> for Automerge {
         }
     }
 
-    fn view_at<'h>(&self, heads: &'h [ChangeHash]) -> HistoricMapView<'_, 'h, Automerge> {
-        HistoricMapView {
+    fn view_at<'h>(&self, heads: &'h [ChangeHash]) -> HistoricalMapView<'_, 'h, Automerge> {
+        HistoricalMapView {
             obj: ROOT,
             doc: self,
             heads: Cow::Borrowed(heads),

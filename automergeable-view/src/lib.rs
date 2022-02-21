@@ -1,4 +1,4 @@
-mod historic;
+mod historical;
 mod immutable;
 mod list;
 mod map;
@@ -8,15 +8,15 @@ mod text;
 mod viewable;
 mod viewable_doc;
 
-pub use historic::HistoricView;
+pub use historical::HistoricalView;
 pub use immutable::View;
-pub use list::HistoricListView;
+pub use list::HistoricalListView;
 pub use list::{ListView, MutableListView};
-pub use map::HistoricMapView;
+pub use map::HistoricalMapView;
 pub use map::{MapView, MutableMapView};
 pub use mutable::MutableView;
 pub use mutable_doc::MutableDoc;
-pub use text::HistoricTextView;
+pub use text::HistoricalTextView;
 pub use text::{MutableTextView, TextView};
 pub use viewable::Viewable;
 pub use viewable_doc::ViewableDoc;

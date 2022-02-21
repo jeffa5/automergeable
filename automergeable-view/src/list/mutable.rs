@@ -3,13 +3,13 @@ use std::borrow::Cow;
 use automerge::transaction::{Transactable, Transaction};
 use automerge::{ChangeHash, ObjId, ObjType, Value};
 
-use crate::map::HistoricMapView;
-use crate::text::HistoricTextView;
+use crate::map::HistoricalMapView;
+use crate::text::HistoricalTextView;
 use crate::{
-    HistoricView, ListView, MapView, MutableMapView, MutableTextView, MutableView, TextView, View,
+    HistoricalView, ListView, MapView, MutableMapView, MutableTextView, MutableView, TextView, View,
 };
 
-use super::HistoricListView;
+use super::HistoricalListView;
 
 /// A mutable view over a list in the document.
 #[derive(Debug)]
@@ -68,26 +68,26 @@ impl<'a, 't> MutableListView<'a, 't> {
         &'s self,
         index: usize,
         heads: Vec<ChangeHash>,
-    ) -> Option<HistoricView<'s, 'static, Transaction<'a>>> {
+    ) -> Option<HistoricalView<'s, 'static, Transaction<'a>>> {
         match Transactable::value_at(self.tx, &self.obj, index, &heads) {
             Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(HistoricView::Map(HistoricMapView {
+                Value::Object(ObjType::Map) => Some(HistoricalView::Map(HistoricalMapView {
                     obj: id,
                     doc: self.tx,
                     heads: Cow::Owned(heads),
                 })),
                 Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(HistoricView::List(HistoricListView {
+                Value::Object(ObjType::List) => Some(HistoricalView::List(HistoricalListView {
                     obj: id,
                     doc: self.tx,
                     heads: Cow::Owned(heads),
                 })),
-                Value::Object(ObjType::Text) => Some(HistoricView::Text(HistoricTextView {
+                Value::Object(ObjType::Text) => Some(HistoricalView::Text(HistoricalTextView {
                     obj: id,
                     doc: self.tx,
                     heads: Cow::Owned(heads),
                 })),
-                Value::Scalar(s) => Some(HistoricView::Scalar(s)),
+                Value::Scalar(s) => Some(HistoricalView::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
         }

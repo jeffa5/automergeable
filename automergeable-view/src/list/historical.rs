@@ -2,30 +2,32 @@ use std::borrow::Cow;
 
 use automerge::{ChangeHash, ObjId, ObjType, Value};
 
-use crate::{historic::HistoricView, map::HistoricMapView, text::HistoricTextView, Viewable};
+use crate::{
+    historical::HistoricalView, map::HistoricalMapView, text::HistoricalTextView, Viewable,
+};
 
 /// A view over a list in the document.
 #[derive(Debug, Clone)]
-pub struct HistoricListView<'a, 'h, V> {
+pub struct HistoricalListView<'a, 'h, V> {
     pub(crate) obj: ObjId,
     pub(crate) doc: &'a V,
     pub(crate) heads: Cow<'h, [ChangeHash]>,
 }
 
-impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricListView<'oa, 'oh, OV>>
-    for HistoricListView<'a, 'h, V>
+impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricalListView<'oa, 'oh, OV>>
+    for HistoricalListView<'a, 'h, V>
 where
     V: Viewable,
     OV: Viewable,
 {
-    fn eq(&self, other: &HistoricListView<'oa, 'oh, OV>) -> bool {
+    fn eq(&self, other: &HistoricalListView<'oa, 'oh, OV>) -> bool {
         self.obj == other.obj
             && self.len() == other.len()
             && self.iter().zip(other.iter()).all(|(a, b)| a == b)
     }
 }
 
-impl<'a, 'h, V> HistoricListView<'a, 'h, V>
+impl<'a, 'h, V> HistoricalListView<'a, 'h, V>
 where
     V: Viewable,
 {
@@ -37,32 +39,32 @@ where
         self.len() == 0
     }
 
-    pub fn get(&self, index: usize) -> Option<HistoricView<'a, 'h, V>> {
+    pub fn get(&self, index: usize) -> Option<HistoricalView<'a, 'h, V>> {
         match self.doc.value_at(&self.obj, index, &self.heads) {
             Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(HistoricView::Map(HistoricMapView {
+                Value::Object(ObjType::Map) => Some(HistoricalView::Map(HistoricalMapView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
                 Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(HistoricView::List(HistoricListView {
+                Value::Object(ObjType::List) => Some(HistoricalView::List(HistoricalListView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Object(ObjType::Text) => Some(HistoricView::Text(HistoricTextView {
+                Value::Object(ObjType::Text) => Some(HistoricalView::Text(HistoricalTextView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Scalar(s) => Some(HistoricView::Scalar(s)),
+                Value::Scalar(s) => Some(HistoricalView::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = HistoricView<V>> {
+    pub fn iter(&self) -> impl Iterator<Item = HistoricalView<V>> {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }

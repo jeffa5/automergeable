@@ -2,23 +2,25 @@ use std::borrow::Cow;
 
 use automerge::{ChangeHash, ObjId, ObjType, Value};
 
-use crate::{historic::HistoricView, list::HistoricListView, text::HistoricTextView, Viewable};
+use crate::{
+    historical::HistoricalView, list::HistoricalListView, text::HistoricalTextView, Viewable,
+};
 
 /// A view over a map in this document.
 #[derive(Debug)]
-pub struct HistoricMapView<'a, 'h, V> {
+pub struct HistoricalMapView<'a, 'h, V> {
     pub(crate) obj: ObjId,
     pub(crate) doc: &'a V,
     pub(crate) heads: Cow<'h, [ChangeHash]>,
 }
 
-impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricMapView<'oa, 'oh, OV>>
-    for HistoricMapView<'a, 'h, V>
+impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricalMapView<'oa, 'oh, OV>>
+    for HistoricalMapView<'a, 'h, V>
 where
     V: Viewable,
     OV: Viewable,
 {
-    fn eq(&self, other: &HistoricMapView<'oa, 'oh, OV>) -> bool {
+    fn eq(&self, other: &HistoricalMapView<'oa, 'oh, OV>) -> bool {
         if self.obj == other.obj && self.len() == other.len() {
             let mut our_keys = self.iter().collect::<Vec<_>>();
             // TODO: our the keys guaranteed to be in sorted order? If so, we can skip the extra
@@ -36,7 +38,7 @@ where
     }
 }
 
-impl<'a, 'h, V> HistoricMapView<'a, 'h, V>
+impl<'a, 'h, V> HistoricalMapView<'a, 'h, V>
 where
     V: Viewable,
 {
@@ -49,26 +51,26 @@ where
     }
 
     /// Get the value at the given key in this map.
-    pub fn get<S: Into<String>>(&self, key: S) -> Option<HistoricView<'a, 'h, V>> {
+    pub fn get<S: Into<String>>(&self, key: S) -> Option<HistoricalView<'a, 'h, V>> {
         match self.doc.value_at(&self.obj, key.into(), &self.heads) {
             Ok(Some((value, id))) => match value {
-                Value::Object(ObjType::Map) => Some(HistoricView::Map(HistoricMapView {
+                Value::Object(ObjType::Map) => Some(HistoricalView::Map(HistoricalMapView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
                 Value::Object(ObjType::Table) => todo!(),
-                Value::Object(ObjType::List) => Some(HistoricView::List(HistoricListView {
+                Value::Object(ObjType::List) => Some(HistoricalView::List(HistoricalListView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Object(ObjType::Text) => Some(HistoricView::Text(HistoricTextView {
+                Value::Object(ObjType::Text) => Some(HistoricalView::Text(HistoricalTextView {
                     obj: id,
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Scalar(s) => Some(HistoricView::Scalar(s)),
+                Value::Scalar(s) => Some(HistoricalView::Scalar(s)),
             },
             Ok(None) | Err(_) => None,
         }
@@ -85,12 +87,12 @@ where
     }
 
     /// Get the values in this map, returned in sorted order of their keys.
-    pub fn values(&self) -> impl Iterator<Item = HistoricView<V>> {
+    pub fn values(&self) -> impl Iterator<Item = HistoricalView<V>> {
         self.keys().map(move |key| self.get(key).unwrap())
     }
 
     /// Get both the keys and values in this map.
-    pub fn iter(&self) -> impl Iterator<Item = (String, HistoricView<V>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (String, HistoricalView<V>)> {
         self.keys().map(move |key| {
             let v = self.get(&key).unwrap();
             (key, v)

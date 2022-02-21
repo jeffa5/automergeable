@@ -1,8 +1,8 @@
-mod historic;
+mod historical;
 mod immutable;
 mod mutable;
 
-pub use historic::HistoricMapView;
+pub use historical::HistoricalMapView;
 pub use immutable::MapView;
 pub use mutable::MutableMapView;
 

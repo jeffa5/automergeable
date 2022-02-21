@@ -1,8 +1,8 @@
-mod historic;
+mod historical;
 mod immutable;
 mod mutable;
 
-pub use historic::HistoricListView;
+pub use historical::HistoricalListView;
 pub use immutable::ListView;
 pub use mutable::MutableListView;
 

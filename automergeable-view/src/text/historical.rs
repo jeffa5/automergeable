@@ -7,26 +7,26 @@ use crate::Viewable;
 
 /// A view over some text in the document.
 #[derive(Debug, Clone)]
-pub struct HistoricTextView<'a, 'h, V> {
+pub struct HistoricalTextView<'a, 'h, V> {
     pub(crate) obj: ObjId,
     pub(crate) doc: &'a V,
     pub(crate) heads: Cow<'h, [ChangeHash]>,
 }
 
-impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricTextView<'oa, 'oh, OV>>
-    for HistoricTextView<'a, 'h, V>
+impl<'a, 'h, 'oa, 'oh, V, OV> PartialEq<HistoricalTextView<'oa, 'oh, OV>>
+    for HistoricalTextView<'a, 'h, V>
 where
     V: Viewable,
     OV: Viewable,
 {
-    fn eq(&self, other: &HistoricTextView<'oa, 'oh, OV>) -> bool {
+    fn eq(&self, other: &HistoricalTextView<'oa, 'oh, OV>) -> bool {
         self.obj == other.obj
             && self.len() == other.len()
             && self.iter().zip(other.iter()).all(|(a, b)| a == b)
     }
 }
 
-impl<'a, 'h, V> HistoricTextView<'a, 'h, V>
+impl<'a, 'h, V> HistoricalTextView<'a, 'h, V>
 where
     V: Viewable,
 {
