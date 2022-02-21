@@ -9,10 +9,10 @@ pub use mutable::MutableMapView;
 #[cfg(test)]
 mod tests {
     use crate::{MutableDoc, View};
-    use automerge::{Automerge, Value};
+    use automerge::{Automerge, ScalarValue, Value};
     use serde_json::json;
 
-    use crate::{automerge_doc, ScalarValue, ViewableDoc};
+    use crate::{automerge_doc, ViewableDoc};
 
     #[test]
     fn test_map() {

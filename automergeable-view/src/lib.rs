@@ -1,80 +1,33 @@
-use std::borrow::Cow;
-
-use automerge::{transaction::Transaction, Automerge, ChangeHash, ScalarValue, ROOT};
-
 mod historic;
 mod immutable;
 mod list;
 mod map;
 mod mutable;
+mod mutable_doc;
 mod text;
 mod viewable;
+mod viewable_doc;
 
 pub use historic::HistoricView;
 pub use immutable::View;
+pub use list::HistoricListView;
 pub use list::{ListView, MutableListView};
-use map::HistoricMapView;
+pub use map::HistoricMapView;
 pub use map::{MapView, MutableMapView};
 pub use mutable::MutableView;
+pub use mutable_doc::MutableDoc;
+pub use text::HistoricTextView;
 pub use text::{MutableTextView, TextView};
 pub use viewable::Viewable;
+pub use viewable_doc::ViewableDoc;
 
-/// A document that can be viewed, both immutably and mutably.
-pub trait ViewableDoc<V> {
-    /// Create a new view over this document.
-    fn view(&self) -> MapView<'_, V>;
-
-    /// Create a new view over this document at historical point `heads`.
-    fn view_at<'a, 'h>(&'a self, heads: &'h [ChangeHash]) -> HistoricMapView<'a, 'h, V>;
-}
-
-pub trait MutableDoc<'a> {
-    /// Create a new mutable view over this document.
-    fn view_mut<'t>(&'t mut self) -> MutableMapView<'a, 't>;
-}
-
-impl ViewableDoc<Automerge> for Automerge {
-    fn view(&self) -> MapView<'_, Automerge> {
-        MapView {
-            obj: ROOT,
-            doc: self,
-        }
-    }
-
-    fn view_at<'h>(&self, heads: &'h [ChangeHash]) -> HistoricMapView<'_, 'h, Automerge> {
-        HistoricMapView {
-            obj: ROOT,
-            doc: self,
-            heads: Cow::Borrowed(heads),
-        }
-    }
-}
-
-impl<'a> MutableDoc<'a> for Transaction<'a> {
-    fn view_mut<'t>(&'t mut self) -> MutableMapView<'a, 't> {
-        MutableMapView {
-            obj: ROOT,
-            tx: self,
-        }
-    }
-}
-
-impl<V> From<u64> for View<'static, V> {
-    fn from(u: u64) -> Self {
-        View::Scalar(ScalarValue::Uint(u))
-    }
-}
-
-impl<V> From<i32> for View<'static, V> {
-    fn from(i: i32) -> Self {
-        View::Scalar(ScalarValue::Int(i as i64))
-    }
-}
+#[cfg(test)]
+use automerge::Automerge;
 
 #[cfg(test)]
 fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
-    use automerge::transaction::Transactable;
-    use automerge::{ObjId, Value};
+    use automerge::transaction::{Transactable, Transaction};
+    use automerge::{ObjId, ScalarValue, Value, ROOT};
     use serde_json::Map;
     fn add_map(map: Map<String, serde_json::Value>, doc: &mut Transaction, obj: ObjId) {
         for (k, v) in map.into_iter() {
@@ -145,7 +98,8 @@ fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
 #[cfg(test)]
 mod tests {
     use crate::MutableDoc;
-    use automerge::{Automerge, Value};
+    use crate::ViewableDoc;
+    use automerge::{Automerge, ScalarValue, Value};
     use serde_json::json;
 
     use super::*;

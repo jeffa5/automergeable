@@ -8,10 +8,10 @@ pub use mutable::MutableListView;
 
 #[cfg(test)]
 mod tests {
-    use automerge::Automerge;
+    use automerge::{Automerge, ScalarValue};
     use serde_json::json;
 
-    use crate::{automerge_doc, ScalarValue, View, ViewableDoc};
+    use crate::{automerge_doc, View, ViewableDoc};
 
     #[test]
     fn test_list() {

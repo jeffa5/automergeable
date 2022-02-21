@@ -135,3 +135,15 @@ where
         }
     }
 }
+
+impl<V> From<u64> for View<'static, V> {
+    fn from(u: u64) -> Self {
+        View::Scalar(ScalarValue::Uint(u))
+    }
+}
+
+impl<V> From<i32> for View<'static, V> {
+    fn from(i: i32) -> Self {
+        View::Scalar(ScalarValue::Int(i as i64))
+    }
+}
