@@ -234,9 +234,18 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a scalar value from this view.
-    pub fn scalar(&self) -> Option<ScalarValue> {
+    pub fn scalar(&self) -> Option<&ScalarValue> {
         if let MutableView::Scalar(scalar) = self {
-            Some(scalar.clone())
+            Some(scalar)
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract a scalar value from this view.
+    pub fn into_scalar(self) -> Option<ScalarValue> {
+        if let MutableView::Scalar(scalar) = self {
+            Some(scalar)
         } else {
             None
         }
