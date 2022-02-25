@@ -21,6 +21,15 @@ impl<'a, 't> MutableView<'a, 't> {
         }
     }
 
+    pub fn to_immutable<'s>(&'s self) -> View<'s, Transaction<'a>> {
+        match self {
+            MutableView::Map(map) => View::Map(map.to_immutable()),
+            MutableView::List(list) => View::List(list.to_immutable()),
+            MutableView::Text(text) => View::Text(text.to_immutable()),
+            MutableView::Scalar(scalar) => View::Scalar(scalar.clone()),
+        }
+    }
+
     /// Get the mutable view of the object at `prop`.
     pub fn get<'s, P: Into<Prop>>(&'s self, prop: P) -> Option<View<'s, Transaction<'a>>> {
         match (prop.into(), self) {
@@ -144,20 +153,20 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a mutable map from this view.
-    pub fn into_map(self) -> Option<MapView<'t, Transaction<'a>>> {
+    pub fn into_map(self) -> Result<MapView<'t, Transaction<'a>>, Self> {
         if let MutableView::Map(map) = self {
-            Some(map.into_immutable())
+            Ok(map.into_immutable())
         } else {
-            None
+            Err(self)
         }
     }
 
     /// Try and extract a mutable map from this view.
-    pub fn into_map_mut(self) -> Option<MutableMapView<'a, 't>> {
+    pub fn into_map_mut(self) -> Result<MutableMapView<'a, 't>, Self> {
         if let MutableView::Map(map) = self {
-            Some(map)
+            Ok(map)
         } else {
-            None
+            Err(self)
         }
     }
 
@@ -180,20 +189,20 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a mutable list from this view.
-    pub fn into_list(self) -> Option<ListView<'t, Transaction<'a>>> {
+    pub fn into_list(self) -> Result<ListView<'t, Transaction<'a>>, Self> {
         if let MutableView::List(list) = self {
-            Some(list.into_immutable())
+            Ok(list.into_immutable())
         } else {
-            None
+            Err(self)
         }
     }
 
     /// Try and extract a mutable list from this view.
-    pub fn into_list_mut(self) -> Option<MutableListView<'a, 't>> {
+    pub fn into_list_mut(self) -> Result<MutableListView<'a, 't>, Self> {
         if let MutableView::List(list) = self {
-            Some(list)
+            Ok(list)
         } else {
-            None
+            Err(self)
         }
     }
 
@@ -216,20 +225,20 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract mutable text from this view.
-    pub fn into_text(self) -> Option<TextView<'t, Transaction<'a>>> {
+    pub fn into_text(self) -> Result<TextView<'t, Transaction<'a>>, Self> {
         if let MutableView::Text(text) = self {
-            Some(text.into_immutable())
+            Ok(text.into_immutable())
         } else {
-            None
+            Err(self)
         }
     }
 
     /// Try and extract mutable text from this view.
-    pub fn into_text_mut(self) -> Option<MutableTextView<'a, 't>> {
+    pub fn into_text_mut(self) -> Result<MutableTextView<'a, 't>, Self> {
         if let MutableView::Text(text) = self {
-            Some(text)
+            Ok(text)
         } else {
-            None
+            Err(self)
         }
     }
 
@@ -243,11 +252,11 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a scalar value from this view.
-    pub fn into_scalar(self) -> Option<ScalarValue> {
+    pub fn into_scalar(self) -> Result<ScalarValue, Self> {
         if let MutableView::Scalar(scalar) = self {
-            Some(scalar)
+            Ok(scalar)
         } else {
-            None
+            Err(self)
         }
     }
 }
