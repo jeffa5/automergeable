@@ -116,13 +116,59 @@ impl<'a, 't> MutableListView<'a, 't> {
     }
 
     /// Insert a new value into the list.
-    pub fn insert<V: Into<Value>>(&mut self, index: usize, value: V) {
-        self.tx.insert(&self.obj, index, value).unwrap();
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert<'s, V: Into<Value>>(
+        &'s mut self,
+        index: usize,
+        value: V,
+    ) -> Option<MutableView<'a, 's>> {
+        let value: Value = value.into();
+        let typ = if let Value::Object(typ) = value {
+            Some(typ)
+        } else {
+            None
+        };
+        self.tx
+            .insert(&self.obj, index, value)
+            .unwrap()
+            .map(move |obj| match typ {
+                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+                Some(ObjType::Table) => {
+                    todo!()
+                }
+                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
+                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+                None => unreachable!(),
+            })
     }
 
     /// Overwrite an existing item in the list.
-    pub fn set<V: Into<Value>>(&mut self, index: usize, value: V) {
-        self.tx.set(&self.obj, index, value).unwrap();
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn set<'s, V: Into<Value>>(
+        &'s mut self,
+        index: usize,
+        value: V,
+    ) -> Option<MutableView<'a, 's>> {
+        let value: Value = value.into();
+        let typ = if let Value::Object(typ) = value {
+            Some(typ)
+        } else {
+            None
+        };
+        self.tx
+            .set(&self.obj, index, value)
+            .unwrap()
+            .map(move |obj| match typ {
+                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+                Some(ObjType::Table) => {
+                    todo!()
+                }
+                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
+                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+                None => unreachable!(),
+            })
     }
 
     pub fn remove(&mut self, index: usize) -> bool {

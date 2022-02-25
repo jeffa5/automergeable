@@ -52,29 +52,48 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Insert the given value at the `prop`.
-    pub fn insert<P: Into<Prop>, V: Into<Value>>(&mut self, prop: P, value: V) {
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert<'s, P: Into<Prop>, V: Into<Value>>(
+        &'s mut self,
+        prop: P,
+        value: V,
+    ) -> Option<MutableView<'a, 's>> {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
             (Prop::Seq(index), MutableView::List(list)) => list.insert(index, value),
-            (Prop::Seq(index), MutableView::Text(text)) => text.insert(index, value),
+            (Prop::Seq(index), MutableView::Text(text)) => {
+                text.insert(index, value);
+                // text can't contain objects
+                None
+            }
             (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
-            | (_, MutableView::Scalar(_)) => {}
+            | (_, MutableView::Scalar(_)) => None,
         }
     }
 
     /// Overwrite the `prop`'s current value with `value`.
-    pub fn set<P: Into<Prop>, V: Into<Value>>(&mut self, prop: P, value: V) {
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn set<'s, P: Into<Prop>, V: Into<Value>>(
+        &'s mut self,
+        prop: P,
+        value: V,
+    ) -> Option<MutableView<'a, 's>> {
         match (prop.into(), self) {
             // map's insert does the same as a set would
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
             (Prop::Seq(index), MutableView::List(list)) => list.set(index, value),
-            (Prop::Seq(index), MutableView::Text(text)) => text.set(index, value),
+            (Prop::Seq(index), MutableView::Text(text)) => {
+                text.set(index, value);
+                None
+            }
             (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
-            | (_, MutableView::Scalar(_)) => {}
+            | (_, MutableView::Scalar(_)) => None,
         }
     }
 

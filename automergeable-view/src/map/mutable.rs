@@ -86,8 +86,32 @@ impl<'a, 't> MutableMapView<'a, 't> {
         }
     }
 
-    pub fn insert<S: Into<String>, V: Into<Value>>(&mut self, key: S, value: V) {
-        self.tx.set(&self.obj, key.into(), value).unwrap();
+    /// Overwrite the `prop`'s current value with `value`.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert<'s, S: Into<String>, V: Into<Value>>(
+        &'s mut self,
+        key: S,
+        value: V,
+    ) -> Option<MutableView<'a, 's>> {
+        let value: Value = value.into();
+        let typ = if let Value::Object(typ) = value {
+            Some(typ)
+        } else {
+            None
+        };
+        self.tx
+            .set(&self.obj, key.into(), value)
+            .unwrap()
+            .map(move |obj| match typ {
+                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+                Some(ObjType::Table) => {
+                    todo!()
+                }
+                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
+                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+                None => unreachable!(),
+            })
     }
 
     /// Remove a value from this map, returning a whether a value was removed or not.
