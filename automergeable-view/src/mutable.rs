@@ -1,6 +1,6 @@
 use automerge::{transaction::Transaction, Prop, ScalarValue, Value};
 
-use crate::{MutableListView, MutableMapView, MutableTextView, View};
+use crate::{ListView, MapView, MutableListView, MutableMapView, MutableTextView, TextView, View};
 
 /// A mutable view over the document, allowing editing.
 #[derive(Debug, PartialEq)]
@@ -126,9 +126,27 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a mutable map from this view.
+    pub fn map<'s>(&'s self) -> Option<MapView<'s, Transaction<'a>>> {
+        if let MutableView::Map(map) = self {
+            Some(map.to_immutable())
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract a mutable map from this view.
     pub fn map_mut(&mut self) -> Option<&mut MutableMapView<'a, 't>> {
         if let MutableView::Map(map) = self {
             Some(map)
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract a mutable map from this view.
+    pub fn into_map(self) -> Option<MapView<'t, Transaction<'a>>> {
+        if let MutableView::Map(map) = self {
+            Some(map.into_immutable())
         } else {
             None
         }
@@ -144,9 +162,27 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract a mutable list from this view.
+    pub fn list<'s>(&'s self) -> Option<ListView<'s, Transaction<'a>>> {
+        if let MutableView::List(list) = self {
+            Some(list.to_immutable())
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract a mutable list from this view.
     pub fn list_mut(&mut self) -> Option<&mut MutableListView<'a, 't>> {
         if let MutableView::List(list) = self {
             Some(list)
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract a mutable list from this view.
+    pub fn into_list(self) -> Option<ListView<'t, Transaction<'a>>> {
+        if let MutableView::List(list) = self {
+            Some(list.into_immutable())
         } else {
             None
         }
@@ -162,9 +198,27 @@ impl<'a, 't> MutableView<'a, 't> {
     }
 
     /// Try and extract mutable text from this view.
+    pub fn text<'s>(&'s self) -> Option<TextView<'s, Transaction<'a>>> {
+        if let MutableView::Text(text) = self {
+            Some(text.to_immutable())
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract mutable text from this view.
     pub fn text_mut(&mut self) -> Option<&mut MutableTextView<'a, 't>> {
         if let MutableView::Text(text) = self {
             Some(text)
+        } else {
+            None
+        }
+    }
+
+    /// Try and extract mutable text from this view.
+    pub fn into_text(self) -> Option<TextView<'t, Transaction<'a>>> {
+        if let MutableView::Text(text) = self {
+            Some(text.into_immutable())
         } else {
             None
         }

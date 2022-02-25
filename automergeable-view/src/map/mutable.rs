@@ -34,6 +34,13 @@ impl<'a, 't> MutableMapView<'a, 't> {
         }
     }
 
+    pub fn to_immutable<'s>(&'s self) -> MapView<'s, Transaction<'a>> {
+        MapView {
+            obj: self.obj.clone(),
+            doc: self.tx,
+        }
+    }
+
     pub fn len(&self) -> usize {
         Transactable::keys(self.tx, &self.obj).len()
     }

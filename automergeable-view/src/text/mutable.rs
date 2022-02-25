@@ -28,6 +28,13 @@ impl<'a, 't> MutableTextView<'a, 't> {
         }
     }
 
+    pub fn to_immutable<'s>(&'s self) -> TextView<'s, Transaction<'a>> {
+        TextView {
+            obj: self.obj.clone(),
+            doc: self.tx,
+        }
+    }
+
     pub fn len(&self) -> usize {
         Transactable::length(self.tx, &self.obj)
     }

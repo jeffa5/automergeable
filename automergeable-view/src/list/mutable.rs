@@ -34,6 +34,13 @@ impl<'a, 't> MutableListView<'a, 't> {
         }
     }
 
+    pub fn to_immutable<'s>(&'s self) -> ListView<'s, Transaction<'a>> {
+        ListView {
+            obj: self.obj.clone(),
+            doc: self.tx,
+        }
+    }
+
     pub fn len(&self) -> usize {
         Transactable::length(self.tx, &self.obj)
     }
