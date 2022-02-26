@@ -64,7 +64,7 @@ where
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = HistoricalView<V>> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = HistoricalView<V>> {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }

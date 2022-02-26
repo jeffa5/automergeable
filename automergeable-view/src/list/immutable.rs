@@ -55,7 +55,7 @@ where
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = View<V>> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = View<V>> {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }
