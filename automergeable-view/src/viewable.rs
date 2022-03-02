@@ -3,14 +3,16 @@ use automerge::transaction::Transaction;
 use automerge::Automerge;
 use automerge::AutomergeError;
 use automerge::ChangeHash;
+use automerge::Keys;
+use automerge::KeysAt;
 use automerge::ObjId;
 use automerge::Prop;
 use automerge::Value;
 
 pub trait Viewable {
-    fn keys(&self, obj: &ObjId) -> Vec<String>;
+    fn keys(&self, obj: &ObjId) -> Keys;
 
-    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Vec<String>;
+    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> KeysAt;
 
     fn length(&self, obj: &ObjId) -> usize;
 
@@ -28,14 +30,18 @@ pub trait Viewable {
         prop: P,
         heads: &[ChangeHash],
     ) -> Result<Option<(Value, ObjId)>, AutomergeError>;
+
+    fn text(&self, obj: &ObjId) -> Result<String, AutomergeError>;
+
+    fn text_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Result<String, AutomergeError>;
 }
 
 impl<'a> Viewable for Transaction<'a> {
-    fn keys(&self, obj: &ObjId) -> Vec<String> {
+    fn keys(&self, obj: &ObjId) -> Keys {
         Transactable::keys(self, obj)
     }
 
-    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Vec<String> {
+    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> KeysAt {
         Transactable::keys_at(self, obj, heads)
     }
 
@@ -63,14 +69,22 @@ impl<'a> Viewable for Transaction<'a> {
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
         Transactable::value_at(self, obj, prop, heads)
     }
+
+    fn text(&self, obj: &ObjId) -> Result<String, AutomergeError> {
+        Transactable::text(self, obj)
+    }
+
+    fn text_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Result<String, AutomergeError> {
+        Transactable::text_at(self, obj, heads)
+    }
 }
 
 impl<'a> Viewable for Automerge {
-    fn keys(&self, obj: &ObjId) -> Vec<String> {
+    fn keys(&self, obj: &ObjId) -> Keys {
         self.keys(obj)
     }
 
-    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Vec<String> {
+    fn keys_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> KeysAt {
         self.keys_at(obj, heads)
     }
 
@@ -97,5 +111,13 @@ impl<'a> Viewable for Automerge {
         heads: &[ChangeHash],
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
         self.value_at(obj, prop, heads)
+    }
+
+    fn text(&self, obj: &ObjId) -> Result<String, AutomergeError> {
+        self.text(obj)
+    }
+
+    fn text_at(&self, obj: &ObjId, heads: &[ChangeHash]) -> Result<String, AutomergeError> {
+        self.text_at(obj, heads)
     }
 }

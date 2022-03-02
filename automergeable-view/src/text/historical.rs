@@ -48,7 +48,11 @@ where
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = SmolStr> + '_ {
+    pub fn as_string(&self) -> String {
+        self.doc.text_at(&self.obj, &self.heads).unwrap()
+    }
+
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = SmolStr> + '_ {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }

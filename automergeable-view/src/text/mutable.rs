@@ -16,7 +16,11 @@ impl<'a, 't> PartialEq for MutableTextView<'a, 't> {
     fn eq(&self, other: &Self) -> bool {
         self.obj == other.obj
             && self.len() == other.len()
-            && self.iter().zip(other.iter()).all(|(a, b)| a == b)
+            && self
+                .iter()
+                .into_iter()
+                .zip(other.iter().into_iter())
+                .all(|(a, b)| a == b)
     }
 }
 
@@ -90,8 +94,14 @@ impl<'a, 't> MutableTextView<'a, 't> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = SmolStr> + 'a + 't {
-        // (0..self.len()).map(|i| self.get(i).unwrap())
-        std::iter::empty()
+    pub fn as_string(&self) -> String {
+        self.tx.text(&self.obj).unwrap()
+    }
+
+    // TODO: return an iterator
+    pub fn iter(&self) -> Vec<SmolStr> {
+        (0..self.len())
+            .map(move |i| self.get(i).unwrap())
+            .collect::<Vec<SmolStr>>()
     }
 }

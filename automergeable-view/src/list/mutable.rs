@@ -187,7 +187,7 @@ impl<'a, 't> MutableListView<'a, 't> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = View<Transaction<'a>>> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = View<Transaction<'a>>> {
         (0..self.len()).map(move |i| self.get(i).unwrap())
     }
 }

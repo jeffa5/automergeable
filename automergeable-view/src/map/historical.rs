@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use automerge::{ChangeHash, ObjId, ObjType, Value};
+use automerge::{ChangeHash, KeysAt, ObjId, ObjType, Value};
 
 use crate::{
     historical::HistoricalView, list::HistoricalListView, text::HistoricalTextView, Viewable,
@@ -43,7 +43,7 @@ where
     V: Viewable,
 {
     pub fn len(&self) -> usize {
-        self.doc.keys_at(&self.obj, &self.heads).len()
+        self.doc.length_at(&self.obj, &self.heads)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -82,17 +82,17 @@ where
     }
 
     /// Get the keys in this map, returned in sorted order.
-    pub fn keys(&self) -> impl Iterator<Item = String> {
-        self.doc.keys_at(&self.obj, &self.heads).into_iter()
+    pub fn keys(&self) -> KeysAt {
+        self.doc.keys_at(&self.obj, &self.heads)
     }
 
     /// Get the values in this map, returned in sorted order of their keys.
-    pub fn values(&self) -> impl Iterator<Item = HistoricalView<V>> {
+    pub fn values(&self) -> impl DoubleEndedIterator<Item = HistoricalView<V>> {
         self.keys().map(move |key| self.get(key).unwrap())
     }
 
     /// Get both the keys and values in this map.
-    pub fn iter(&self) -> impl Iterator<Item = (String, HistoricalView<V>)> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (String, HistoricalView<V>)> {
         self.keys().map(move |key| {
             let v = self.get(&key).unwrap();
             (key, v)

@@ -1,4 +1,4 @@
-use automerge::{transaction::Transactable, transaction::Transaction, ObjId, ObjType, Value};
+use automerge::{transaction::Transactable, transaction::Transaction, Keys, ObjId, ObjType, Value};
 
 use crate::{ListView, MapView, MutableListView, MutableTextView, MutableView, TextView, View};
 
@@ -42,7 +42,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
     }
 
     pub fn len(&self) -> usize {
-        Transactable::keys(self.tx, &self.obj).len()
+        Transactable::length(self.tx, &self.obj)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -136,15 +136,15 @@ impl<'a, 't> MutableMapView<'a, 't> {
         self.get(key).is_some()
     }
 
-    pub fn keys(&self) -> impl Iterator<Item = String> {
-        Transactable::keys(self.tx, &self.obj).into_iter()
+    pub fn keys(&self) -> Keys {
+        Transactable::keys(self.tx, &self.obj)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = View<Transaction<'a>>> {
+    pub fn values(&self) -> impl DoubleEndedIterator<Item = View<Transaction<'a>>> {
         self.keys().map(move |key| self.get(key).unwrap())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (String, View<Transaction<'a>>)> {
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = (String, View<Transaction<'a>>)> {
         self.keys().map(move |key| {
             let v = self.get(&key).unwrap();
             (key, v)
