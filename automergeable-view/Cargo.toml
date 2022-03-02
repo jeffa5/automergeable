@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-automerge = { git = "https://github.com/jeffa5/automerge-rs", branch = "iterable-query" }
+automerge = { git = "https://github.com/automerge/automerge-rs", branch = "experiment" }
 smol_str = "0.1.21"
 
 [dev-dependencies]
