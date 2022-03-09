@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use automerge::transaction::{Transactable, Transaction};
-use automerge::{ChangeHash, ObjId, ObjType, Value};
+use automerge::{ChangeHash, ObjId, ObjType, ScalarValue, Value};
 
 use crate::map::HistoricalMapView;
 use crate::text::HistoricalTextView;
@@ -125,57 +125,45 @@ impl<'a, 't> MutableListView<'a, 't> {
     /// Insert a new value into the list.
     ///
     /// Returns a mutable view of the new object if the value created one.
-    pub fn insert<'s, V: Into<Value>>(
-        &'s mut self,
-        index: usize,
-        value: V,
-    ) -> Option<MutableView<'a, 's>> {
-        let value: Value = value.into();
-        let typ = if let Value::Object(typ) = value {
-            Some(typ)
-        } else {
-            None
-        };
-        self.tx
-            .insert(&self.obj, index, value)
-            .unwrap()
-            .map(move |obj| match typ {
-                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
-                Some(ObjType::Table) => {
-                    todo!()
-                }
-                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
-                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
-                None => unreachable!(),
-            })
+    pub fn insert<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
+        self.tx.insert(&self.obj, index, value).unwrap()
+    }
+
+    /// Insert a new value into the list.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert_object<'s>(&'s mut self, index: usize, value: ObjType) -> MutableView<'a, 's> {
+        let obj = self.tx.insert_object(&self.obj, index, value).unwrap();
+        match value {
+            ObjType::Map => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+            ObjType::Table => {
+                todo!()
+            }
+            ObjType::List => MutableView::List(MutableListView { obj, tx: self.tx }),
+            ObjType::Text => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+        }
     }
 
     /// Overwrite an existing item in the list.
     ///
     /// Returns a mutable view of the new object if the value created one.
-    pub fn set<'s, V: Into<Value>>(
-        &'s mut self,
-        index: usize,
-        value: V,
-    ) -> Option<MutableView<'a, 's>> {
-        let value: Value = value.into();
-        let typ = if let Value::Object(typ) = value {
-            Some(typ)
-        } else {
-            None
-        };
-        self.tx
-            .set(&self.obj, index, value)
-            .unwrap()
-            .map(move |obj| match typ {
-                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
-                Some(ObjType::Table) => {
-                    todo!()
-                }
-                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
-                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
-                None => unreachable!(),
-            })
+    pub fn set<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
+        self.tx.set(&self.obj, index, value).unwrap()
+    }
+
+    /// Overwrite an existing item in the list.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn set_object<'s>(&'s mut self, index: usize, value: ObjType) -> MutableView<'a, 's> {
+        let obj = self.tx.set_object(&self.obj, index, value).unwrap();
+        match value {
+            ObjType::Map => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+            ObjType::Table => {
+                todo!()
+            }
+            ObjType::List => MutableView::List(MutableListView { obj, tx: self.tx }),
+            ObjType::Text => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+        }
     }
 
     pub fn remove(&mut self, index: usize) -> bool {

@@ -1,4 +1,6 @@
-use automerge::{transaction::Transactable, transaction::Transaction, Keys, ObjId, ObjType, Value};
+use automerge::{
+    transaction::Transactable, transaction::Transaction, Keys, ObjId, ObjType, ScalarValue, Value,
+};
 
 use crate::{ListView, MapView, MutableListView, MutableTextView, MutableView, TextView, View};
 
@@ -96,29 +98,27 @@ impl<'a, 't> MutableMapView<'a, 't> {
     /// Overwrite the `prop`'s current value with `value`.
     ///
     /// Returns a mutable view of the new object if the value created one.
-    pub fn insert<'s, S: Into<String>, V: Into<Value>>(
+    pub fn insert<S: Into<String>, V: Into<ScalarValue>>(&mut self, key: S, value: V) {
+        self.tx.set(&self.obj, key.into(), value).unwrap()
+    }
+
+    /// Overwrite the `prop`'s current value with `value`.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert_object<'s, S: Into<String>>(
         &'s mut self,
         key: S,
-        value: V,
-    ) -> Option<MutableView<'a, 's>> {
-        let value: Value = value.into();
-        let typ = if let Value::Object(typ) = value {
-            Some(typ)
-        } else {
-            None
-        };
-        self.tx
-            .set(&self.obj, key.into(), value)
-            .unwrap()
-            .map(move |obj| match typ {
-                Some(ObjType::Map) => MutableView::Map(MutableMapView { obj, tx: self.tx }),
-                Some(ObjType::Table) => {
-                    todo!()
-                }
-                Some(ObjType::List) => MutableView::List(MutableListView { obj, tx: self.tx }),
-                Some(ObjType::Text) => MutableView::Text(MutableTextView { obj, tx: self.tx }),
-                None => unreachable!(),
-            })
+        value: ObjType,
+    ) -> MutableView<'a, 's> {
+        let obj = self.tx.set_object(&self.obj, key.into(), value).unwrap();
+        match value {
+            ObjType::Map => MutableView::Map(MutableMapView { obj, tx: self.tx }),
+            ObjType::Table => {
+                todo!()
+            }
+            ObjType::List => MutableView::List(MutableListView { obj, tx: self.tx }),
+            ObjType::Text => MutableView::Text(MutableTextView { obj, tx: self.tx }),
+        }
     }
 
     /// Remove a value from this map, returning a whether a value was removed or not.

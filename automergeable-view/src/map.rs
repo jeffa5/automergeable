@@ -9,7 +9,7 @@ pub use mutable::MutableMapView;
 #[cfg(test)]
 mod tests {
     use crate::{MutableDoc, View};
-    use automerge::{Automerge, ScalarValue, Value};
+    use automerge::{Automerge, ScalarValue};
     use serde_json::json;
 
     use crate::{automerge_doc, ViewableDoc};
@@ -111,7 +111,7 @@ mod tests {
         let mut tx = doc.transaction();
         let mut root = tx.view_mut();
 
-        root.insert("a", Value::map());
+        root.insert_object("a", automerge::ObjType::Map);
         let mut a = root.get_mut("a").unwrap().into_map_mut().unwrap();
         a.insert("b", 1);
 

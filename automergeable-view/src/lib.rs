@@ -27,7 +27,7 @@ use automerge::Automerge;
 #[cfg(test)]
 fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
     use automerge::transaction::{Transactable, Transaction};
-    use automerge::{ObjId, ScalarValue, Value, ROOT};
+    use automerge::{ObjId, ScalarValue, ROOT};
     use serde_json::Map;
     fn add_map(map: Map<String, serde_json::Value>, doc: &mut Transaction, obj: ObjId) {
         for (k, v) in map.into_iter() {
@@ -43,14 +43,18 @@ fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
                         .expect("no error");
                 }
                 serde_json::Value::String(s) => {
-                    doc.set(&obj.clone(), k, s.to_owned()).unwrap().unwrap();
+                    doc.set(&obj.clone(), k, s.to_owned()).unwrap();
                 }
                 serde_json::Value::Array(a) => {
-                    let obj = doc.set(&obj.clone(), k, Value::list()).unwrap().unwrap();
+                    let obj = doc
+                        .set_object(&obj.clone(), k, automerge::ObjType::List)
+                        .unwrap();
                     add_list(a, doc, obj)
                 }
                 serde_json::Value::Object(map) => {
-                    let obj = doc.set(&obj.clone(), k, Value::map()).unwrap().unwrap();
+                    let obj = doc
+                        .set_object(&obj.clone(), k, automerge::ObjType::Map)
+                        .unwrap();
                     add_map(map, doc, obj)
                 }
             };
@@ -70,14 +74,14 @@ fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
                     doc.insert(&obj, i, n.as_u64().unwrap()).expect("no error");
                 }
                 serde_json::Value::String(s) => {
-                    doc.set(&obj, i, s.to_owned()).unwrap().unwrap();
+                    doc.set(&obj, i, s.to_owned()).unwrap();
                 }
                 serde_json::Value::Array(a) => {
-                    let obj = doc.set(&obj, i, Value::list()).unwrap().unwrap();
+                    let obj = doc.set_object(&obj, i, automerge::ObjType::List).unwrap();
                     add_list(a, doc, obj)
                 }
                 serde_json::Value::Object(map) => {
-                    let obj = doc.set(&obj, i, Value::map()).unwrap().unwrap();
+                    let obj = doc.set_object(&obj, i, automerge::ObjType::Map).unwrap();
                     add_map(map, doc, obj)
                 }
             };
@@ -99,7 +103,7 @@ fn automerge_doc(value: serde_json::Value) -> Result<Automerge, String> {
 mod tests {
     use crate::MutableDoc;
     use crate::ViewableDoc;
-    use automerge::{Automerge, ScalarValue, Value};
+    use automerge::{Automerge, ScalarValue};
     use serde_json::json;
 
     use super::*;
@@ -126,7 +130,7 @@ mod tests {
         let mut doc = Automerge::new();
         let mut tx = doc.transaction();
         let mut root = tx.view_mut();
-        root.insert("a", Value::map());
+        root.insert_object("a", automerge::ObjType::Map);
         let mut a = root.get_mut("a").unwrap();
         a.insert("b", 1);
 

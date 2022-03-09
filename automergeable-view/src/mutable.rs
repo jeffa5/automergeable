@@ -1,4 +1,4 @@
-use automerge::{transaction::Transaction, Prop, ScalarValue, Value};
+use automerge::{transaction::Transaction, ObjType, Prop, ScalarValue};
 
 use crate::{ListView, MapView, MutableListView, MutableMapView, MutableTextView, TextView, View};
 
@@ -63,20 +63,33 @@ impl<'a, 't> MutableView<'a, 't> {
     /// Insert the given value at the `prop`.
     ///
     /// Returns a mutable view of the new object if the value created one.
-    pub fn insert<'s, P: Into<Prop>, V: Into<Value>>(
-        &'s mut self,
-        prop: P,
-        value: V,
-    ) -> Option<MutableView<'a, 's>> {
+    pub fn insert<P: Into<Prop>, V: Into<ScalarValue>>(&mut self, prop: P, value: V) {
         match (prop.into(), self) {
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
             (Prop::Seq(index), MutableView::List(list)) => list.insert(index, value),
             (Prop::Seq(index), MutableView::Text(text)) => {
                 text.insert(index, value);
-                // text can't contain objects
-                None
             }
             (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
+            | (Prop::Seq(_), MutableView::Map(_))
+            | (_, MutableView::Scalar(_)) => {}
+        }
+    }
+
+    /// Insert the given value at the `prop`.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn insert_object<'s, P: Into<Prop>>(
+        &'s mut self,
+        prop: P,
+        value: ObjType,
+    ) -> Option<MutableView<'a, 's>> {
+        match (prop.into(), self) {
+            (Prop::Map(key), MutableView::Map(map)) => Some(map.insert_object(key, value)),
+            (Prop::Seq(index), MutableView::List(list)) => Some(list.insert_object(index, value)),
+            (Prop::Seq(_), MutableView::Text(_))
+            | (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
             | (_, MutableView::Scalar(_)) => None,
@@ -86,20 +99,35 @@ impl<'a, 't> MutableView<'a, 't> {
     /// Overwrite the `prop`'s current value with `value`.
     ///
     /// Returns a mutable view of the new object if the value created one.
-    pub fn set<'s, P: Into<Prop>, V: Into<Value>>(
-        &'s mut self,
-        prop: P,
-        value: V,
-    ) -> Option<MutableView<'a, 's>> {
+    pub fn set<P: Into<Prop>, V: Into<ScalarValue>>(&mut self, prop: P, value: V) {
         match (prop.into(), self) {
             // map's insert does the same as a set would
             (Prop::Map(key), MutableView::Map(map)) => map.insert(key, value),
             (Prop::Seq(index), MutableView::List(list)) => list.set(index, value),
             (Prop::Seq(index), MutableView::Text(text)) => {
                 text.set(index, value);
-                None
             }
             (Prop::Map(_), MutableView::List(_))
+            | (Prop::Map(_), MutableView::Text(_))
+            | (Prop::Seq(_), MutableView::Map(_))
+            | (_, MutableView::Scalar(_)) => {}
+        }
+    }
+
+    /// Overwrite the `prop`'s current value with `value`.
+    ///
+    /// Returns a mutable view of the new object if the value created one.
+    pub fn set_object<'s, P: Into<Prop>>(
+        &'s mut self,
+        prop: P,
+        value: ObjType,
+    ) -> Option<MutableView<'a, 's>> {
+        match (prop.into(), self) {
+            // map's insert does the same as a set would
+            (Prop::Map(key), MutableView::Map(map)) => Some(map.insert_object(key, value)),
+            (Prop::Seq(index), MutableView::List(list)) => Some(list.set_object(index, value)),
+            (Prop::Seq(_), MutableView::Text(_))
+            | (Prop::Map(_), MutableView::List(_))
             | (Prop::Map(_), MutableView::Text(_))
             | (Prop::Seq(_), MutableView::Map(_))
             | (_, MutableView::Scalar(_)) => None,

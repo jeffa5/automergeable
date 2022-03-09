@@ -77,11 +77,11 @@ impl<'a, 't> MutableTextView<'a, 't> {
         }
     }
 
-    pub fn insert<V: Into<Value>>(&mut self, index: usize, value: V) {
+    pub fn insert<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
         self.tx.insert(&self.obj, index, value).unwrap();
     }
 
-    pub fn set<V: Into<Value>>(&mut self, index: usize, value: V) {
+    pub fn set<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
         self.tx.set(&self.obj, index, value).unwrap();
     }
 

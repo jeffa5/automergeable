@@ -11,13 +11,12 @@ mod tests {
     use crate::MutableDoc;
     use crate::ViewableDoc;
     use automerge::Automerge;
-    use automerge::Value;
 
     #[test]
     fn test_text() {
         let mut doc = Automerge::new();
         let mut tx = doc.transaction();
-        tx.view_mut().insert("a", Value::text());
+        tx.view_mut().insert_object("a", automerge::ObjType::Text);
         tx.view_mut().get_mut("a").unwrap().insert(0, "b");
         tx.view_mut().get_mut("a").unwrap().insert(1, "c");
         tx.commit();
