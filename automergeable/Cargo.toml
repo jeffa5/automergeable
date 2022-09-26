@@ -6,9 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-automerge = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
-automerge-protocol = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
-automerge-frontend = { git = "https://github.com/automerge/automerge-rs", branch = "main" }
+automerge = "0.1.0"
 automergeable-traits = { path = "../automergeable-traits" }
 automergeable-derive = { path = "../automergeable-derive" }
 thiserror = "1.0.24"
@@ -29,7 +27,7 @@ pretty_assertions = "0.7.1"
 [features]
 default = ["std"]
 std = []
-derive-arbitrary = ["automerge-protocol/derive-arbitrary", "automerge-frontend/derive-arbitrary"]
+derive-arbitrary = []
 
 [[bench]]
 name = "diff"
