@@ -58,7 +58,7 @@ impl<'a> Viewable for Transaction<'a> {
         obj: &ObjId,
         prop: P,
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
-        Transactable::value(self, obj, prop)
+        Transactable::get(self, obj, prop)
     }
 
     fn value_at<P: Into<Prop>>(
@@ -67,7 +67,7 @@ impl<'a> Viewable for Transaction<'a> {
         prop: P,
         heads: &[ChangeHash],
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
-        Transactable::value_at(self, obj, prop, heads)
+        Transactable::get_at(self, obj, prop, heads)
     }
 
     fn text(&self, obj: &ObjId) -> Result<String, AutomergeError> {
@@ -79,7 +79,7 @@ impl<'a> Viewable for Transaction<'a> {
     }
 }
 
-impl<'a> Viewable for Automerge {
+impl Viewable for Automerge {
     fn keys(&self, obj: &ObjId) -> Keys {
         self.keys(obj)
     }
@@ -101,7 +101,7 @@ impl<'a> Viewable for Automerge {
         obj: &ObjId,
         prop: P,
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
-        self.value(obj, prop)
+        self.get(obj, prop)
     }
 
     fn value_at<P: Into<Prop>>(
@@ -110,7 +110,7 @@ impl<'a> Viewable for Automerge {
         prop: P,
         heads: &[ChangeHash],
     ) -> Result<Option<(Value, ObjId)>, AutomergeError> {
-        self.value_at(obj, prop, heads)
+        self.get_at(obj, prop, heads)
     }
 
     fn text(&self, obj: &ObjId) -> Result<String, AutomergeError> {

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use automerge::{ChangeHash, ObjId, ScalarValue, Value};
+use automerge::{ChangeHash, ObjId};
 use smol_str::SmolStr;
 
 use crate::Viewable;
@@ -40,10 +40,7 @@ where
 
     pub fn get(&self, index: usize) -> Option<SmolStr> {
         match self.doc.value_at(&self.obj, index, &self.heads) {
-            Ok(Some((value, _))) => match value {
-                Value::Scalar(ScalarValue::Str(s)) => Some(s),
-                Value::Object(_) | Value::Scalar(_) => None,
-            },
+            Ok(Some((value, _))) => value.into_string().ok().map(Into::into),
             Ok(None) | Err(_) => None,
         }
     }

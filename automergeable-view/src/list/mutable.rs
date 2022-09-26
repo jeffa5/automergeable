@@ -50,7 +50,7 @@ impl<'a, 't> MutableListView<'a, 't> {
     }
 
     pub fn get<'s>(&'s self, index: usize) -> Option<View<'s, Transaction<'a>>> {
-        match Transactable::value(self.tx, &self.obj, index) {
+        match Transactable::get(self.tx, &self.obj, index) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(View::Map(MapView {
                     obj: id,
@@ -65,7 +65,7 @@ impl<'a, 't> MutableListView<'a, 't> {
                     obj: id,
                     doc: self.tx,
                 })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+                Value::Scalar(s) => Some(View::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }
@@ -76,7 +76,7 @@ impl<'a, 't> MutableListView<'a, 't> {
         index: usize,
         heads: Vec<ChangeHash>,
     ) -> Option<HistoricalView<'s, 'static, Transaction<'a>>> {
-        match Transactable::value_at(self.tx, &self.obj, index, &heads) {
+        match Transactable::get_at(self.tx, &self.obj, index, &heads) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(HistoricalView::Map(HistoricalMapView {
                     obj: id,
@@ -94,14 +94,14 @@ impl<'a, 't> MutableListView<'a, 't> {
                     doc: self.tx,
                     heads: Cow::Owned(heads),
                 })),
-                Value::Scalar(s) => Some(HistoricalView::Scalar(s)),
+                Value::Scalar(s) => Some(HistoricalView::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }
     }
 
     pub fn get_mut<'s>(&'s mut self, index: usize) -> Option<MutableView<'a, 's>> {
-        match Transactable::value(self.tx, &self.obj, index) {
+        match Transactable::get(self.tx, &self.obj, index) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(MutableView::Map(MutableMapView {
                     obj: id,
@@ -116,7 +116,7 @@ impl<'a, 't> MutableListView<'a, 't> {
                     obj: id,
                     tx: self.tx,
                 })),
-                Value::Scalar(s) => Some(MutableView::Scalar(s)),
+                Value::Scalar(s) => Some(MutableView::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }
@@ -148,14 +148,14 @@ impl<'a, 't> MutableListView<'a, 't> {
     ///
     /// Returns a mutable view of the new object if the value created one.
     pub fn set<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
-        self.tx.set(&self.obj, index, value).unwrap()
+        self.tx.put(&self.obj, index, value).unwrap()
     }
 
     /// Overwrite an existing item in the list.
     ///
     /// Returns a mutable view of the new object if the value created one.
     pub fn set_object<'s>(&'s mut self, index: usize, value: ObjType) -> MutableView<'a, 's> {
-        let obj = self.tx.set_object(&self.obj, index, value).unwrap();
+        let obj = self.tx.put_object(&self.obj, index, value).unwrap();
         match value {
             ObjType::Map => MutableView::Map(MutableMapView { obj, tx: self.tx }),
             ObjType::Table => {
@@ -168,7 +168,7 @@ impl<'a, 't> MutableListView<'a, 't> {
 
     pub fn remove(&mut self, index: usize) -> bool {
         if self.get_mut(index).is_some() {
-            self.tx.del(&self.obj, index).unwrap();
+            self.tx.delete(&self.obj, index).unwrap();
             true
         } else {
             false

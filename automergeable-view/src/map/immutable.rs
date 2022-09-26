@@ -61,7 +61,7 @@ where
                     obj: id,
                     doc: self.doc,
                 })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+                Value::Scalar(s) => Some(View::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }

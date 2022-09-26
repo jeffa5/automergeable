@@ -1,5 +1,5 @@
 use automerge::{
-    transaction::Transactable, transaction::Transaction, ChangeHash, ObjId, ScalarValue, Value,
+    transaction::Transactable, transaction::Transaction, ChangeHash, ObjId, ScalarValue,
 };
 use smol_str::SmolStr;
 
@@ -48,31 +48,22 @@ impl<'a, 't> MutableTextView<'a, 't> {
     }
 
     pub fn get(&self, index: usize) -> Option<SmolStr> {
-        match Transactable::value(self.tx, &self.obj, index) {
-            Ok(Some((value, _))) => match value {
-                Value::Scalar(ScalarValue::Str(s)) => Some(s),
-                Value::Object(_) | Value::Scalar(_) => None,
-            },
+        match Transactable::get(self.tx, &self.obj, index) {
+            Ok(Some((value, _))) => value.into_string().ok().map(Into::into),
             Ok(None) | Err(_) => None,
         }
     }
 
     pub fn get_at(&self, index: usize, heads: Vec<ChangeHash>) -> Option<SmolStr> {
-        match Transactable::value_at(self.tx, &self.obj, index, &heads) {
-            Ok(Some((value, _))) => match value {
-                Value::Scalar(ScalarValue::Str(s)) => Some(s),
-                Value::Object(_) | Value::Scalar(_) => None,
-            },
+        match Transactable::get_at(self.tx, &self.obj, index, &heads) {
+            Ok(Some((value, _))) => value.into_string().ok().map(Into::into),
             Ok(None) | Err(_) => None,
         }
     }
 
     pub fn get_mut(&mut self, index: usize) -> Option<SmolStr> {
-        match Transactable::value(self.tx, &self.obj, index) {
-            Ok(Some((value, _))) => match value {
-                Value::Scalar(ScalarValue::Str(s)) => Some(s),
-                Value::Object(_) | Value::Scalar(_) => None,
-            },
+        match Transactable::get(self.tx, &self.obj, index) {
+            Ok(Some((value, _))) => value.into_string().ok().map(Into::into),
             Ok(None) | Err(_) => None,
         }
     }
@@ -82,12 +73,12 @@ impl<'a, 't> MutableTextView<'a, 't> {
     }
 
     pub fn set<V: Into<ScalarValue>>(&mut self, index: usize, value: V) {
-        self.tx.set(&self.obj, index, value).unwrap();
+        self.tx.put(&self.obj, index, value).unwrap();
     }
 
     pub fn remove(&mut self, index: usize) -> bool {
         if self.get(index).is_some() {
-            self.tx.del(&self.obj, index).unwrap();
+            self.tx.delete(&self.obj, index).unwrap();
             true
         } else {
             false

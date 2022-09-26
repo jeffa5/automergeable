@@ -70,7 +70,7 @@ where
                     doc: self.doc,
                     heads: self.heads.clone(),
                 })),
-                Value::Scalar(s) => Some(HistoricalView::Scalar(s)),
+                Value::Scalar(s) => Some(HistoricalView::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }

@@ -52,7 +52,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
     }
 
     pub fn get<'s, S: Into<String>>(&'s self, key: S) -> Option<View<'s, Transaction<'a>>> {
-        match Transactable::value(self.tx, &self.obj, key.into()) {
+        match Transactable::get(self.tx, &self.obj, key.into()) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(View::Map(MapView {
                     obj: id,
@@ -67,14 +67,14 @@ impl<'a, 't> MutableMapView<'a, 't> {
                     obj: id,
                     doc: self.tx,
                 })),
-                Value::Scalar(s) => Some(View::Scalar(s)),
+                Value::Scalar(s) => Some(View::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }
     }
 
     pub fn get_mut<'s, S: Into<String>>(&'s mut self, key: S) -> Option<MutableView<'a, 's>> {
-        match Transactable::value(self.tx, &self.obj, key.into()) {
+        match Transactable::get(self.tx, &self.obj, key.into()) {
             Ok(Some((value, id))) => match value {
                 Value::Object(ObjType::Map) => Some(MutableView::Map(MutableMapView {
                     obj: id,
@@ -89,7 +89,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
                     obj: id,
                     tx: self.tx,
                 })),
-                Value::Scalar(s) => Some(MutableView::Scalar(s)),
+                Value::Scalar(s) => Some(MutableView::Scalar(s.into_owned())),
             },
             Ok(None) | Err(_) => None,
         }
@@ -99,7 +99,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
     ///
     /// Returns a mutable view of the new object if the value created one.
     pub fn insert<S: Into<String>, V: Into<ScalarValue>>(&mut self, key: S, value: V) {
-        self.tx.set(&self.obj, key.into(), value).unwrap()
+        self.tx.put(&self.obj, key.into(), value).unwrap()
     }
 
     /// Overwrite the `prop`'s current value with `value`.
@@ -110,7 +110,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
         key: S,
         value: ObjType,
     ) -> MutableView<'a, 's> {
-        let obj = self.tx.set_object(&self.obj, key.into(), value).unwrap();
+        let obj = self.tx.put_object(&self.obj, key.into(), value).unwrap();
         match value {
             ObjType::Map => MutableView::Map(MutableMapView { obj, tx: self.tx }),
             ObjType::Table => {
@@ -125,7 +125,7 @@ impl<'a, 't> MutableMapView<'a, 't> {
     pub fn remove<S: Into<String>>(&mut self, key: S) -> bool {
         let key = key.into();
         if self.get(key.clone()).is_some() {
-            self.tx.del(&self.obj, key).unwrap();
+            self.tx.delete(&self.obj, key).unwrap();
             true
         } else {
             false
